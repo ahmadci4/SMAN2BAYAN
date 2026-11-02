@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Guru - E-Learning SMAN 2 Bayan</title>
+    <title>Panel Guru - SMAN 2 Bayan</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body style="background-color: #f4f7fe; padding: 20px;">
-    <header class="app-header" style="max-width: 800px; margin: 0 auto; border-radius: 20px;">
+    <header class="app-header" style="max-width: 800px; margin: 0 auto; border-radius: 20px; display:flex; justify-content:space-between; align-items:center; padding:15px 20px;">
         <div class="school-info">
             <h1>Panel Guru SMAN 2 BAYAN</h1>
         </div>
-        <button id="btn-logout" style="display: none; background: #e2e8f0; color: #475569; padding: 10px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="logoutGuru()">Logout</button>
+        <button id="btn-logout" style="display: none; background: #fee2e2; color: #dc2626; padding: 8px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="logoutGuru()">Logout</button>
     </header>
 
     <main style="max-width: 800px; margin: 20px auto;">
         
-        <!-- Bagian Login -->
+        <!-- Login Section -->
         <div id="login-section" style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
             <h2 style="color: #2b3674; margin-bottom: 15px;">Login Guru</h2>
             <input type="email" id="email-guru" placeholder="Email Guru" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
@@ -31,12 +32,14 @@
         <!-- Dashboard Guru -->
         <div id="dashboard-section" style="display: none;">
             
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button onclick="switchTab('input')" style="flex: 1;" class="btn-primary">Tambah Materi</button>
-                <button onclick="switchTab('notif')" style="flex: 1; background: #f2994a;" class="btn-primary">Pertanyaan Siswa <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 8px; font-size: 12px; display: none;">0</span></button>
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap:wrap;">
+                <button onclick="switchTab('input')" id="tbtn-input" style="flex: 1; padding:10px;" class="btn-primary">Tambah Materi</button>
+                <button onclick="switchTab('list')" id="tbtn-list" style="flex: 1; padding:10px; background:#475569;" class="btn-primary">Daftar Materi</button>
+                <button onclick="switchTab('profil')" id="tbtn-profil" style="flex: 1; padding:10px; background:#05cd99;" class="btn-primary">Edit Profil</button>
+                <button onclick="switchTab('notif')" id="tbtn-notif" style="flex: 1; padding:10px; background: #f2994a;" class="btn-primary">Diskusi <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 6px; font-size: 11px; display: none;">0</span></button>
             </div>
 
-            <!-- Tab Input Materi -->
+            <!-- Tab 1: Tambah Materi -->
             <div id="tab-input" class="detail-box">
                 <h2 style="color: #2b3674; margin-bottom: 15px;">Tambah Materi Baru</h2>
                 
@@ -74,32 +77,70 @@
                 <input type="text" id="input-subbab" placeholder="Contoh: Macam-macam Alat Ukur" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
 
                 <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Penjelasan Singkat / Pengantar Materi:</label>
-                <textarea id="input-deskripsi" rows="4" placeholder="Berikan sedikit penjelasan pengantar materi..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
+                <textarea id="input-deskripsi" rows="3" placeholder="Berikan penjelasan pengantar..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                    <h3 style="font-size: 1rem; color: #4318ff; margin-bottom: 10px;">Lampiran Media & Literatur (YouTube/Drive/Sosmed/Web)</h3>
-                    
-                    <input type="text" id="ket-link-1" placeholder="Keterangan 1 (Misal: Video Penjelasan YouTube)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                    <input type="url" id="url-link-1" placeholder="Paste URL di sini..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <h3 style="font-size: 1rem; color: #4318ff; margin-bottom: 10px;">Lampiran Media & Literatur (YouTube/Drive/Sosmed)</h3>
+                    <input type="text" id="ket-link-1" placeholder="Keterangan 1 (Misal: Video YouTube)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <input type="url" id="url-link-1" placeholder="Paste URL..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px;">
 
-                    <input type="text" id="ket-link-2" placeholder="Keterangan 2 (Misal: Dokumen LKS Google Drive)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                    <input type="url" id="url-link-2" placeholder="Paste URL di sini..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px;">
-
-                    <input type="text" id="ket-link-3" placeholder="Keterangan 3 (Misal: Bacaan Tambahan dari Web)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                    <input type="url" id="url-link-3" placeholder="Paste URL di sini..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <input type="text" id="ket-link-2" placeholder="Keterangan 2 (Misal: Modul Drive)" style="width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    <input type="url" id="url-link-2" placeholder="Paste URL..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px;">
                 </div>
 
                 <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Tugas / PR (Opsional):</label>
-                <textarea id="input-pr" rows="3" placeholder="Tuliskan instruksi tugas atau PR di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
+                <textarea id="input-pr" rows="2" placeholder="Tulis instruksi tugas..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
 
-                <button id="btn-submit" onclick="unggahMateri()" style="width: 100%; background: #05cd99; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer;">Simpan Materi ke Database</button>
+                <button id="btn-submit" onclick="unggahMateri()" style="width: 100%; background: #05cd99; color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Materi ke Database</button>
             </div>
 
-            <!-- Tab Notifikasi & Pertanyaan -->
+            <!-- Tab 2: Daftar Materi Guru -->
+            <div id="tab-list" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Daftar Materi yang Diunggah</h2>
+                <div id="daftar-materi-guru">
+                    <p style="color:grey;">Memuat daftar materi...</p>
+                </div>
+            </div>
+
+            <!-- Tab 3: Edit Profil Guru Lengkap -->
+            <div id="tab-profil" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Edit Profil Guru</h2>
+                
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Nama Lengkap & Gelar:</label>
+                <input type="text" id="prof-nama" placeholder="Contoh: Rianti, S.Pd." style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Gelar Akademik & Kampus Kelulusan:</label>
+                <input type="text" id="prof-gelar" placeholder="Contoh: Sarjana Pendidikan Fisika" style="width: 100%; padding: 10px; margin-bottom: 6px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <input type="text" id="prof-kampus" placeholder="Contoh: Universitas Mataram" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Mata Pelajaran yang Diampu:</label>
+                <input type="text" id="prof-mapel" placeholder="Contoh: Fisika" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Quote / Moto Mengajar:</label>
+                <textarea id="prof-quote" rows="2" placeholder="Tulis moto hidup/mengajar..." style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;"></textarea>
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">URL Foto Profil (Link Gambar):</label>
+                <input type="url" id="prof-foto" placeholder="https://..." style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Email & WhatsApp:</label>
+                <input type="email" id="prof-email" placeholder="email@sekolah.sch.id" style="width: 100%; padding: 10px; margin-bottom: 6px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <input type="text" id="prof-wa" placeholder="Nomor WA (Contoh: 62812...)" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Link Instagram & Google Maps Rumah:</label>
+                <input type="url" id="prof-ig" placeholder="https://instagram.com/..." style="width: 100%; padding: 10px; margin-bottom: 6px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <input type="url" id="prof-maps" placeholder="https://maps.google.com/..." style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <button onclick="simpanProfilGuru()" style="width: 100%; background: #4318ff; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Perubahan Profil</button>
+            </div>
+
+            <!-- Tab 4: Diskusi & Balasan Guru -->
             <div id="tab-notif" class="detail-box" style="display: none;">
-                <h2 style="color: #2b3674; margin-bottom: 15px;">Daftar Pertanyaan Siswa</h2>
-                <div id="list-pertanyaan"></div>
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Pertanyaan & Diskusi Siswa</h2>
+                <div id="list-pertanyaan">
+                    <p style="color:grey;">Memuat diskusi...</p>
+                </div>
             </div>
+
         </div>
     </main>
 
@@ -130,7 +171,9 @@
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
                 document.getElementById('btn-logout').style.display = 'block';
-                listenPertanyaanSiswa(); 
+                loadDaftarMateriGuru();
+                loadProfilGuruForm();
+                listenDiskusiGuru();
             } else {
                 document.getElementById('login-section').style.display = 'block';
                 document.getElementById('dashboard-section').style.display = 'none';
@@ -140,16 +183,17 @@
 
         function switchTab(tab) {
             document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
+            document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('tab-profil').style.display = tab === 'profil' ? 'block' : 'none';
             document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
+            if(tab === 'list') loadDaftarMateriGuru();
         }
 
         function unggahMateri() {
             const btnSubmit = document.getElementById('btn-submit');
-            
             let tautan = [];
-            if (document.getElementById('url-link-1').value) tautan.push({ label: document.getElementById('ket-link-1').value || 'Materi 1', url: document.getElementById('url-link-1').value });
-            if (document.getElementById('url-link-2').value) tautan.push({ label: document.getElementById('ket-link-2').value || 'Materi 2', url: document.getElementById('url-link-2').value });
-            if (document.getElementById('url-link-3').value) tautan.push({ label: document.getElementById('ket-link-3').value || 'Materi 3', url: document.getElementById('url-link-3').value });
+            if (document.getElementById('url-link-1').value) tautan.push({ label: document.getElementById('ket-link-1').value || 'Media 1', url: document.getElementById('url-link-1').value });
+            if (document.getElementById('url-link-2').value) tautan.push({ label: document.getElementById('ket-link-2').value || 'Media 2', url: document.getElementById('url-link-2').value });
 
             const data = {
                 mapel: document.getElementById('input-mapel').value,
@@ -164,65 +208,143 @@
             
             if(!data.bab || !data.subBab) return alert("Harap isi Judul dan Sub Judul Bab!");
 
-            btnSubmit.innerText = "Menyimpan data...";
+            btnSubmit.innerText = "Menyimpan...";
             btnSubmit.disabled = true;
 
-            db.collection("materi_pelajaran").add(data)
-            .then(() => {
-                alert("Berhasil! Materi telah tersimpan.");
+            db.collection("materi_pelajaran").add(data).then(() => {
+                alert("Berhasil mengunggah materi!");
                 document.getElementById('input-bab').value = '';
                 document.getElementById('input-subbab').value = '';
                 document.getElementById('input-deskripsi').value = '';
                 document.getElementById('url-link-1').value = ''; document.getElementById('ket-link-1').value = '';
                 document.getElementById('url-link-2').value = ''; document.getElementById('ket-link-2').value = '';
-                document.getElementById('url-link-3').value = ''; document.getElementById('ket-link-3').value = '';
                 document.getElementById('input-pr').value = '';
-            })
-            .catch((error) => {
-                console.error(error);
-                alert("Error: Pastikan Anda sudah membuat Firestore Database (Bukan Realtime Database).");
-            })
-            .finally(() => {
-                btnSubmit.innerText = "Simpan Materi ke Database";
-                btnSubmit.disabled = false;
+                switchTab('list');
+            }).catch(err => alert("Error: " + err.message))
+            .finally(() => { btnSubmit.innerText = "Simpan Materi ke Database"; btnSubmit.disabled = false; });
+        }
+
+        function loadDaftarMateriGuru() {
+            const container = document.getElementById('daftar-materi-guru');
+            container.innerHTML = "<p>Memuat daftar materi...</p>";
+            
+            db.collection("materi_pelajaran").get().then((snapshot) => {
+                if(snapshot.empty) {
+                    container.innerHTML = "<p style='color:grey;'>Belum ada materi yang diunggah.</p>";
+                    return;
+                }
+                container.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const m = doc.data();
+                    container.innerHTML += `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="background:#4318ff; color:white; font-size:0.75rem; padding:2px 6px; border-radius:4px;">${m.kelas}</span>
+                                <strong style="color:#2b3674; margin-left:8px;">${m.bab}</strong> - <span style="font-size:0.9rem; color:#64748b;">${m.subBab}</span>
+                            </div>
+                            <button onclick="hapusMateri('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                    `;
+                });
             });
         }
 
-        function listenPertanyaanSiswa() {
-            db.collection("diskusi").where("status", "==", "unread").orderBy("waktu", "desc")
-              .onSnapshot((snapshot) => {
-                  const listDiv = document.getElementById('list-pertanyaan');
-                  listDiv.innerHTML = '';
-                  
-                  const count = snapshot.size;
-                  const badge = document.getElementById('badge-notif');
-                  if(count > 0) {
-                      badge.style.display = 'inline-block';
-                      badge.innerText = count;
-                  } else {
-                      badge.style.display = 'none';
-                      listDiv.innerHTML = '<p style="color:grey;">Belum ada pertanyaan baru dari siswa.</p>';
-                  }
-
-                  snapshot.forEach((doc) => {
-                      const msg = doc.data();
-                      listDiv.innerHTML += `
-                          <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                              <p style="font-size: 0.8rem; color: #a3aed1;">Kelas ${msg.kelasSiswa || '-'} | Bab: <strong>${msg.bab}</strong></p>
-                              <p style="margin-top: 5px;"><strong>${msg.pengirim}</strong> bertanya:</p>
-                              <p style="background: #f4f7fe; padding: 10px; border-radius: 8px; margin: 10px 0;">"${msg.pesan}"</p>
-                              <textarea id="reply-${doc.id}" rows="2" placeholder="Tulis balasan guru..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px;"></textarea>
-                              <button onclick="balasPertanyaan('${doc.id}')" style="background: #4318ff; color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer;">Kirim Balasan</button>
-                          </div>
-                      `;
-                  });
-              });
+        function hapusMateri(id) {
+            if(confirm("Yakin ingin menghapus materi ini?")) {
+                db.collection("materi_pelajaran").doc(id).delete().then(() => {
+                    loadDaftarMateriGuru();
+                });
+            }
         }
 
-        function balasPertanyaan(docId) {
-            const balasan = document.getElementById(`reply-${docId}`).value;
-            if(!balasan) return alert("Balasan tidak boleh kosong.");
-            db.collection("diskusi").doc(docId).update({ balasanGuru: balasan, status: "read" }).catch(err => alert("Error: " + err.message));
+        function loadProfilGuruForm() {
+            db.collection("profil_guru").doc("utama").get().then((doc) => {
+                if(doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('prof-nama').value = d.nama || '';
+                    document.getElementById('prof-gelar').value = d.gelar || '';
+                    document.getElementById('prof-kampus').value = d.kampus || '';
+                    document.getElementById('prof-mapel').value = d.mapel || '';
+                    document.getElementById('prof-quote').value = d.quote || '';
+                    document.getElementById('prof-foto').value = d.foto || '';
+                    document.getElementById('prof-email').value = d.email || '';
+                    document.getElementById('prof-wa').value = d.whatsapp || '';
+                    document.getElementById('prof-ig').value = d.instagram || '';
+                    document.getElementById('prof-maps').value = d.maps || '';
+                }
+            });
+        }
+
+        function simpanProfilGuru() {
+            const data = {
+                nama: document.getElementById('prof-nama').value,
+                gelar: document.getElementById('prof-gelar').value,
+                kampus: document.getElementById('prof-kampus').value,
+                mapel: document.getElementById('prof-mapel').value,
+                quote: document.getElementById('prof-quote').value,
+                foto: document.getElementById('prof-foto').value,
+                email: document.getElementById('prof-email').value,
+                whatsapp: document.getElementById('prof-wa').value,
+                instagram: document.getElementById('prof-ig').value,
+                maps: document.getElementById('prof-maps').value
+            };
+            db.collection("profil_guru").doc("utama").set(data, { merge: true }).then(() => {
+                alert("Profil guru berhasil diperbarui!");
+            }).catch(err => alert("Gagal menyimpan profil: " + err.message));
+        }
+
+        function listenDiskusiGuru() {
+            db.collection("diskusi").orderBy("waktu", "desc").onSnapshot((snapshot) => {
+                const listDiv = document.getElementById('list-pertanyaan');
+                listDiv.innerHTML = '';
+                if(snapshot.empty) {
+                    listDiv.innerHTML = '<p style="color:grey;">Belum ada pertanyaan siswa.</p>';
+                    return;
+                }
+                
+                let allChat = [];
+                snapshot.forEach(doc => allChat.push({ id: doc.id, ...doc.data() }));
+                let parents = allChat.filter(c => !c.parentId);
+
+                document.getElementById('badge-notif').style.display = parents.length > 0 ? 'inline-block' : 'none';
+                document.getElementById('badge-notif').innerText = parents.length;
+
+                parents.forEach(p => {
+                    let replies = allChat.filter(c => c.parentId === p.id);
+                    let repHtml = '';
+                    replies.forEach(r => {
+                        repHtml += `<div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; margin-left:15px;"><strong>${r.pengirim}:</strong> ${r.pesan}</div>`;
+                    });
+
+                    listDiv.innerHTML += `
+                        <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:12px; background:white;">
+                            <strong style="color:#4318ff;">${p.pengirim}</strong> bertanya:
+                            <p style="margin:5px 0;">${p.pesan}</p>
+                            ${repHtml}
+                            <div style="margin-top:8px; display:flex; gap:5px;">
+                                <input type="text" id="guru-reply-${p.id}" placeholder="Balas sebagai Guru..." style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <button onclick="kirimBalasanGuru('${p.materiId}', '${p.id}')" class="btn-primary" style="padding:6px 12px; font-size:0.8rem;">Balas</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function kirimBalasanGuru(materiId, parentId) {
+            const pesan = document.getElementById(`guru-reply-${parentId}`).value.trim();
+            if(!pesan) return alert("Pesan balasan tidak boleh kosong!");
+
+            db.collection("diskusi").add({
+                materiId: materiId,
+                pengirim: "Ibu Guru (Rianti, S.Pd.)",
+                pesan: pesan,
+                parentId: parentId,
+                isGuru: true,
+                waktu: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById(`guru-reply-${parentId}`).value = "";
+            });
         }
     </script>
 </body>
