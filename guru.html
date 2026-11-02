@@ -31,7 +31,6 @@
         <!-- Dashboard Guru -->
         <div id="dashboard-section" style="display: none;">
             
-            <!-- Menu Navigasi Guru -->
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button onclick="switchTab('input')" style="flex: 1;" class="btn-primary">Tambah Materi</button>
                 <button onclick="switchTab('notif')" style="flex: 1; background: #f2994a;" class="btn-primary">Pertanyaan Siswa <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 8px; font-size: 12px; display: none;">0</span></button>
@@ -46,11 +45,26 @@
                     <option value="Fisika">Fisika</option>
                 </select>
 
-                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Kelas (Fase):</label>
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Kelas:</label>
                 <select id="input-kelas" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
-                    <option value="Kelas 10">Kelas 10 (Fase E)</option>
-                    <option value="Kelas 11">Kelas 11 (Fase F)</option>
-                    <option value="Kelas 12">Kelas 12 (Fase F)</option>
+                    <optgroup label="Kelas X">
+                        <option value="X.A">Kelas X.A</option>
+                        <option value="X.B">Kelas X.B</option>
+                        <option value="X.C">Kelas X.C</option>
+                        <option value="X.D">Kelas X.D</option>
+                    </optgroup>
+                    <optgroup label="Kelas XI">
+                        <option value="XI.A">Kelas XI.A</option>
+                        <option value="XI.B">Kelas XI.B</option>
+                        <option value="XI.C">Kelas XI.C</option>
+                        <option value="XI.D">Kelas XI.D</option>
+                    </optgroup>
+                    <optgroup label="Kelas XII">
+                        <option value="XII.A">Kelas XII.A</option>
+                        <option value="XII.B">Kelas XII.B</option>
+                        <option value="XII.C">Kelas XII.C</option>
+                        <option value="XII.D">Kelas XII.D</option>
+                    </optgroup>
                 </select>
 
                 <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Judul Bab:</label>
@@ -63,7 +77,10 @@
                 <textarea id="input-deskripsi" rows="3" placeholder="Contoh: Pengukuran merupakan proses membandingkan..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
 
                 <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Link Materi Lengkap (Google Drive):</label>
-                <input type="url" id="input-link" placeholder="Paste link Google Drive di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <input type="url" id="input-link" placeholder="Paste link Google Drive di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Tugas / PR (Opsional):</label>
+                <textarea id="input-pr" rows="2" placeholder="Tuliskan instruksi tugas atau PR di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
 
                 <button id="btn-submit" onclick="unggahMateri()" style="width: 100%; background: #05cd99; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Materi ke Database</button>
             </div>
@@ -86,7 +103,8 @@
             projectId: "e-learning-sman-2-bayan",
             storageBucket: "e-learning-sman-2-bayan.firebasestorage.app",
             messagingSenderId: "715837451881",
-            appId: "1:715837451881:web:48540594fe89d36d8c3cf8"
+            appId: "1:715837451881:web:48540594fe89d36d8c3cf8",
+            measurementId: "G-TTVZ22Z4H5"
         };
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -106,7 +124,7 @@
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
                 document.getElementById('btn-logout').style.display = 'block';
-                listenPertanyaanSiswa(); // Mulai pantau pertanyaan baru
+                listenPertanyaanSiswa(); 
             } else {
                 document.getElementById('login-section').style.display = 'block';
                 document.getElementById('dashboard-section').style.display = 'none';
@@ -119,8 +137,10 @@
             document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
         }
 
-        // Fungsi Simpan Materi
-        async function unggahMateri() {
+        // Fungsi Simpan Materi (Dirombak agar tidak nyangkut)
+        function unggahMateri() {
+            const btnSubmit = document.getElementById('btn-submit');
+            
             const data = {
                 mapel: document.getElementById('input-mapel').value,
                 kelas: document.getElementById('input-kelas').value,
@@ -128,33 +148,40 @@
                 subBab: document.getElementById('input-subbab').value,
                 deskripsi: document.getElementById('input-deskripsi').value,
                 fileUrl: document.getElementById('input-link').value,
+                pr: document.getElementById('input-pr').value,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            if(!data.bab || !data.subBab || !data.fileUrl) return alert("Harap isi Judul, Sub Judul, dan Link Drive!");
+            if(!data.bab || !data.subBab || !data.fileUrl) {
+                return alert("Harap isi Judul, Sub Judul, dan Link Drive!");
+            }
 
-            document.getElementById('btn-submit').innerText = "Menyimpan data...";
-            document.getElementById('btn-submit').disabled = true;
+            btnSubmit.innerText = "Menyimpan data... (Mohon tunggu)";
+            btnSubmit.disabled = true;
 
-            try {
-                await db.collection("materi_pelajaran").add(data);
+            // Proses simpan menggunakan standar Promise (Lebih stabil)
+            db.collection("materi_pelajaran").add(data)
+            .then(() => {
                 alert("Berhasil! Materi telah tersimpan.");
                 document.getElementById('input-bab').value = '';
                 document.getElementById('input-subbab').value = '';
                 document.getElementById('input-deskripsi').value = '';
                 document.getElementById('input-link').value = '';
-            } catch (error) {
-                alert("Terjadi kesalahan saat menyimpan.");
-            } finally {
-                document.getElementById('btn-submit').innerText = "Simpan Materi ke Database";
-                document.getElementById('btn-submit').disabled = false;
-            }
+                document.getElementById('input-pr').value = '';
+            })
+            .catch((error) => {
+                console.error("Terjadi Error Firebase: ", error);
+                alert("GAGAL MENYIMPAN! Error: " + error.message);
+            })
+            .finally(() => {
+                btnSubmit.innerText = "Simpan Materi ke Database";
+                btnSubmit.disabled = false;
+            });
         }
 
-        // Fitur Pemantau Pertanyaan Siswa (Real-time)
         function listenPertanyaanSiswa() {
             db.collection("diskusi")
-              .where("status", "==", "unread") // Hanya cari yang belum dibalas
+              .where("status", "==", "unread") 
               .orderBy("waktu", "desc")
               .onSnapshot((snapshot) => {
                   const listDiv = document.getElementById('list-pertanyaan');
@@ -174,7 +201,7 @@
                       const msg = doc.data();
                       listDiv.innerHTML += `
                           <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                              <p style="font-size: 0.8rem; color: #a3aed1;">Pertanyaan pada Bab: <strong>${msg.bab}</strong></p>
+                              <p style="font-size: 0.8rem; color: #a3aed1;">Pertanyaan Kelas ${msg.kelasSiswa || '-'} | Bab: <strong>${msg.bab}</strong></p>
                               <p style="margin-top: 5px;"><strong>${msg.pengirim}</strong> bertanya:</p>
                               <p style="background: #f4f7fe; padding: 10px; border-radius: 8px; margin: 10px 0;">"${msg.pesan}"</p>
                               
@@ -183,21 +210,19 @@
                           </div>
                       `;
                   });
+              }, (error) => {
+                  console.error("Error mengambil notif: ", error);
               });
         }
 
-        async function balasPertanyaan(docId) {
+        function balasPertanyaan(docId) {
             const balasan = document.getElementById(`reply-${docId}`).value;
             if(!balasan) return alert("Balasan tidak boleh kosong.");
             
-            try {
-                await db.collection("diskusi").doc(docId).update({
-                    balasanGuru: balasan,
-                    status: "read"
-                });
-            } catch (err) {
-                console.error("Gagal membalas: ", err);
-            }
+            db.collection("diskusi").doc(docId).update({
+                balasanGuru: balasan,
+                status: "read"
+            }).catch(err => alert("Gagal mengirim balasan: " + err.message));
         }
     </script>
 </body>
