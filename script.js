@@ -17,15 +17,10 @@ const db = firebase.firestore();
 // Login Anonim Otomatis untuk Siswa
 firebase.auth().signInAnonymously().catch((error) => console.error("Auth failed:", error));
 
-
 // ==========================================
 // 2. DATA UTAMA & STATE APLIKASI
 // ==========================================
-const GURU = {
-    nama: "Rianti, S.Pd.",
-    mapel: "Fisika",
-    whatsapp: "6281234567890" 
-};
+const GURU = { nama: "Rianti, S.Pd.", mapel: "Fisika", whatsapp: "6281234567890" };
 
 let currentMateriList = []; 
 let activeAssessment = { type: '', title: '' };
@@ -53,14 +48,14 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. RENDER BERANDA & KELAS
+// 3. RENDER BERANDA & KELAS (ROMAWI)
 // ==========================================
 function renderHome() {
     const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
     let html = `
         <div class="hero-banner">
             <img src="${heroImagePlaceholder}" alt="Hero Image" class="hero-img">
-            <div class="hero-overlay"><h2>Selamat Belajar!</h2><p>E-Learning SMAN 2 Bayan Fase E & F</p></div>
+            <div class="hero-overlay"><h2>Selamat Belajar!</h2><p>E-Learning SMAN 2 Bayan</p></div>
         </div>
         <h3 class="section-title">Semua Mata Pelajaran</h3>
         <div class="grid-container">
@@ -79,25 +74,38 @@ function renderHome() {
 }
 
 function renderKelas() {
-    contentDiv.innerHTML = `
+    let html = `
         <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-        <h3 class="section-title">Pilih Kelas (Fisika)</h3>
-        <div class="grid-container">
-            <div class="subject-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);" onclick="renderMateri('Kelas 10')">
-                <i class="fa-solid fa-users bg-icon"></i><h3>Kelas 10</h3><p class="status">Fase E</p>
-            </div>
-            <div class="subject-card" style="background: linear-gradient(135deg, #4318ff, #290bb4);" onclick="renderMateri('Kelas 11')">
-                <i class="fa-solid fa-users bg-icon"></i><h3>Kelas 11</h3><p class="status">Fase F</p>
-            </div>
-            <div class="subject-card" style="background: linear-gradient(135deg, #ff9f43, #ff6b6b);" onclick="renderMateri('Kelas 12')">
-                <i class="fa-solid fa-user-graduate bg-icon"></i><h3>Kelas 12</h3><p class="status">Fase F</p>
-            </div>
-        </div>
+        <h3 class="section-title" style="margin-bottom: 20px;">Pilih Kelas (Fisika)</h3>
     `;
+
+    const tingkatan = [
+        { tingkat: 'X', warna: 'linear-gradient(135deg, #11998e, #38ef7d)' },
+        { tingkat: 'XI', warna: 'linear-gradient(135deg, #4318ff, #290bb4)' },
+        { tingkat: 'XII', warna: 'linear-gradient(135deg, #ff9f43, #ff6b6b)' }
+    ];
+    const subKelas = ['A', 'B', 'C', 'D'];
+
+    // Membuat grid otomatis untuk Kelas X, XI, XII beserta A,B,C,D
+    tingkatan.forEach(t => {
+        html += `<h4 style="margin-top: 10px; margin-bottom: 10px; color: var(--text-dark);">Kelas ${t.tingkat}</h4>`;
+        html += `<div class="grid-container" style="margin-bottom: 25px;">`;
+        subKelas.forEach(sub => {
+            const namaKelas = `${t.tingkat}.${sub}`;
+            html += `
+                <div class="subject-card" style="background: ${t.warna}; min-height: 80px; padding: 15px;" onclick="renderMateri('${namaKelas}')">
+                    <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin-top: 10px;">${namaKelas}</h3>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    });
+
+    contentDiv.innerHTML = html;
 }
 
 // ==========================================
-// 4. MENGAMBIL DATA MATERI DARI FIREBASE
+// 4. MENGAMBIL DATA MATERI
 // ==========================================
 function renderMateri(kelas) {
     contentDiv.innerHTML = `
@@ -131,11 +139,25 @@ function renderMateri(kelas) {
           }
           html += `</div>`;
           contentDiv.innerHTML = html;
-      }).catch(err => console.error(err));
+      }).catch(err => {
+          console.error(err);
+          contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi.</p>`;
+      });
 }
 
 function renderDetailMateriDinamis(kelas, index) {
     const babData = currentMateriList[index];
+    
+    // Blok Tugas / PR jika ada isinya
+    let prHtml = '';
+    if (babData.pr && babData.pr.trim() !== "") {
+        prHtml = `
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
+                <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
+                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px;">${babData.pr}</p>
+            </div>
+        `;
+    }
     
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
@@ -146,9 +168,11 @@ function renderDetailMateriDinamis(kelas, index) {
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
             
             <p style="margin-bottom: 20px; line-height: 1.6;">${babData.deskripsi}</p>
+            
+            ${prHtml} <!-- Menampilkan kotak tugas PR di sini -->
 
             <div style="padding: 15px; background: #eef2ff; border-radius: 10px; border-left: 4px solid #4318ff; text-align:center;">
-                <p style="margin-bottom: 10px; font-weight: bold; color: #2b3674;">Untuk penjelasan materi secara utuh dan lengkap, silakan unduh file materi di bawah ini:</p>
+                <p style="margin-bottom: 10px; font-weight: bold; color: #2b3674;">Untuk penjelasan materi selengkapnya, silakan unduh file materi di bawah ini:</p>
                 <a href="${babData.fileUrl}" target="_blank" style="background: #4318ff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display:inline-block; font-weight: bold;">
                     <i class="fa-solid fa-download"></i> Unduh / Buka Materi Lengkap
                 </a>
@@ -167,21 +191,20 @@ function renderDetailMateriDinamis(kelas, index) {
             
             <input type="text" id="input-nama-siswa" placeholder="Nama Anda (Misal: Budi IPA 1)" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px;">
             <textarea id="input-diskusi" rows="3" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px;" placeholder="Tulis pertanyaan Anda di sini..."></textarea>
-            <button class="btn-primary" style="margin-top:10px; width: 100%;" onclick="tambahDiskusi('${babData.id}', '${babData.bab}')">Kirim Pertanyaan</button>
+            <button class="btn-primary" style="margin-top:10px; width: 100%;" onclick="tambahDiskusi('${babData.id}', '${babData.bab}', '${kelas}')">Kirim Pertanyaan</button>
         </div>
     `;
     
-    // Tarik diskusi dari Firestore secara Realtime
     listenDiskusi(babData.id);
 }
 
 // ==========================================
-// 5. FITUR DISKUSI (FIREBASE REALTIME)
+// 5. FITUR DISKUSI
 // ==========================================
 let unsubscribeDiskusi = null;
 
 function listenDiskusi(materiId) {
-    if (unsubscribeDiskusi) unsubscribeDiskusi(); // Hentikan listener lama jika ada
+    if (unsubscribeDiskusi) unsubscribeDiskusi(); 
     
     unsubscribeDiskusi = db.collection("diskusi").where("materiId", "==", materiId).orderBy("waktu", "asc")
       .onSnapshot((snapshot) => {
@@ -196,15 +219,12 @@ function listenDiskusi(materiId) {
 
           snapshot.forEach((doc) => {
               const data = doc.data();
-              
-              // Render chat siswa
               let htmlMsg = `
                   <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                       <strong style="color:#4318ff;">${data.pengirim}:</strong> 
                       <span style="font-size:0.9rem;">${data.pesan}</span>
               `;
               
-              // Jika guru membalas, tampilkan di bawahnya
               if (data.balasanGuru) {
                   htmlMsg += `
                       <div style="background: #f4f7fe; padding: 10px; border-radius: 8px; margin-top: 10px; margin-left: 20px; font-size:0.85rem;">
@@ -219,26 +239,25 @@ function listenDiskusi(materiId) {
       });
 }
 
-function tambahDiskusi(materiId, judulBab) {
+function tambahDiskusi(materiId, judulBab, namaKelas) {
     const nama = document.getElementById('input-nama-siswa').value.trim();
     const pesan = document.getElementById('input-diskusi').value.trim();
     
     if (!nama || !pesan) return alert("Harap isi Nama Anda dan Pertanyaannya!");
 
-    // Simpan ke Firestore
     db.collection("diskusi").add({
         materiId: materiId,
         bab: judulBab,
+        kelasSiswa: namaKelas,
         pengirim: nama,
         pesan: pesan,
         balasanGuru: "",
-        status: "unread", // Menandakan belum dibalas guru
+        status: "unread",
         waktu: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        document.getElementById('input-diskusi').value = ""; // Bersihkan textarea saja
-    }).catch(err => alert("Gagal mengirim pertanyaan."));
+        document.getElementById('input-diskusi').value = ""; 
+    }).catch(err => alert("Gagal mengirim pertanyaan. Error: " + err.message));
 }
-
 
 // ==========================================
 // 6. LATIHAN SOAL KHUSUS & PDF
