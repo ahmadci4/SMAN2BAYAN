@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Learning SMAN 2 Bayan</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Library untuk cetak PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="school-info">
+            <h1>SMAN 2 BAYAN</h1>
+            <p>Dusun Ancak, Desa Karang Bajo, Kec. Bayan, Lombok Utara 83354</p>
+        </div>
+        <div class="user-profile">
+            <div class="avatar">A</div>
+        </div>
+    </header>
+
+    <main id="app-content">
+        <!-- Konten akan di-render secara dinamis di sini oleh JavaScript -->
+    </main>
+
+    <nav class="bottom-nav">
+        <button onclick="renderHome()">Beranda</button>
+        <button onclick="renderLatihanSoal()">Latihan Soal</button>
+    </nav>
+
+    <!-- Modal untuk Input Data Siswa (Kuis/Soal) -->
+    <div id="student-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Identitas Siswa</h3>
+            <input type="text" id="student-name" placeholder="Nama Lengkap" required>
+            <input type="text" id="student-class" placeholder="Kelas (Contoh: X IPA 1)" required>
+            <button onclick="startAssessment()">Mulai</button>
+            <button onclick="closeModal()" class="btn-cancel">Batal</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
