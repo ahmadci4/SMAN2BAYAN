@@ -6,13 +6,13 @@
     <title>E-Learning SMAN 2 Bayan</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Font Awesome untuk Ikon -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Library untuk cetak PDF -->
+    <!-- Library Cetak PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Firebase SDK (Wajib untuk Diskusi dan Materi Dinamis) -->
+    <!-- Firebase SDK (Firestore) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -29,7 +29,7 @@
     </header>
 
     <main id="app-content">
-        <!-- Konten dinamis -->
+        <!-- Konten Dinamis -->
     </main>
 
     <nav class="bottom-nav">
@@ -37,13 +37,13 @@
         <button onclick="renderLatihanSoal()"><i class="fa-solid fa-pen-to-square"></i><br>Latihan</button>
     </nav>
 
-    <!-- Modal Input Siswa -->
+    <!-- Modal Identitas Kuis -->
     <div id="student-modal" class="modal hidden">
         <div class="modal-content">
             <h3>Identitas Siswa</h3>
             <input type="text" id="student-name" placeholder="Nama Lengkap" required>
-            <input type="text" id="student-class" placeholder="Kelas (Contoh: X IPA 1)" required>
-            <button onclick="startAssessment()" class="btn-primary">Mulai</button>
+            <input type="text" id="student-class" placeholder="Kelas (Contoh: X.A)" required>
+            <button onclick="startAssessment()" class="btn-primary">Mulai Evaluasi</button>
             <button onclick="closeModal()" class="btn-cancel">Batal</button>
         </div>
     </div>
