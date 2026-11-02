@@ -1,211 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
 :root {
-    --primary: #ff6b6b;
-    --bg-color: #f7f9fc;
-    --text-dark: #2d3436;
-    --text-light: #636e72;
-    --card-fisika: linear-gradient(135deg, #ff9f43, #ff6b6b);
-    --card-locked: linear-gradient(135deg, #b2bec3, #dfe6e9);
+    --bg-color: #f4f7fe;
+    --text-dark: #2b3674;
+    --text-light: #a3aed1;
+    --white: #ffffff;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-dark);
-    padding-bottom: 70px;
+    padding-bottom: 80px;
 }
 
+/* Header */
 .app-header {
-    background: white;
-    padding: 20px;
+    background: var(--white);
+    padding: 20px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .school-info h1 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--text-dark);
 }
 
 .school-info p {
     font-size: 0.75rem;
     color: var(--text-light);
-    margin-top: 5px;
+    margin-top: 2px;
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
-    background: var(--primary);
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #4318ff, #868cff);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 10px rgba(67, 24, 255, 0.3);
 }
 
 #app-content {
     padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* Grid Mata Pelajaran & Kelas */
+/* Hero Banner */
+.hero-banner {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 25px;
+}
+
+.hero-overlay h2 {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.hero-overlay p {
+    color: #e0e0e0;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+/* Grid Mata Pelajaran */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 15px;
-    margin-top: 20px;
 }
 
-.card {
+.subject-card {
+    position: relative;
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 20px;
     color: white;
-    font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-    min-height: 120px;
+    overflow: hidden;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-height: 130px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
 
-.card:active {
-    transform: scale(0.95);
+.subject-card:hover {
+    transform: translateY(-5px);
 }
 
-.card.active { background: var(--card-fisika); }
-.card.locked { background: var(--card-locked); cursor: not-allowed; color: #636e72; }
-
-/* List Materi */
-.material-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
+.subject-card:active {
+    transform: scale(0.96);
 }
 
-.material-item {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    cursor: pointer;
-    border-left: 5px solid var(--primary);
+.subject-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 2;
+    line-height: 1.2;
 }
 
-/* Detail Materi */
-.detail-box {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-}
-
-.btn-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-    flex-wrap: wrap;
-}
-
-button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    background: var(--primary);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.btn-cancel { background: #b2bec3; }
-
-/* Diskusi */
-.discussion-board {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-
-.comment {
-    border-bottom: 1px solid #eee;
-    padding: 10px 0;
-    font-size: 0.9rem;
-}
-
-.comment span {
-    font-weight: bold;
-    color: var(--primary);
-}
-
-textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+.subject-card p.status {
+    font-size: 0.75rem;
+    z-index: 2;
+    opacity: 0.9;
     margin-top: 10px;
-    margin-bottom: 10px;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    align-self: flex-start;
 }
 
-/* Modal */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+/* Siluet Icon */
+.subject-card .bg-icon {
+    position: absolute;
+    bottom: -15px;
+    right: -15px;
+    font-size: 5rem;
+    opacity: 0.2;
+    transform: rotate(-10deg);
+    z-index: 1;
 }
 
-.modal.hidden { display: none; }
-
-.modal-content {
-    background: white;
-    padding: 20px;
+/* Materi Style */
+.material-item {
+    background: var(--white);
+    padding: 15px 20px;
     border-radius: 15px;
-    width: 90%;
-    max-width: 400px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #4318ff;
+    transition: transform 0.2s;
+}
+.material-item:hover { transform: translateX(5px); }
+
+.detail-box {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 
-.modal-content input {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
+/* Buttons */
+.btn-primary { background: #4318ff; color: white; padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.btn-success { background: #05cd99; color: white; padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.btn-cancel { background: #e2e8f0; color: #475569; padding: 12px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.btn-back { background: transparent; color: var(--text-dark); border: none; font-weight: 600; cursor: pointer; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;}
 
 /* Bottom Nav */
 .bottom-nav {
     position: fixed;
     bottom: 0; left: 0; width: 100%;
-    background: white;
+    background: var(--white);
     display: flex;
     justify-content: space-around;
-    padding: 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding: 10px 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    z-index: 100;
 }
 
 .bottom-nav button {
     background: transparent;
     color: var(--text-light);
+    border: none;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
 }
 
-#pdf-content {
-    background: white;
-    padding: 20px;
-}
+.bottom-nav button i { font-size: 1.2rem; }
+.bottom-nav button.active { color: #4318ff; }
+
+/* Modal */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal.hidden { display: none; }
+.modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+.modal-content input { padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; }
+.modal-content input:focus { border-color: #4318ff; }
