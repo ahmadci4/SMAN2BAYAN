@@ -14,11 +14,10 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Login Anonim Otomatis untuk Siswa
 firebase.auth().signInAnonymously().catch((error) => console.error("Auth failed:", error));
 
 // ==========================================
-// 2. DATA UTAMA & STATE APLIKASI
+// 2. DATA UTAMA
 // ==========================================
 const GURU = { nama: "Rianti, S.Pd.", mapel: "Fisika", whatsapp: "6281234567890" };
 
@@ -48,13 +47,13 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. RENDER BERANDA & KELAS (ROMAWI)
+// 3. RENDER BERANDA & KELAS 
 // ==========================================
 function renderHome() {
     const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
     let html = `
         <div class="hero-banner">
-            <img src="${heroImagePlaceholder}" alt="Hero Image" class="hero-img">
+            <img src="${heroImagePlaceholder}" class="hero-img">
             <div class="hero-overlay"><h2>Selamat Belajar!</h2><p>E-Learning SMAN 2 Bayan</p></div>
         </div>
         <h3 class="section-title">Semua Mata Pelajaran</h3>
@@ -62,23 +61,17 @@ function renderHome() {
     `;
     subjectsList.forEach(sub => {
         const onClickAction = sub.active ? `onclick="renderKelas()"` : `onclick="alert('Materi belum ditambahkan.')"`;
-        const statusBadge = sub.active ? "Tersedia" : "Segera Hadir";
-        html += `
-            <div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.8'}" ${onClickAction}>
-                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${statusBadge}</p>
-            </div>
-        `;
+        html += `<div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.8'}" ${onClickAction}>
+                    <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${sub.active ? "Tersedia" : "Segera Hadir"}</p>
+                </div>`;
     });
     html += `</div>`;
     contentDiv.innerHTML = html;
 }
 
 function renderKelas() {
-    let html = `
-        <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-        <h3 class="section-title" style="margin-bottom: 20px;">Pilih Kelas (Fisika)</h3>
-    `;
-
+    let html = `<button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                <h3 class="section-title" style="margin-bottom: 20px;">Pilih Kelas (Fisika)</h3>`;
     const tingkatan = [
         { tingkat: 'X', warna: 'linear-gradient(135deg, #11998e, #38ef7d)' },
         { tingkat: 'XI', warna: 'linear-gradient(135deg, #4318ff, #290bb4)' },
@@ -86,40 +79,32 @@ function renderKelas() {
     ];
     const subKelas = ['A', 'B', 'C', 'D'];
 
-    // Membuat grid otomatis untuk Kelas X, XI, XII beserta A,B,C,D
     tingkatan.forEach(t => {
-        html += `<h4 style="margin-top: 10px; margin-bottom: 10px; color: var(--text-dark);">Kelas ${t.tingkat}</h4>`;
-        html += `<div class="grid-container" style="margin-bottom: 25px;">`;
+        html += `<h4 style="margin-top: 10px; margin-bottom: 10px; color: var(--text-dark);">Kelas ${t.tingkat}</h4>
+                 <div class="grid-container" style="margin-bottom: 25px;">`;
         subKelas.forEach(sub => {
             const namaKelas = `${t.tingkat}.${sub}`;
-            html += `
-                <div class="subject-card" style="background: ${t.warna}; min-height: 80px; padding: 15px;" onclick="renderMateri('${namaKelas}')">
-                    <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin-top: 10px;">${namaKelas}</h3>
-                </div>
-            `;
+            html += `<div class="subject-card" style="background: ${t.warna}; min-height: 80px; padding: 15px;" onclick="renderMateri('${namaKelas}')">
+                        <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin-top: 10px;">${namaKelas}</h3>
+                    </div>`;
         });
         html += `</div>`;
     });
-
     contentDiv.innerHTML = html;
 }
 
 // ==========================================
-// 4. MENGAMBIL DATA MATERI
+// 4. MENGAMBIL DATA MATERI (FIRESTORE)
 // ==========================================
 function renderMateri(kelas) {
-    contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-        <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>
-    `;
+    contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                            <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>`;
     
     db.collection("materi_pelajaran").where("mapel", "==", "Fisika").where("kelas", "==", kelas).orderBy("timestamp", "asc")
       .get().then((querySnapshot) => {
-          let html = `
-              <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-              <h3 class="section-title">Materi Fisika - ${kelas}</h3>
-              <div class="material-list">
-          `;
+          let html = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+                      <h3 class="section-title">Materi Fisika - ${kelas}</h3>
+                      <div class="material-list">`;
           
           if (querySnapshot.empty) {
               html += `<p style="color:var(--text-light); text-align:center; padding: 20px;">Belum ada materi dari guru.</p>`;
@@ -129,32 +114,80 @@ function renderMateri(kelas) {
                   const data = { id: doc.id, ...doc.data() };
                   currentMateriList.push(data);
                   const index = currentMateriList.length - 1;
-                  html += `
-                      <div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
-                          <div style="font-weight:600;">${index + 1}. ${data.bab}</div>
-                          <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
-                      </div>
-                  `;
+                  html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
+                              <div style="font-weight:600;">${index + 1}. ${data.bab}</div>
+                              <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
+                          </div>`;
               });
           }
           html += `</div>`;
           contentDiv.innerHTML = html;
       }).catch(err => {
           console.error(err);
-          contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi.</p>`;
+          contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi. Cek koneksi Anda.</p>`;
       });
+}
+
+// Fungsi Pengekstrak ID YouTube untuk Embed Video
+function getYouTubeEmbedId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function getIconForUrl(url) {
+    if(url.includes("instagram.com")) return { icon: "fa-brands fa-instagram", color: "#e1306c" };
+    if(url.includes("drive.google.com")) return { icon: "fa-brands fa-google-drive", color: "#0F9D58" };
+    if(url.includes("facebook.com")) return { icon: "fa-brands fa-facebook", color: "#1877F2" };
+    return { icon: "fa-solid fa-link", color: "#4318ff" };
 }
 
 function renderDetailMateriDinamis(kelas, index) {
     const babData = currentMateriList[index];
     
-    // Blok Tugas / PR jika ada isinya
+    // Blok Tautan / Video Embed
+    let mediaHtml = '';
+    if (babData.links && babData.links.length > 0) {
+        mediaHtml += `<div style="margin-top: 20px; margin-bottom: 20px;">
+                        <h4 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;"><i class="fa-solid fa-photo-film"></i> Media & Literatur:</h4>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">`;
+        
+        babData.links.forEach(linkObj => {
+            const ytId = getYouTubeEmbedId(linkObj.url);
+            if (ytId) {
+                // Jika itu link YouTube, render Video Player
+                mediaHtml += `
+                    <div style="width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 5px;">
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${linkObj.label}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <div style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-top: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                            <p style="color: #2b3674; font-weight: 600; font-size: 0.9rem; margin: 0;"><i class="fa-brands fa-youtube" style="color:red;"></i> ${linkObj.label}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Jika web/drive/ig, render tombol pintar
+                const uiConf = getIconForUrl(linkObj.url);
+                mediaHtml += `
+                    <a href="${linkObj.url}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none; transition: background 0.2s;">
+                        <i class="${uiConf.icon}" style="color: ${uiConf.color}; font-size: 1.5rem; margin-right: 15px; width: 25px; text-align: center;"></i>
+                        <div>
+                            <p style="color: #2b3674; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">${linkObj.label}</p>
+                            <p style="color: #64748b; font-size: 0.75rem;">Buka Tautan (Tab Baru)</p>
+                        </div>
+                    </a>
+                `;
+            }
+        });
+        mediaHtml += `</div></div>`;
+    }
+
+    // Blok Tugas / PR
     let prHtml = '';
     if (babData.pr && babData.pr.trim() !== "") {
         prHtml = `
             <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
                 <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
-                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px;">${babData.pr}</p>
+                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
             </div>
         `;
     }
@@ -167,20 +200,14 @@ function renderDetailMateriDinamis(kelas, index) {
             <p style="color:var(--text-light); font-size:0.9rem; margin-top:5px;">Guru: ${GURU.nama}</p>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
             
-            <p style="margin-bottom: 20px; line-height: 1.6;">${babData.deskripsi}</p>
+            <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;">${babData.deskripsi || ''}</p>
             
-            ${prHtml} <!-- Menampilkan kotak tugas PR di sini -->
-
-            <div style="padding: 15px; background: #eef2ff; border-radius: 10px; border-left: 4px solid #4318ff; text-align:center;">
-                <p style="margin-bottom: 10px; font-weight: bold; color: #2b3674;">Untuk penjelasan materi selengkapnya, silakan unduh file materi di bawah ini:</p>
-                <a href="${babData.fileUrl}" target="_blank" style="background: #4318ff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display:inline-block; font-weight: bold;">
-                    <i class="fa-solid fa-download"></i> Unduh / Buka Materi Lengkap
-                </a>
-            </div>
+            ${mediaHtml} 
+            ${prHtml} 
         </div>
         
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
-            <button class="btn-success" onclick="openModal('Kuis', '${babData.bab}')"><i class="fa-solid fa-pen"></i> Kerjakan Kuis</button>
+            <button class="btn-success" onclick="openModal('Kuis', '${babData.bab}')" style="width:100%;"><i class="fa-solid fa-pen"></i> Kerjakan Evaluasi/Kuis</button>
         </div>
 
         <div class="detail-box">
@@ -189,7 +216,7 @@ function renderDetailMateriDinamis(kelas, index) {
                 <p style="color:grey; font-size:0.9rem;">Memuat diskusi...</p>
             </div>
             
-            <input type="text" id="input-nama-siswa" placeholder="Nama Anda (Misal: Budi IPA 1)" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px;">
+            <input type="text" id="input-nama-siswa" placeholder="Nama Anda (Misal: Budi X.A)" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px;">
             <textarea id="input-diskusi" rows="3" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px;" placeholder="Tulis pertanyaan Anda di sini..."></textarea>
             <button class="btn-primary" style="margin-top:10px; width: 100%;" onclick="tambahDiskusi('${babData.id}', '${babData.bab}', '${kelas}')">Kirim Pertanyaan</button>
         </div>
@@ -283,7 +310,6 @@ function openModal(type, title) {
     activeAssessment = { type, title };
     document.getElementById('student-modal').classList.remove('hidden');
 }
-
 function closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
 
 function startAssessment() {
@@ -305,10 +331,8 @@ function renderUjian(nama, kelas, jenis, judul) {
                 <tr><td><strong>Tanggal</strong></td><td>: ${new Date().toLocaleDateString('id-ID')}</td></tr>
             </table>
             <hr style="margin-bottom:20px;">
-            
             <p style="font-weight:bold;">1. Jelaskan pemahaman Anda mengenai materi ini dengan singkat!</p>
             <textarea style="width:100%; margin:10px 0 20px; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
-            
             <p style="font-weight:bold;">2. Sebutkan contoh penerapannya dalam kehidupan sehari-hari!</p>
             <textarea style="width:100%; margin:10px 0; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
         </div>
