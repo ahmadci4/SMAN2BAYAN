@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Learning SMAN 2 Bayan</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome untuk Ikon Siluet Mata Pelajaran -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Library untuk cetak PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -12,10 +14,10 @@
     <header class="app-header">
         <div class="school-info">
             <h1>SMAN 2 BAYAN</h1>
-            <p>Dusun Ancak, Desa Karang Bajo, Kec. Bayan, Lombok Utara 83354</p>
+            <p><i class="fa-solid fa-location-dot"></i> Dusun Ancak, Desa Karang Bajo, Kec. Bayan 83354</p>
         </div>
         <div class="user-profile">
-            <div class="avatar">A</div>
+            <div class="avatar"><i class="fa-solid fa-user-graduate"></i></div>
         </div>
     </header>
 
@@ -24,8 +26,8 @@
     </main>
 
     <nav class="bottom-nav">
-        <button onclick="renderHome()">Beranda</button>
-        <button onclick="renderLatihanSoal()">Latihan Soal</button>
+        <button onclick="renderHome()" class="active"><i class="fa-solid fa-house"></i><br>Beranda</button>
+        <button onclick="renderLatihanSoal()"><i class="fa-solid fa-pen-to-square"></i><br>Latihan</button>
     </nav>
 
     <!-- Modal untuk Input Data Siswa (Kuis/Soal) -->
@@ -34,7 +36,7 @@
             <h3>Identitas Siswa</h3>
             <input type="text" id="student-name" placeholder="Nama Lengkap" required>
             <input type="text" id="student-class" placeholder="Kelas (Contoh: X IPA 1)" required>
-            <button onclick="startAssessment()">Mulai</button>
+            <button onclick="startAssessment()" class="btn-primary">Mulai</button>
             <button onclick="closeModal()" class="btn-cancel">Batal</button>
         </div>
     </div>
