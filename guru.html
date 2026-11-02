@@ -6,20 +6,19 @@
     <title>Panel Guru - E-Learning SMAN 2 Bayan</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase SDK (Tanpa Storage karena kita pakai Google Drive) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body style="background-color: #f4f7fe; padding: 20px;">
-    <header class="app-header" style="max-width: 600px; margin: 0 auto; border-radius: 20px;">
+    <header class="app-header" style="max-width: 800px; margin: 0 auto; border-radius: 20px;">
         <div class="school-info">
             <h1>Panel Guru SMAN 2 BAYAN</h1>
         </div>
         <button id="btn-logout" style="display: none; background: #e2e8f0; color: #475569; padding: 10px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="logoutGuru()">Logout</button>
     </header>
 
-    <main style="max-width: 600px; margin: 20px auto;">
+    <main style="max-width: 800px; margin: 20px auto;">
         
         <!-- Bagian Login -->
         <div id="login-section" style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
@@ -29,32 +28,54 @@
             <button onclick="loginGuru()" style="width: 100%; background: #4318ff; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Masuk</button>
         </div>
 
-        <!-- Bagian Input Materi -->
-        <div id="input-section" style="display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-            <h2 style="color: #2b3674; margin-bottom: 15px;">Tambah Materi Baru</h2>
+        <!-- Dashboard Guru -->
+        <div id="dashboard-section" style="display: none;">
             
-            <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Mata Pelajaran:</label>
-            <select id="input-mapel" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
-                <option value="Fisika">Fisika</option>
-            </select>
+            <!-- Menu Navigasi Guru -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button onclick="switchTab('input')" style="flex: 1;" class="btn-primary">Tambah Materi</button>
+                <button onclick="switchTab('notif')" style="flex: 1; background: #f2994a;" class="btn-primary">Pertanyaan Siswa <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 8px; font-size: 12px; display: none;">0</span></button>
+            </div>
 
-            <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Kelas (Fase):</label>
-            <select id="input-kelas" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
-                <option value="Kelas 10">Kelas 10 (Fase E)</option>
-                <option value="Kelas 11">Kelas 11 (Fase F)</option>
-                <option value="Kelas 12">Kelas 12 (Fase F)</option>
-            </select>
+            <!-- Tab Input Materi -->
+            <div id="tab-input" class="detail-box">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Tambah Materi Baru</h2>
+                
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Mata Pelajaran:</label>
+                <select id="input-mapel" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <option value="Fisika">Fisika</option>
+                </select>
 
-            <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Judul Bab / Materi:</label>
-            <input type="text" id="input-bab" placeholder="Contoh: Pengukuran" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Kelas (Fase):</label>
+                <select id="input-kelas" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <option value="Kelas 10">Kelas 10 (Fase E)</option>
+                    <option value="Kelas 11">Kelas 11 (Fase F)</option>
+                    <option value="Kelas 12">Kelas 12 (Fase F)</option>
+                </select>
 
-            <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Sub-materi (Teks Penjelasan):</label>
-            <textarea id="input-isi" rows="4" placeholder="Tulis ringkasan materi di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Judul Bab:</label>
+                <input type="text" id="input-bab" placeholder="Contoh: Pengukuran" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
 
-            <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Link Lampiran Google Drive (Opsional):</label>
-            <input type="url" id="input-link" placeholder="Paste link Google Drive di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Sub Judul Materi:</label>
+                <input type="text" id="input-subbab" placeholder="Contoh: Macam-macam Alat Ukur" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
 
-            <button id="btn-submit" onclick="unggahMateri()" style="width: 100%; background: #05cd99; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Materi ke Database</button>
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Penjelasan Singkat (Pengantar):</label>
+                <textarea id="input-deskripsi" rows="3" placeholder="Contoh: Pengukuran merupakan proses membandingkan..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;"></textarea>
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Link Materi Lengkap (Google Drive):</label>
+                <input type="url" id="input-link" placeholder="Paste link Google Drive di sini..." style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+
+                <button id="btn-submit" onclick="unggahMateri()" style="width: 100%; background: #05cd99; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Materi ke Database</button>
+            </div>
+
+            <!-- Tab Notifikasi & Pertanyaan -->
+            <div id="tab-notif" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Daftar Pertanyaan Siswa</h2>
+                <div id="list-pertanyaan">
+                    <!-- Data pertanyaan dimuat di sini -->
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -68,73 +89,114 @@
             appId: "1:715837451881:web:48540594fe89d36d8c3cf8"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Login Logika
         function loginGuru() {
             const email = document.getElementById('email-guru').value;
             const pass = document.getElementById('password-guru').value;
-            auth.signInWithEmailAndPassword(email, pass)
-                .catch((error) => alert("Gagal login: " + error.message));
+            auth.signInWithEmailAndPassword(email, pass).catch((error) => alert("Gagal login: " + error.message));
         }
-
-        function logoutGuru() {
-            auth.signOut();
-        }
+        function logoutGuru() { auth.signOut(); }
 
         auth.onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById('login-section').style.display = 'none';
-                document.getElementById('input-section').style.display = 'block';
+                document.getElementById('dashboard-section').style.display = 'block';
                 document.getElementById('btn-logout').style.display = 'block';
+                listenPertanyaanSiswa(); // Mulai pantau pertanyaan baru
             } else {
                 document.getElementById('login-section').style.display = 'block';
-                document.getElementById('input-section').style.display = 'none';
+                document.getElementById('dashboard-section').style.display = 'none';
                 document.getElementById('btn-logout').style.display = 'none';
             }
         });
 
-        async function unggahMateri() {
-            const mapel = document.getElementById('input-mapel').value;
-            const kelas = document.getElementById('input-kelas').value;
-            const bab = document.getElementById('input-bab').value;
-            const isiText = document.getElementById('input-isi').value;
-            const linkDrive = document.getElementById('input-link').value; // Mengambil text link
-            const btnSubmit = document.getElementById('btn-submit');
-            
-            if(!bab || !isiText) return alert("Harap isi Judul Bab dan Teks Materi!");
+        function switchTab(tab) {
+            document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
+            document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
+        }
 
-            const isiArray = isiText.split('\n').filter(item => item.trim() !== "");
-            btnSubmit.innerText = "Menyimpan data...";
-            btnSubmit.disabled = true;
+        // Fungsi Simpan Materi
+        async function unggahMateri() {
+            const data = {
+                mapel: document.getElementById('input-mapel').value,
+                kelas: document.getElementById('input-kelas').value,
+                bab: document.getElementById('input-bab').value,
+                subBab: document.getElementById('input-subbab').value,
+                deskripsi: document.getElementById('input-deskripsi').value,
+                fileUrl: document.getElementById('input-link').value,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if(!data.bab || !data.subBab || !data.fileUrl) return alert("Harap isi Judul, Sub Judul, dan Link Drive!");
+
+            document.getElementById('btn-submit').innerText = "Menyimpan data...";
+            document.getElementById('btn-submit').disabled = true;
 
             try {
-                // Simpan data teks dan link ke Firestore (sangat ringan)
-                await db.collection("materi_pelajaran").add({
-                    mapel: mapel,
-                    kelas: kelas,
-                    bab: bab,
-                    isi: isiArray,
-                    fileUrl: linkDrive, // Menyimpan URL Google Drive
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
+                await db.collection("materi_pelajaran").add(data);
                 alert("Berhasil! Materi telah tersimpan.");
-                
-                // Reset Form
                 document.getElementById('input-bab').value = '';
-                document.getElementById('input-isi').value = '';
+                document.getElementById('input-subbab').value = '';
+                document.getElementById('input-deskripsi').value = '';
                 document.getElementById('input-link').value = '';
-
             } catch (error) {
-                console.error("Error: ", error);
                 alert("Terjadi kesalahan saat menyimpan.");
             } finally {
-                btnSubmit.innerText = "Simpan Materi ke Database";
-                btnSubmit.disabled = false;
+                document.getElementById('btn-submit').innerText = "Simpan Materi ke Database";
+                document.getElementById('btn-submit').disabled = false;
+            }
+        }
+
+        // Fitur Pemantau Pertanyaan Siswa (Real-time)
+        function listenPertanyaanSiswa() {
+            db.collection("diskusi")
+              .where("status", "==", "unread") // Hanya cari yang belum dibalas
+              .orderBy("waktu", "desc")
+              .onSnapshot((snapshot) => {
+                  const listDiv = document.getElementById('list-pertanyaan');
+                  listDiv.innerHTML = '';
+                  
+                  const count = snapshot.size;
+                  const badge = document.getElementById('badge-notif');
+                  if(count > 0) {
+                      badge.style.display = 'inline-block';
+                      badge.innerText = count;
+                  } else {
+                      badge.style.display = 'none';
+                      listDiv.innerHTML = '<p style="color:grey;">Belum ada pertanyaan baru dari siswa.</p>';
+                  }
+
+                  snapshot.forEach((doc) => {
+                      const msg = doc.data();
+                      listDiv.innerHTML += `
+                          <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                              <p style="font-size: 0.8rem; color: #a3aed1;">Pertanyaan pada Bab: <strong>${msg.bab}</strong></p>
+                              <p style="margin-top: 5px;"><strong>${msg.pengirim}</strong> bertanya:</p>
+                              <p style="background: #f4f7fe; padding: 10px; border-radius: 8px; margin: 10px 0;">"${msg.pesan}"</p>
+                              
+                              <textarea id="reply-${doc.id}" rows="2" placeholder="Tulis balasan guru..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px;"></textarea>
+                              <button onclick="balasPertanyaan('${doc.id}')" style="background: #4318ff; color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer;">Kirim Balasan</button>
+                          </div>
+                      `;
+                  });
+              });
+        }
+
+        async function balasPertanyaan(docId) {
+            const balasan = document.getElementById(`reply-${docId}`).value;
+            if(!balasan) return alert("Balasan tidak boleh kosong.");
+            
+            try {
+                await db.collection("diskusi").doc(docId).update({
+                    balasanGuru: balasan,
+                    status: "read"
+                });
+            } catch (err) {
+                console.error("Gagal membalas: ", err);
             }
         }
     </script>
