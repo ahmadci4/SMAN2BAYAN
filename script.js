@@ -17,12 +17,32 @@ const db = firebase.firestore();
 firebase.auth().signInAnonymously().catch((error) => console.error("Auth failed:", error));
 
 // ==========================================
-// 2. DATA UTAMA
+// 2. DATA DEFAULT GURU (Sinkron dengan Profil Guru)
 // ==========================================
-const GURU = { nama: "Rianti, S.Pd.", mapel: "Fisika", whatsapp: "6281234567890" };
+let GURU_DATA = {
+    nama: "Rianti, S.Pd.",
+    gelar: "Sarjana Pendidikan Fisika",
+    kampus: "Universitas Mataram",
+    mapel: "Fisika",
+    quote: "Belajar adalah kunci membuka masa depan yang cerah.",
+    email: "rianti@sman2bayan.sch.id",
+    whatsapp: "6281234567890",
+    instagram: "https://instagram.com",
+    maps: "https://maps.google.com",
+    foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
+};
+
+// Ambil profil guru dari database agar selalu sinkron
+function loadProfilGuruData(callback) {
+    db.collection("profil_guru").doc("utama").get().then((doc) => {
+        if (doc.exists) {
+            GURU_DATA = { ...GURU_DATA, ...doc.data() };
+        }
+        if (callback) callback();
+    }).catch(() => { if (callback) callback(); });
+}
 
 let currentMateriList = []; 
-let activeAssessment = { type: '', title: '' };
 const contentDiv = document.getElementById('app-content');
 
 const subjectsList = [
@@ -47,29 +67,64 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. RENDER BERANDA & KELAS (ROMAWI)
+// 3. RENDER BERANDA & PROFIL GURU
 // ==========================================
 function renderHome() {
-    const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
-    let html = `
-        <div class="hero-banner">
-            <img src="${heroImagePlaceholder}" alt="Hero Image" class="hero-img">
-            <div class="hero-overlay"><h2>Selamat Belajar!</h2><p>E-Learning SMAN 2 Bayan</p></div>
-        </div>
-        <h3 class="section-title">Semua Mata Pelajaran</h3>
-        <div class="grid-container">
-    `;
-    subjectsList.forEach(sub => {
-        const onClickAction = sub.active ? `onclick="renderKelas()"` : `onclick="alert('Materi belum ditambahkan.')"`;
-        const statusBadge = sub.active ? "Tersedia" : "Segera Hadir";
-        html += `
-            <div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.8'}" ${onClickAction}>
-                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${statusBadge}</p>
+    loadProfilGuruData(() => {
+        const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
+        let html = `
+            <div class="hero-banner" style="cursor:pointer;" onclick="renderProfilGuru()">
+                <img src="${heroImagePlaceholder}" alt="Hero" class="hero-img">
+                <div class="hero-overlay" style="display:flex; align-items:center; gap:15px;">
+                    <img src="${GURU_DATA.foto}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid white;">
+                    <div>
+                        <h2 style="font-size:1.2rem; margin:0;">${GURU_DATA.nama}</h2>
+                        <p style="margin:0; font-size:0.85rem; opacity:0.9;">Guru ${GURU_DATA.mapel} • Klik lihat Profil</p>
+                    </div>
+                </div>
+            </div>
+            <h3 class="section-title">Semua Mata Pelajaran</h3>
+            <div class="grid-container">
+        `;
+        subjectsList.forEach(sub => {
+            const onClickAction = sub.active ? `onclick="renderKelas()"` : `onclick="alert('Materi belum ditambahkan.')"`;
+            html += `
+                <div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.8'}" ${onClickAction}>
+                    <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${sub.active ? "Tersedia" : "Segera Hadir"}</p>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        contentDiv.innerHTML = html;
+    });
+}
+
+function renderProfilGuru() {
+    loadProfilGuruData(() => {
+        contentDiv.innerHTML = `
+            <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+            <div class="detail-box" style="text-align:center; padding: 30px;">
+                <img src="${GURU_DATA.foto}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; margin-bottom:15px; border: 4px solid #4318ff;">
+                <h2 style="color:#2b3674; margin-bottom:5px;">${GURU_DATA.nama}</h2>
+                <p style="color:#4318ff; font-weight:600; margin-bottom:15px;">Guru Mata Pelajaran ${GURU_DATA.mapel}</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-style: italic; color: #475569; border-left: 4px solid #4318ff;">
+                    "${GURU_DATA.quote || 'Semangat belajar siswa-siswiku!'}"
+                </div>
+
+                <div style="text-align:left; margin-bottom: 25px; line-height: 1.8; font-size: 0.95rem; color: #334155;">
+                    <p><i class="fa-solid fa-graduation-cap" style="color:#4318ff; width:25px;"></i> <strong>Pendidikan:</strong> ${GURU_DATA.gelar} (${GURU_DATA.kampus})</p>
+                    <p><i class="fa-solid fa-envelope" style="color:#4318ff; width:25px;"></i> <strong>Email:</strong> ${GURU_DATA.email}</p>
+                    <p><i class="fa-solid fa-location-dot" style="color:#4318ff; width:25px;"></i> <strong>Lokasi Rumah:</strong> <a href="${GURU_DATA.maps}" target="_blank" style="color:#4318ff; text-decoration:underline;">Buka Google Maps Rumah Guru</a></p>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                    <a href="https://wa.me/${GURU_DATA.whatsapp}" target="_blank" class="btn-success" style="padding:10px 20px; border-radius:10px; text-decoration:none; color:white;"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp</a>
+                    <a href="${GURU_DATA.instagram}" target="_blank" class="btn-primary" style="padding:10px 20px; border-radius:10px; text-decoration:none; background:#e1306c;"><i class="fa-brands fa-instagram"></i> Instagram</a>
+                </div>
             </div>
         `;
     });
-    html += `</div>`;
-    contentDiv.innerHTML = html;
 }
 
 function renderKelas() {
@@ -101,7 +156,7 @@ function renderKelas() {
 }
 
 // ==========================================
-// 4. MENGAMBIL DATA MATERI (TANPA INDEX FIREBASE)
+// 4. MENGAMBIL DATA MATERI
 // ==========================================
 function renderMateri(kelas) {
     contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
@@ -123,7 +178,6 @@ function renderMateri(kelas) {
                   currentMateriList.push({ id: doc.id, ...doc.data() });
               });
 
-              // Mengurutkan secara manual dengan JavaScript untuk menghindari error indeks komposit
               currentMateriList.sort((a, b) => {
                   let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
                   let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
@@ -160,85 +214,84 @@ function getIconForUrl(url) {
 
 function renderDetailMateriDinamis(kelas, index) {
     const babData = currentMateriList[index];
-    
-    let mediaHtml = '';
-    if (babData.links && babData.links.length > 0) {
-        mediaHtml += `<div style="margin-top: 20px; margin-bottom: 20px;">
-                        <h4 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;"><i class="fa-solid fa-photo-film"></i> Media & Literatur:</h4>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">`;
-        
-        babData.links.forEach(linkObj => {
-            const ytId = getYouTubeEmbedId(linkObj.url);
-            if (ytId) {
-                mediaHtml += `
-                    <div style="width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 5px;">
-                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${linkObj.label}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        <div style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-top: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
-                            <p style="color: #2b3674; font-weight: 600; font-size: 0.9rem; margin: 0;"><i class="fa-brands fa-youtube" style="color:red;"></i> ${linkObj.label}</p>
+    loadProfilGuruData(() => {
+        let mediaHtml = '';
+        if (babData.links && babData.links.length > 0) {
+            mediaHtml += `<div style="margin-top: 20px; margin-bottom: 20px;">
+                            <h4 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;"><i class="fa-solid fa-photo-film"></i> Media & Literatur:</h4>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">`;
+            
+            babData.links.forEach(linkObj => {
+                const ytId = getYouTubeEmbedId(linkObj.url);
+                if (ytId) {
+                    mediaHtml += `
+                        <div style="width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 5px;">
+                            <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${linkObj.label}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            <div style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-top: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                                <p style="color: #2b3674; font-weight: 600; font-size: 0.9rem; margin: 0;"><i class="fa-brands fa-youtube" style="color:red;"></i> ${linkObj.label}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-            } else {
-                const uiConf = getIconForUrl(linkObj.url);
-                mediaHtml += `
-                    <a href="${linkObj.url}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none; transition: background 0.2s;">
-                        <i class="${uiConf.icon}" style="color: ${uiConf.color}; font-size: 1.5rem; margin-right: 15px; width: 25px; text-align: center;"></i>
-                        <div>
-                            <p style="color: #2b3674; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">${linkObj.label}</p>
-                            <p style="color: #64748b; font-size: 0.75rem;">Buka Tautan (Tab Baru)</p>
-                        </div>
-                    </a>
-                `;
-            }
-        });
-        mediaHtml += `</div></div>`;
-    }
+                    `;
+                } else {
+                    const uiConf = getIconForUrl(linkObj.url);
+                    mediaHtml += `
+                        <a href="${linkObj.url}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none; transition: background 0.2s;">
+                            <i class="${uiConf.icon}" style="color: ${uiConf.color}; font-size: 1.5rem; margin-right: 15px; width: 25px; text-align: center;"></i>
+                            <div>
+                                <p style="color: #2b3674; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">${linkObj.label}</p>
+                                <p style="color: #64748b; font-size: 0.75rem;">Buka Tautan (Tab Baru)</p>
+                            </div>
+                        </a>
+                    `;
+                }
+            });
+            mediaHtml += `</div></div>`;
+        }
 
-    let prHtml = '';
-    if (babData.pr && babData.pr.trim() !== "") {
-        prHtml = `
-            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
-                <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
-                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
+        let prHtml = '';
+        if (babData.pr && babData.pr.trim() !== "") {
+            prHtml = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
+                    <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
+                    <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
+                </div>
+            `;
+        }
+        
+        contentDiv.innerHTML = `
+            <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+            <div class="detail-box">
+                <h2 style="color:var(--text-dark);">${babData.bab}</h2>
+                <h4 style="color:var(--primary); margin-top:5px;">${babData.subBab}</h4>
+                <p style="color:var(--text-light); font-size:0.9rem; margin-top:5px; cursor:pointer;" onclick="renderProfilGuru()">Guru: <span style="color:#4318ff; text-decoration:underline;">${GURU_DATA.nama}</span></p>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+                <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;">${babData.deskripsi || ''}</p>
+                ${mediaHtml} 
+                ${prHtml} 
+            </div>
+
+            <!-- Ruang Diskusi Bergaya Sosial Media (Komentar & Balasan) -->
+            <div class="detail-box">
+                <h3 style="margin-bottom:15px; font-size:1.1rem;"><i class="fa-solid fa-comments"></i> Diskusi & Tanya Jawab Kelas</h3>
+                <div id="comments-container" style="margin-bottom:15px; max-height: 400px; overflow-y:auto; padding-right:5px;">
+                    <p style="color:grey; font-size:0.9rem;">Memuat diskusi...</p>
+                </div>
+                
+                <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <h4 style="font-size:0.9rem; margin-bottom:10px; color:#2b3674;">Buat Pertanyaan Baru</h4>
+                    <input type="text" id="input-nama-siswa" placeholder="Nama Anda (Misal: Budi X.A)" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:10px; background:white;">
+                    <textarea id="input-diskusi" rows="2" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; background:white;" placeholder="Tulis pertanyaanmu di sini..."></textarea>
+                    <button class="btn-primary" style="margin-top:5px; width: 100%; padding:10px;" onclick="tambahDiskusi Utama('${babData.id}')">Kirim Pertanyaan</button>
+                </div>
             </div>
         `;
-    }
-    
-    contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-        <div class="detail-box" id="pdf-content">
-            <h2 style="color:var(--text-dark);">${babData.bab}</h2>
-            <h4 style="color:var(--primary); margin-top:5px;">${babData.subBab}</h4>
-            <p style="color:var(--text-light); font-size:0.9rem; margin-top:5px;">Guru: ${GURU.nama}</p>
-            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
-            
-            <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;">${babData.deskripsi || ''}</p>
-            
-            ${mediaHtml} 
-            ${prHtml} 
-        </div>
         
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
-            <button class="btn-success" onclick="openModal('Kuis', '${babData.bab}')" style="width:100%;"><i class="fa-solid fa-pen"></i> Kerjakan Evaluasi/Kuis</button>
-        </div>
-
-        <div class="detail-box">
-            <h3 style="margin-bottom:15px; font-size:1.1rem;">Tanya Guru (Diskusi Kelas)</h3>
-            <div id="comments-container" style="margin-bottom:15px; max-height: 250px; overflow-y:auto; padding-right:10px;">
-                <p style="color:grey; font-size:0.9rem;">Memuat diskusi...</p>
-            </div>
-            
-            <input type="text" id="input-nama-siswa" placeholder="Nama Anda (Misal: Budi X.A)" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px;">
-            <textarea id="input-diskusi" rows="3" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px;" placeholder="Tulis pertanyaan Anda di sini..."></textarea>
-            <button class="btn-primary" style="margin-top:10px; width: 100%;" onclick="tambahDiskusi('${babData.id}', '${babData.bab}', '${kelas}')">Kirim Pertanyaan</button>
-        </div>
-    `;
-    
-    listenDiskusi(babData.id);
+        listenDiskusi(babData.id);
+    });
 }
 
 // ==========================================
-// 5. FITUR DISKUSI
+// 5. FITUR DISKUSI SOSIAL MEDIA (NESTED REPLIES)
 // ==========================================
 let unsubscribeDiskusi = null;
 
@@ -252,121 +305,98 @@ function listenDiskusi(materiId) {
           
           commentsDiv.innerHTML = '';
           if (snapshot.empty) {
-              commentsDiv.innerHTML = "<p style='color:grey; font-size:0.8rem;'>Belum ada pertanyaan. Jadilah yang pertama bertanya!</p>";
+              commentsDiv.innerHTML = "<p style='color:grey; font-size:0.85rem; text-align:center;'>Belum ada diskusi. Jadilah yang pertama bertanya!</p>";
               return;
           }
 
+          let diskusiList = [];
           snapshot.forEach((doc) => {
-              const data = doc.data();
-              let htmlMsg = `
-                  <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                      <strong style="color:#4318ff;">${data.pengirim}:</strong> 
-                      <span style="font-size:0.9rem;">${data.pesan}</span>
-              `;
+              diskusiList.push({ id: doc.id, ...doc.data() });
+          });
+
+          // Filter hanya komentar utama (yang tidak punya parentId)
+          let parentComments = diskusiList.filter(d => !d.parentId);
+
+          parentComments.forEach(parent => {
+              let replies = diskusiList.filter(d => d.parentId === parent.id);
               
-              if (data.balasanGuru) {
-                  htmlMsg += `
-                      <div style="background: #f4f7fe; padding: 10px; border-radius: 8px; margin-top: 10px; margin-left: 20px; font-size:0.85rem;">
-                          <strong style="color:#05cd99;"><i class="fa-solid fa-check-circle"></i> Balasan Guru:</strong><br>
-                          ${data.balasanGuru}
+              let repliesHtml = '';
+              replies.forEach(rep => {
+                  let isGuru = rep.isGuru ? `<span style="background:#4318ff; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Guru</span>` : '';
+                  repliesHtml += `
+                      <div style="background:#f1f5f9; padding:10px 12px; border-radius:8px; margin-top:8px; margin-left:25px; border-left:3px solid #4318ff;">
+                          <strong style="font-size:0.85rem; color:#1e293b;">${rep.pengirim}</strong> ${isGuru}
+                          <p style="font-size:0.85rem; margin:3px 0; color:#334155;">${rep.pesan}</p>
                       </div>
                   `;
-              }
-              htmlMsg += `</div>`;
-              commentsDiv.innerHTML += htmlMsg;
+              });
+
+              commentsDiv.innerHTML += `
+                  <div style="background:white; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:12px;">
+                      <strong style="color:#2b3674; font-size:0.9rem;">${parent.pengirim}</strong>
+                      <p style="font-size:0.9rem; margin:5px 0; color:#1e293b;">${parent.pesan}</p>
+                      
+                      ${repliesHtml}
+
+                      <div style="margin-top:10px; text-align:right;">
+                          <button onclick="toggleReplyBox('${parent.id}')" style="background:none; border:none; color:#4318ff; font-size:0.8rem; font-weight:600; cursor:pointer;"><i class="fa-solid fa-reply">} Balas</button>
+                      </div>
+
+                      <div id="reply-box-${parent.id}" style="display:none; margin-top:8px; background:#f8fafc; padding:10px; border-radius:8px;">
+                          <input type="text" id="reply-name-${parent.id}" placeholder="Nama Anda" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; margin-bottom:6px; background:white;">
+                          <textarea id="reply-msg-${parent.id}" rows="2" placeholder="Tulis balasan..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; margin-bottom:6px; background:white;"></textarea>
+                          <button onclick="kirimBalasan('${materiId}', '${parent.id}')" class="btn-primary" style="padding:6px 12px; font-size:0.8rem; width:100%;">Kirim Balasan</button>
+                      </div>
+                  </div>
+              `;
           });
       });
 }
 
-function tambahDiskusi(materiId, judulBab, namaKelas) {
+function toggleReplyBox(parentId) {
+    const box = document.getElementById(`reply-box-${parentId}`);
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function tambahDiskusiUtama(materiId) {
     const nama = document.getElementById('input-nama-siswa').value.trim();
     const pesan = document.getElementById('input-diskusi').value.trim();
     
-    if (!nama || !pesan) return alert("Harap isi Nama Anda dan Pertanyaannya!");
+    if (!nama || !pesan) return alert("Harap isi Nama dan Pertanyaannya!");
 
     db.collection("diskusi").add({
         materiId: materiId,
-        bab: judulBab,
-        kelasSiswa: namaKelas,
         pengirim: nama,
         pesan: pesan,
-        balasanGuru: "",
-        status: "unread",
+        parentId: null,
+        isGuru: false,
         waktu: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         document.getElementById('input-diskusi').value = ""; 
-    }).catch(err => alert("Gagal mengirim pertanyaan. Error: " + err.message));
+    }).catch(err => alert("Gagal mengirim: " + err.message));
 }
 
-// ==========================================
-// 6. LATIHAN SOAL KHUSUS & PDF
-// ==========================================
+function kirimBalasan(materiId, parentId) {
+    const nama = document.getElementById(`reply-name-${parentId}`).value.trim();
+    const pesan = document.getElementById(`reply-msg-${parentId}`).value.trim();
+    
+    if (!nama || !pesan) return alert("Harap isi Nama dan Balasan Anda!");
+
+    db.collection("diskusi").add({
+        materiId: materiId,
+        pengirim: nama,
+        pesan: pesan,
+        parentId: parentId,
+        isGuru: false,
+        waktu: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        document.getElementById(`reply-msg-${parentId}`).value = "";
+        document.getElementById(`reply-box-${parentId}`).style.display = 'none';
+    }).catch(err => alert("Gagal membalas: " + err.message));
+}
+
 function renderLatihanSoal() {
-    contentDiv.innerHTML = `
-        <div class="hero-banner" style="height:120px;">
-            <div class="hero-overlay" style="background: linear-gradient(to right, #4318ff, #868cff);">
-                <h2>Latihan Soal</h2>
-                <p>Uji kemampuan Anda kapan saja.</p>
-            </div>
-        </div>
-        <div class="detail-box" style="text-align:center;">
-            <i class="fa-solid fa-file-signature" style="font-size:3rem; color:#4318ff; margin-bottom:15px;"></i>
-            <h3>Evaluasi Mandiri</h3>
-            <p style="color:var(--text-light); margin:10px 0 20px 0;">Buat latihan soal mandiri untuk mengukur pemahaman materi yang telah dipelajari.</p>
-            <button class="btn-primary" onclick="openModal('Soal', 'Latihan Mandiri')">Mulai Latihan Baru</button>
-        </div>
-    `;
+    renderHome(); // Karena menu evaluasi dihilangkan, kembalikan ke beranda
 }
 
-function openModal(type, title) {
-    activeAssessment = { type, title };
-    document.getElementById('student-modal').classList.remove('hidden');
-}
-function closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
-
-function startAssessment() {
-    const name = document.getElementById('student-name').value;
-    const cls = document.getElementById('student-class').value;
-    if(!name || !cls) return alert("Harap isi Nama dan Kelas!");
-    closeModal();
-    renderUjian(name, cls, activeAssessment.type, activeAssessment.title);
-}
-
-function renderUjian(nama, kelas, jenis, judul) {
-    contentDiv.innerHTML = `
-        <div id="lembar-ujian" class="detail-box" style="background:white; padding:30px;">
-            <h2 style="text-align:center; color:#4318ff;">Lembar ${jenis}</h2>
-            <h4 style="text-align:center; margin-bottom: 20px;">${judul}</h4>
-            <table style="width:100%; margin-bottom:20px; font-size:14px;">
-                <tr><td style="width:30%;"><strong>Nama</strong></td><td>: ${nama}</td></tr>
-                <tr><td><strong>Kelas</strong></td><td>: ${kelas}</td></tr>
-                <tr><td><strong>Tanggal</strong></td><td>: ${new Date().toLocaleDateString('id-ID')}</td></tr>
-            </table>
-            <hr style="margin-bottom:20px;">
-            <p style="font-weight:bold;">1. Jelaskan pemahaman Anda mengenai materi ini dengan singkat!</p>
-            <textarea style="width:100%; margin:10px 0 20px; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
-            <p style="font-weight:bold;">2. Sebutkan contoh penerapannya dalam kehidupan sehari-hari!</p>
-            <textarea style="width:100%; margin:10px 0; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
-        </div>
-        <button class="btn-success" style="width:100%; padding:15px; font-size:1.1rem;" onclick="submitUjian('${nama}', '${kelas}', '${jenis}', '${judul}')">
-            <i class="fa-solid fa-paper-plane"></i> Selesai & Kirim PDF ke WhatsApp Guru
-        </button>
-    `;
-}
-
-function submitUjian(nama, kelas, jenis, judul) {
-    const elemen = document.getElementById('lembar-ujian');
-    const opt = {
-        margin: 0.5, filename: `${jenis}_${nama}_${kelas}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(elemen).save().then(() => {
-        const teksWA = `Halo Ibu ${GURU.nama}, saya ${nama} dari kelas ${kelas}. Saya telah menyelesaikan ${jenis} materi *${judul}*. File PDF jawaban sudah saya lampirkan.`;
-        window.open(`https://wa.me/${GURU.whatsapp}?text=${encodeURIComponent(teksWA)}`, '_blank');
-        renderHome(); 
-    });
-}
-
-// Inisialisasi awal saat halaman dimuat
 renderHome();
