@@ -47,16 +47,67 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. RENDER BERANDA & KELAS 
+// 3. RENDER BERANDA & KELAS (Fungsi yang hilang sudah dikembalikan)
 // ==========================================
+function renderHome() {
+    const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
+    let html = `
+        <div class="hero-banner">
+            <img src="${heroImagePlaceholder}" alt="Hero Image" class="hero-img">
+            <div class="hero-overlay"><h2>Selamat Belajar!</h2><p>E-Learning SMAN 2 Bayan</p></div>
+        </div>
+        <h3 class="section-title">Semua Mata Pelajaran</h3>
+        <div class="grid-container">
+    `;
+    subjectsList.forEach(sub => {
+        const onClickAction = sub.active ? `onclick="renderKelas()"` : `onclick="alert('Materi belum ditambahkan.')"`;
+        const statusBadge = sub.active ? "Tersedia" : "Segera Hadir";
+        html += `
+            <div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.8'}" ${onClickAction}>
+                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${statusBadge}</p>
+            </div>
+        `;
+    });
+    html += `</div>`;
+    contentDiv.innerHTML = html;
+}
+
+function renderKelas() {
+    let html = `
+        <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <h3 class="section-title" style="margin-bottom: 20px;">Pilih Kelas (Fisika)</h3>
+    `;
+    const tingkatan = [
+        { tingkat: 'X', warna: 'linear-gradient(135deg, #11998e, #38ef7d)' },
+        { tingkat: 'XI', warna: 'linear-gradient(135deg, #4318ff, #290bb4)' },
+        { tingkat: 'XII', warna: 'linear-gradient(135deg, #ff9f43, #ff6b6b)' }
+    ];
+    const subKelas = ['A', 'B', 'C', 'D'];
+
+    tingkatan.forEach(t => {
+        html += `<h4 style="margin-top: 10px; margin-bottom: 10px; color: var(--text-dark);">Kelas ${t.tingkat}</h4>
+                 <div class="grid-container" style="margin-bottom: 25px;">`;
+        subKelas.forEach(sub => {
+            const namaKelas = `${t.tingkat}.${sub}`;
+            html += `
+                <div class="subject-card" style="background: ${t.warna}; min-height: 80px; padding: 15px;" onclick="renderMateri('${namaKelas}')">
+                    <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin-top: 10px;">${namaKelas}</h3>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    });
+    contentDiv.innerHTML = html;
+}
+
 // ==========================================
-// 4. MENGAMBIL DATA MATERI (TANPA INDEX FIREBASE)
+// 4. MENGAMBIL DATA MATERI (PERBAIKAN: TANPA INDEX FIREBASE)
 // ==========================================
 function renderMateri(kelas) {
     contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
                             <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>`;
     
-    // PERUBAHAN: Menghapus .orderBy("timestamp", "asc") agar Firebase tidak meminta index
+    // Hanya menggunakan WHERE, membuang ORDER BY agar tidak butuh komposit indeks
     db.collection("materi_pelajaran")
       .where("mapel", "==", "Fisika")
       .where("kelas", "==", kelas)
@@ -73,7 +124,7 @@ function renderMateri(kelas) {
                   currentMateriList.push({ id: doc.id, ...doc.data() });
               });
 
-              // PERUBAHAN: Mengurutkan materi berdasarkan waktu secara manual menggunakan JavaScript
+              // Mengurutkan secara manual menggunakan JavaScript (Menggantikan peran orderBy Firebase)
               currentMateriList.sort((a, b) => {
                   let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
                   let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
@@ -81,40 +132,6 @@ function renderMateri(kelas) {
               });
 
               currentMateriList.forEach((data, index) => {
-                  html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
-                              <div style="font-weight:600;">${index + 1}. ${data.bab}</div>
-                              <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
-                          </div>`;
-              });
-          }
-          html += `</div>`;
-          contentDiv.innerHTML = html;
-      }).catch(err => {
-          console.error(err);
-          contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi. Cek koneksi Anda.</p>`;
-      });
-}
-// ==========================================
-// 4. MENGAMBIL DATA MATERI (FIRESTORE)
-// ==========================================
-function renderMateri(kelas) {
-    contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                            <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>`;
-    
-    db.collection("materi_pelajaran").where("mapel", "==", "Fisika").where("kelas", "==", kelas).orderBy("timestamp", "asc")
-      .get().then((querySnapshot) => {
-          let html = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                      <h3 class="section-title">Materi Fisika - ${kelas}</h3>
-                      <div class="material-list">`;
-          
-          if (querySnapshot.empty) {
-              html += `<p style="color:var(--text-light); text-align:center; padding: 20px;">Belum ada materi dari guru.</p>`;
-          } else {
-              currentMateriList = []; 
-              querySnapshot.forEach((doc) => {
-                  const data = { id: doc.id, ...doc.data() };
-                  currentMateriList.push(data);
-                  const index = currentMateriList.length - 1;
                   html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
                               <div style="font-weight:600;">${index + 1}. ${data.bab}</div>
                               <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
@@ -156,7 +173,6 @@ function renderDetailMateriDinamis(kelas, index) {
         babData.links.forEach(linkObj => {
             const ytId = getYouTubeEmbedId(linkObj.url);
             if (ytId) {
-                // Jika itu link YouTube, render Video Player
                 mediaHtml += `
                     <div style="width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 5px;">
                         <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${linkObj.label}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -166,7 +182,6 @@ function renderDetailMateriDinamis(kelas, index) {
                     </div>
                 `;
             } else {
-                // Jika web/drive/ig, render tombol pintar
                 const uiConf = getIconForUrl(linkObj.url);
                 mediaHtml += `
                     <a href="${linkObj.url}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none; transition: background 0.2s;">
@@ -357,4 +372,5 @@ function submitUjian(nama, kelas, jenis, judul) {
     });
 }
 
+// Menjalankan aplikasi untuk pertama kali
 renderHome();
