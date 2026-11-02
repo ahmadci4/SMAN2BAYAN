@@ -47,7 +47,7 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. RENDER BERANDA & KELAS (Fungsi yang hilang sudah dikembalikan)
+// 3. RENDER BERANDA & KELAS (ROMAWI)
 // ==========================================
 function renderHome() {
     const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
@@ -101,13 +101,12 @@ function renderKelas() {
 }
 
 // ==========================================
-// 4. MENGAMBIL DATA MATERI (PERBAIKAN: TANPA INDEX FIREBASE)
+// 4. MENGAMBIL DATA MATERI (TANPA INDEX FIREBASE)
 // ==========================================
 function renderMateri(kelas) {
     contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
                             <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>`;
     
-    // Hanya menggunakan WHERE, membuang ORDER BY agar tidak butuh komposit indeks
     db.collection("materi_pelajaran")
       .where("mapel", "==", "Fisika")
       .where("kelas", "==", kelas)
@@ -124,7 +123,7 @@ function renderMateri(kelas) {
                   currentMateriList.push({ id: doc.id, ...doc.data() });
               });
 
-              // Mengurutkan secara manual menggunakan JavaScript (Menggantikan peran orderBy Firebase)
+              // Mengurutkan secara manual dengan JavaScript untuk menghindari error indeks komposit
               currentMateriList.sort((a, b) => {
                   let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
                   let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
@@ -146,7 +145,6 @@ function renderMateri(kelas) {
       });
 }
 
-// Fungsi Pengekstrak ID YouTube untuk Embed Video
 function getYouTubeEmbedId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -163,7 +161,6 @@ function getIconForUrl(url) {
 function renderDetailMateriDinamis(kelas, index) {
     const babData = currentMateriList[index];
     
-    // Blok Tautan / Video Embed
     let mediaHtml = '';
     if (babData.links && babData.links.length > 0) {
         mediaHtml += `<div style="margin-top: 20px; margin-bottom: 20px;">
@@ -197,7 +194,6 @@ function renderDetailMateriDinamis(kelas, index) {
         mediaHtml += `</div></div>`;
     }
 
-    // Blok Tugas / PR
     let prHtml = '';
     if (babData.pr && babData.pr.trim() !== "") {
         prHtml = `
@@ -372,5 +368,5 @@ function submitUjian(nama, kelas, jenis, judul) {
     });
 }
 
-// Menjalankan aplikasi untuk pertama kali
+// Inisialisasi awal saat halaman dimuat
 renderHome();
