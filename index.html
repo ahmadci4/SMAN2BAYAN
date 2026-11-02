@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Learning SMAN 2 Bayan</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome untuk Ikon Siluet Mata Pelajaran -->
+    
+    <!-- Font Awesome untuk Ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Library untuk cetak PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- lnk ke guru -->
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <!-- Firebase SDK (Wajib untuk Diskusi dan Materi Dinamis) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
     <header class="app-header">
@@ -26,7 +29,7 @@
     </header>
 
     <main id="app-content">
-        <!-- Konten akan di-render secara dinamis di sini oleh JavaScript -->
+        <!-- Konten dinamis -->
     </main>
 
     <nav class="bottom-nav">
@@ -34,7 +37,7 @@
         <button onclick="renderLatihanSoal()"><i class="fa-solid fa-pen-to-square"></i><br>Latihan</button>
     </nav>
 
-    <!-- Modal untuk Input Data Siswa (Kuis/Soal) -->
+    <!-- Modal Input Siswa -->
     <div id="student-modal" class="modal hidden">
         <div class="modal-content">
             <h3>Identitas Siswa</h3>
