@@ -1,11 +1,41 @@
-// Konfigurasi Guru Fisika (sebagai contoh materi yang sudah ada)
+// ==========================================
+// 1. KONFIGURASI FIREBASE
+// ==========================================
+const firebaseConfig = {
+    apiKey: "AIzaSyCKG-pHGN3Wz7X9q9BnSL-dChSNX87EpyY",
+    authDomain: "e-learning-sman-2-bayan.firebaseapp.com",
+    projectId: "e-learning-sman-2-bayan",
+    storageBucket: "e-learning-sman-2-bayan.firebasestorage.app",
+    messagingSenderId: "715837451881",
+    appId: "1:715837451881:web:48540594fe89d36d8c3cf8",
+    measurementId: "G-TTVZ22Z4H5"
+};
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+
+// Login Anonim Otomatis untuk Siswa agar memiliki izin baca dari database
+firebase.auth().signInAnonymously().catch((error) => console.error("Auth failed:", error));
+
+
+// ==========================================
+// 2. DATA UTAMA & STATE APLIKASI
+// ==========================================
+// Konfigurasi Guru Fisika
 const GURU = {
     nama: "Rianti, S.Pd.",
     mapel: "Fisika",
     whatsapp: "6281234567890" 
 };
 
-// Data Seluruh Mata Pelajaran beserta Ikon & Warna
+// Variabel penampung data dinamis dari Firebase
+let currentMateriList = []; 
+let activeAssessment = { type: '', title: '' };
+const contentDiv = document.getElementById('app-content');
+
+// Data Seluruh Mata Pelajaran beserta Ikon & Warna (Statis untuk UI Utama)
 const subjectsList = [
     { name: "Pend. Agama", icon: "fa-book-quran", grad: "linear-gradient(135deg, #05cd99, #02946d)", active: false },
     { name: "Pend. Pancasila", icon: "fa-landmark", grad: "linear-gradient(135deg, #ff5b5c, #d93839)", active: false },
@@ -18,7 +48,7 @@ const subjectsList = [
     { name: "Informatika", icon: "fa-laptop-code", grad: "linear-gradient(135deg, #11998e, #38ef7d)", active: false },
     { name: "Biologi", icon: "fa-leaf", grad: "linear-gradient(135deg, #56ab2f, #a8e063)", active: false },
     { name: "Kimia", icon: "fa-flask", grad: "linear-gradient(135deg, #f2994a, #f2c94c)", active: false },
-    { name: "Fisika", icon: "fa-atom", grad: "linear-gradient(135deg, #ff9f43, #ff6b6b)", active: true }, // Hanya Fisika yg aktif
+    { name: "Fisika", icon: "fa-atom", grad: "linear-gradient(135deg, #ff9f43, #ff6b6b)", active: true }, // Hanya Fisika yg aktif sementara
     { name: "MTK Lanjut", icon: "fa-square-root-variable", grad: "linear-gradient(135deg, #ec008c, #fc6767)", active: false },
     { name: "Sosiologi", icon: "fa-users", grad: "linear-gradient(135deg, #3a1c71, #d76d77)", active: false },
     { name: "Ekonomi", icon: "fa-chart-line", grad: "linear-gradient(135deg, #159957, #155799)", active: false },
@@ -27,37 +57,11 @@ const subjectsList = [
     { name: "PKWU", icon: "fa-lightbulb", grad: "linear-gradient(135deg, #e65c00, #f9d423)", active: false }
 ];
 
-// Data Materi Fisika
-const materiFisika = {
-    "Kelas 10": [
-        { bab: "Pengukuran", isi: ["Hakikat Fisika dan Kerja Ilmiah", "Macam-macam Alat Ukur", "Besaran, Satuan, dan Dimensi", "Aturan Angka Penting", "Nilai Ketidakpastian"] },
-        { bab: "Energi Terbarukan", isi: ["Energi dan Hukum Kekekalan Energi", "Macam-macam Sumber Energi", "Potensi Sumber Energi Lokal"] },
-        { bab: "Pencemaran lingkungan", isi: ["Pendahuluan fisika lingkungan", "Sumber penyebab", "Dampak pencemaran", "Upaya penanggulangan"] },
-        { bab: "Perubahan iklim", isi: ["Gejala dan Dampak", "Penyebab perubahan lingkungan", "Solusi"] }
-    ],
-    "Kelas 11": [
-        { bab: "Vektor", isi: ["Besaran skalar dan vektor", "Komponen Vektor", "Perkalian Vektor"] },
-        { bab: "Kinematika", isi: ["Gerak lurus", "Gerak parabola", "Gerak Melingkar"] },
-        { bab: "Dinamika", isi: ["Hukum Newton", "Gravitasi", "Hukum III Kepler"] },
-        { bab: "Usaha dan energi", isi: ["Usaha", "Energi", "Kekekalan energi mekanik", "Daya"] },
-        { bab: "Momentum dan impuls", isi: ["Momentum dan Impuls", "Tumbukan"] },
-        { bab: "Fluida", isi: ["Fluida Statis", "Fluida Dinamis"] }
-    ],
-    "Kelas 12": [
-        { bab: "Listrik statis", isi: ["Muatan listrik, gaya Coulomb", "Kapasitor"] },
-        { bab: "Rangkaian arus searah", isi: ["Kuat Arus", "Hukum Ohm", "Hukum Kirchoff"] },
-        { bab: "Medan magnet", isi: ["Medan Magnet Kawat", "Gaya Lorentz"] },
-        { bab: "Induksi elektromagnetik", isi: ["Fluks Magnetik", "Hukum Faraday", "Transformator"] },
-        { bab: "Teori relativitas", isi: ["Kerangka Acuan", "Dilatasi Waktu", "Energi Relativistik"] }
-    ]
-};
 
-const contentDiv = document.getElementById('app-content');
-let activeAssessment = { type: '', title: '' };
-
-// 1. Render Beranda
+// ==========================================
+// 3. RENDER BERANDA & KELAS
+// ==========================================
 function renderHome() {
-    // Placeholder gambar yang bisa diganti link-nya nanti oleh Anda
     const heroImagePlaceholder = "https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1200&q=80";
 
     let html = `
@@ -89,7 +93,6 @@ function renderHome() {
     contentDiv.innerHTML = html;
 }
 
-// 2. Render Pilihan Kelas (Untuk Mapel yang aktif)
 function renderKelas() {
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
@@ -114,47 +117,90 @@ function renderKelas() {
     `;
 }
 
-// 3. Render Daftar Materi berdasarkan Kelas
+
+// ==========================================
+// 4. MENGAMBIL DATA DARI FIREBASE (DINAMIS)
+// ==========================================
 function renderMateri(kelas) {
-    const materi = materiFisika[kelas];
-    let html = `
+    contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-        <h3 class="section-title">Materi Fisika - ${kelas}</h3>
-        <div class="material-list">
+        <h3 class="section-title" style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>
     `;
     
-    materi.forEach((item, index) => {
-        html += `
-            <div class="material-item" onclick="renderDetailMateri('${kelas}', ${index})">
-                <div style="font-weight:600;">${index + 1}. ${item.bab}</div>
-                <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
-            </div>
-        `;
-    });
-    html += `</div>`;
-    contentDiv.innerHTML = html;
+    // Menarik data langsung dari Firestore berdasarkan Mapel dan Kelas
+    db.collection("materi_pelajaran")
+      .where("mapel", "==", "Fisika")
+      .where("kelas", "==", kelas)
+      .orderBy("timestamp", "asc")
+      .get()
+      .then((querySnapshot) => {
+          let html = `
+              <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+              <h3 class="section-title">Materi Fisika - ${kelas}</h3>
+              <div class="material-list">
+          `;
+          
+          if (querySnapshot.empty) {
+              html += `<p style="color:var(--text-light); text-align:center; padding: 20px;">Belum ada materi dari guru untuk kelas ini.</p>`;
+          } else {
+              currentMateriList = []; // Reset list sementara
+              querySnapshot.forEach((doc) => {
+                  const data = doc.data();
+                  currentMateriList.push(data);
+                  const index = currentMateriList.length - 1;
+                  
+                  html += `
+                      <div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
+                          <div style="font-weight:600;">${index + 1}. ${data.bab}</div>
+                          <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
+                      </div>
+                  `;
+              });
+          }
+          html += `</div>`;
+          contentDiv.innerHTML = html;
+      })
+      .catch((error) => {
+          console.error("Gagal menarik data:", error);
+          contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi. Pastikan perangkat terhubung ke internet.</p>`;
+      });
 }
 
-// 4. Render Detail Materi & Sub-materi
-function renderDetailMateri(kelas, index) {
-    const bab = materiFisika[kelas][index];
-    let isiHtml = bab.isi.map(sub => `<li style="margin-bottom:8px;"><i class="fa-solid fa-check" style="color:#05cd99; margin-right:8px;"></i>${sub}</li>`).join('');
+function renderDetailMateriDinamis(kelas, index) {
+    const babData = currentMateriList[index];
+    let isiHtml = babData.isi.map(sub => `<li style="margin-bottom:8px;"><i class="fa-solid fa-check" style="color:#05cd99; margin-right:8px;"></i>${sub}</li>`).join('');
+    
+    // Fitur: Cek apakah guru menyertakan link Google Drive
+    let lampiranFileHtml = '';
+    if (babData.fileUrl && babData.fileUrl !== "") {
+        lampiranFileHtml = `
+            <div style="margin-bottom: 20px; padding: 15px; background: #eef2ff; border-radius: 10px; border-left: 4px solid #4318ff;">
+                <p style="margin-bottom: 5px; font-weight: bold; color: #2b3674;"><i class="fa-solid fa-paperclip"></i> Lampiran Dokumen dari Guru:</p>
+                <a href="${babData.fileUrl}" target="_blank" style="color: #4318ff; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                    Buka / Unduh Lampiran Materi (via Google Drive)
+                </a>
+            </div>
+        `;
+    }
     
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="detail-box" id="pdf-content">
-            <h2 style="color:var(--text-dark);">${bab.bab}</h2>
+            <h2 style="color:var(--text-dark);">${babData.bab}</h2>
             <p style="color:var(--text-light); font-size:0.9rem; margin-top:5px;">Mata Pelajaran: Fisika | Guru: ${GURU.nama}</p>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
-            <p style="font-weight:600; margin-bottom:10px;">Sub-materi yang dipelajari:</p>
+            
+            ${lampiranFileHtml}
+
+            <p style="font-weight:600; margin-bottom:10px;">Ringkasan Materi:</p>
             <ul style="list-style:none;">
                 ${isiHtml}
             </ul>
         </div>
         
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
-            <button class="btn-primary" onclick="downloadMateriPDF('${bab.bab}')"><i class="fa-solid fa-download"></i> Unduh Materi PDF</button>
-            <button class="btn-success" onclick="openModal('Kuis', '${bab.bab}')"><i class="fa-solid fa-pen"></i> Kerjakan Kuis</button>
+            <button class="btn-primary" onclick="downloadMateriPDF('${babData.bab}')"><i class="fa-solid fa-print"></i> Cetak PDF Catatan Ini</button>
+            <button class="btn-success" onclick="openModal('Kuis', '${babData.bab}')"><i class="fa-solid fa-pen"></i> Kerjakan Kuis</button>
         </div>
 
         <div class="detail-box">
@@ -167,7 +213,10 @@ function renderDetailMateri(kelas, index) {
     loadDiskusi(`${kelas}_${index}`, index);
 }
 
-// 5. Fitur Diskusi
+
+// ==========================================
+// 5. FITUR DISKUSI (LOCAL STORAGE)
+// ==========================================
 function loadDiskusi(id, index) {
     const commentsDiv = document.getElementById(`comments-${index}`);
     const data = JSON.parse(localStorage.getItem(`diskusi_${id}`)) || [];
@@ -188,7 +237,10 @@ function tambahDiskusi(id) {
     document.getElementById('input-diskusi').value = "";
 }
 
-// 6. Latihan Soal Khusus
+
+// ==========================================
+// 6. LATIHAN SOAL & UNDUH PDF
+// ==========================================
 function renderLatihanSoal() {
     contentDiv.innerHTML = `
         <div class="hero-banner" style="height:120px;">
@@ -206,7 +258,6 @@ function renderLatihanSoal() {
     `;
 }
 
-// 7. Pengelolaan Ujian (PDF)
 function openModal(type, title) {
     activeAssessment = { type, title };
     document.getElementById('student-modal').classList.remove('hidden');
@@ -226,29 +277,28 @@ function startAssessment() {
 
 function renderUjian(nama, kelas, jenis, judul) {
     contentDiv.innerHTML = `
-        <div id="lembar-ujian" class="detail-box">
+        <div id="lembar-ujian" class="detail-box" style="background:white; padding:30px;">
             <h2 style="text-align:center; color:#4318ff;">Lembar ${jenis}</h2>
-            <h4 style="text-align:center;">${judul}</h4>
-            <hr style="margin: 15px 0;">
-            <table style="width:100%; margin-bottom:20px;">
+            <h4 style="text-align:center; margin-bottom: 20px;">${judul}</h4>
+            <table style="width:100%; margin-bottom:20px; font-size:14px;">
                 <tr><td style="width:30%;"><strong>Nama</strong></td><td>: ${nama}</td></tr>
                 <tr><td><strong>Kelas</strong></td><td>: ${kelas}</td></tr>
                 <tr><td><strong>Tanggal</strong></td><td>: ${new Date().toLocaleDateString('id-ID')}</td></tr>
             </table>
+            <hr style="margin-bottom:20px;">
             
-            <p>1. Jelaskan pemahaman Anda mengenai materi ini dengan singkat!</p>
-            <textarea style="width:100%; margin:10px 0 20px; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="3"></textarea>
+            <p style="font-weight:bold;">1. Jelaskan pemahaman Anda mengenai materi ini dengan singkat!</p>
+            <textarea style="width:100%; margin:10px 0 20px; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
             
-            <p>2. Sebutkan contoh penerapannya dalam kehidupan sehari-hari!</p>
-            <textarea style="width:100%; margin:10px 0; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="3"></textarea>
+            <p style="font-weight:bold;">2. Sebutkan contoh penerapannya dalam kehidupan sehari-hari!</p>
+            <textarea style="width:100%; margin:10px 0; border:1px solid #ddd; padding:10px; border-radius:8px;" rows="4"></textarea>
         </div>
         <button class="btn-success" style="width:100%; padding:15px; font-size:1.1rem;" onclick="submitUjian('${nama}', '${kelas}', '${jenis}', '${judul}')">
-            <i class="fa-solid fa-paper-plane"></i> Selesai & Kirim ke WhatsApp Guru
+            <i class="fa-solid fa-paper-plane"></i> Selesai & Kirim PDF ke WhatsApp Guru
         </button>
     `;
 }
 
-// 8. Cetak & Kirim WA
 function submitUjian(nama, kelas, jenis, judul) {
     const elemen = document.getElementById('lembar-ujian');
     const opt = {
@@ -257,7 +307,7 @@ function submitUjian(nama, kelas, jenis, judul) {
         html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
     html2pdf().set(opt).from(elemen).save().then(() => {
-        const teksWA = `Halo Ibu ${GURU.nama}, saya ${nama} dari kelas ${kelas}. Saya telah menyelesaikan ${jenis} untuk materi *${judul}*. File PDF jawaban sudah saya unduh dan saya lampirkan bersama pesan ini.`;
+        const teksWA = `Halo Ibu ${GURU.nama}, saya ${nama} dari kelas ${kelas}. Saya telah menyelesaikan ${jenis} materi *${judul}*. File PDF jawaban sudah saya unduh dan saya lampirkan bersama pesan ini.`;
         window.open(`https://wa.me/${GURU.whatsapp}?text=${encodeURIComponent(teksWA)}`, '_blank');
         renderHome(); 
     });
@@ -265,7 +315,10 @@ function submitUjian(nama, kelas, jenis, judul) {
 
 function downloadMateriPDF(judulMateri) {
     const elemen = document.getElementById('pdf-content');
-    html2pdf().set({margin: 1, filename: `Materi_Fisika_${judulMateri}.pdf`}).from(elemen).save();
+    html2pdf().set({margin: 1, filename: `Ringkasan_Materi_${judulMateri}.pdf`}).from(elemen).save();
 }
 
+// ==========================================
+// 7. JALANKAN APLIKASI SAAT DIMUAT
+// ==========================================
 renderHome();
