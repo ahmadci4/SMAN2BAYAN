@@ -3,48 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Learning SMAN 2 Bayan</title>
+    <title>Smart E-Learning SMAN 2 BAYAN</title>
     <link rel="stylesheet" href="style.css">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Library Cetak PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Firebase SDK (Firestore) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
-    <header class="app-header">
-        <div class="school-info">
-            <h1>SMAN 2 BAYAN</h1>
-            <p><i class="fa-solid fa-location-dot"></i> Dusun Ancak, Desa Karang Bajo, Kec. Bayan 83354</p>
+    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="images/logo-sman2bayan.png" alt="Logo SMAN 2 Bayan" style="width: 45px; height: 45px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/45'">
+            <div>
+                <h1 style="font-size: 1.1rem; margin: 0; color: #2b3674;">Smart E-Learning SMAN 2 BAYAN</h1>
+                <p style="font-size: 0.75rem; margin: 0; color: #718096;"><i class="fa-solid fa-location-dot"></i> Dusun Ancak, Desa Karang Bajo, Kec. Bayan 83354</p>
+            </div>
         </div>
-        <div class="user-profile">
-            <div class="avatar"><i class="fa-solid fa-user-graduate"></i></div>
+        <div>
+            <button onclick="openProfilSiswaModal()" style="background: #4318ff; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-user-gear"></i> Profil Saya</button>
         </div>
     </header>
 
-    <main id="app-content">
+    <main id="app-content" style="padding-bottom: 60px;">
         <!-- Konten Dinamis -->
     </main>
 
+    <!-- Tombol WhatsApp Mengapung Guru -->
+    <div id="floating-wa-container"></div>
+
+    <!-- Footer Sekolah -->
+    <footer style="background: #1e293b; color: #94a3b8; text-align: center; padding: 25px 15px; margin-top: 40px; font-size: 0.85rem; border-top: 4px solid #4318ff;">
+        <p style="margin-bottom: 8px; color: white; font-weight: bold;">Smart E-Learning SMAN 2 BAYAN</p>
+        <p style="margin-bottom: 5px;">Kabupaten Lombok Utara, Nusa Tenggara Barat, Indonesia</p>
+        <p style="font-size: 0.75rem; color: #64748b;">&copy; 2026 Ahmad Yani, S.Kom &mdash; All Rights Reserved.</p>
+    </footer>
+
     <nav class="bottom-nav">
         <button onclick="renderHome()" class="active"><i class="fa-solid fa-house"></i><br>Beranda</button>
-        <button onclick="renderLatihanSoal()"><i class="fa-solid fa-pen-to-square"></i><br>Latihan</button>
+        <button onclick="renderProfilGuru()"><i class="fa-solid fa-chalkboard-user"></i><br>Profil Guru</button>
     </nav>
 
-    <!-- Modal Identitas Kuis -->
-    <div id="student-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Identitas Siswa</h3>
-            <input type="text" id="student-name" placeholder="Nama Lengkap" required>
-            <input type="text" id="student-class" placeholder="Kelas (Contoh: X.A)" required>
-            <button onclick="startAssessment()" class="btn-primary">Mulai Evaluasi</button>
-            <button onclick="closeModal()" class="btn-cancel">Batal</button>
+    <!-- Modal Profil Siswa & Login -->
+    <div id="student-profile-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Profil & Akun Siswa</h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Login dengan email agar Anda bisa membuat pertanyaan dan berkomentar.</p>
+            
+            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Email Akun:</label>
+            <input type="email" id="modal-email" placeholder="email@siswa.com" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;">
+            
+            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Password:</label>
+            <input type="password" id="modal-pass" placeholder="Password minimal 6 karakter" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;">
+
+            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Nama Lengkap:</label>
+            <input type="text" id="modal-nama" placeholder="Nama Lengkap Anda" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;">
+
+            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Kelas:</label>
+            <input type="text" id="modal-kelas" placeholder="Contoh: X.A" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px;">
+
+            <button onclick="simpanDanLoginSiswa()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:8px;">Simpan & Masuk</button>
+            <button onclick="closeProfilSiswaModal()" class="btn-cancel" style="width:100%; padding:8px;">Tutup</button>
         </div>
     </div>
 
