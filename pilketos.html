@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PILKETOS Online - SMAN 2 Bayan</title>
+    <!-- Tailwind CSS untuk tampilan modern dan responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (Versi 8 agar konsisten dengan file proyek utama Anda) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fe;
+        }
+        .candidate-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(67, 24, 255, 0.12);
+        }
+        /* Animasi Modal */
+        .modal-enter {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- HEADER SEKOLAH -->
+    <header class="bg-white shadow-sm sticky top-0 z-30 border-b border-slate-100">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="images/logo-sman2bayan.png" alt="Logo SMAN 2 Bayan" class="w-11 h-11 object-contain" onerror="this.src='https://placehold.co/45x45/4318ff/ffffff?text=SMAN2'">
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold text-[#2b3674] leading-tight">E-PILKETOS SMAN 2 BAYAN</h1>
+                    <p class="text-xs text-slate-500">Pemilihan Ketua & Wakil Ketua OSIS Online</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="text-xs sm:text-sm font-semibold text-[#4318ff] bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-xl transition">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Beranda
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- BANNER INFO -->
+        <div class="bg-gradient-to-r from-[#4318ff] to-[#6b46c1] rounded-2xl p-6 sm:p-8 text-white shadow-lg mb-8 relative overflow-hidden">
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 backdrop-blur-sm">
+                    <i class="fa-solid fa-check-to-slot mr-1"></i> PESTA DEMOKRASI SEKOLAH
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-2">Gunakan Hak Suaramu dengan Bijak!</h2>
+                <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+                    Satu suara dari Siswa, Siswi, dan Bapak/Ibu Guru sangat menentukan kemajuan OSIS SMAN 2 Bayan periode ini. Pilih pasangan calon terbaik pilihanmu.
+                </p>
+            </div>
+            <i class="fa-solid fa-box-ballot text-white/10 text-9xl absolute -right-4 -bottom-6 transform -rotate-12"></i>
+        </div>
+
+        <!-- STATUS PEMILIH (LOGIN/VERIFIKASI) -->
+        <div id="voter-status-bar" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-lg shrink-0" id="status-icon">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Status Pemilih</p>
+                    <h3 class="font-bold text-[#2b3674] text-sm sm:text-base" id="voter-name-display">Belum Verifikasi Identitas</h3>
+                    <p class="text-xs text-slate-500" id="voter-role-display">Silakan isi data diri Anda terlebih dahulu untuk membuka bilik suara.</p>
+                </div>
+            </div>
+            <button id="btn-open-auth" onclick="openVoterModal()" class="w-full sm:w-auto bg-[#4318ff] hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-sm">
+                <i class="fa-solid fa-user-check mr-1"></i> Verifikasi Data Pemilih
+            </button>
+        </div>
+
+        <!-- TAB NAVIGASI (BILIK SUARA vs HASIL QUICK COUNT) -->
+        <div class="flex gap-2 mb-6 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto">
+            <button id="tab-vote" onclick="switchPilketosTab('vote')" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-bold bg-[#4318ff] text-white transition">
+                <i class="fa-solid fa-person-booth mr-1"></i> Bilik Suara
+            </button>
+            <button id="tab-result" onclick="switchPilketosTab('result')" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-pie mr-1"></i> Hasil Sementara
+            </button>
+        </div>
+
+        <!-- SEKSI 1: DAFTAR KANDIDAT (BILIK SUARA) -->
+        <div id="section-vote">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="candidates-grid">
+                <!-- Kartu Kandidat akan dirender oleh JavaScript -->
+            </div>
+        </div>
+
+        <!-- SEKSI 2: HASIL REAL-TIME (QUICK COUNT) -->
+        <div id="section-result" class="hidden">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 mb-6 gap-2">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-[#2b3674]">Perolehan Suara Real-Time</h3>
+                        <p class="text-xs text-slate-500">Data diperbarui secara otomatis setiap kali ada suara masuk.</p>
+                    </div>
+                    <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold border border-emerald-200">
+                        Total Suara Masuk: <span id="total-votes-count" class="text-lg">0</span>
+                    </div>
+                </div>
+
+                <!-- Bar Grafik Perolehan Suara -->
+                <div id="results-container" class="space-y-6">
+                    <p class="text-center text-slate-400 py-8">Memuat data perolehan suara...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#1e293b] text-slate-400 text-center py-6 px-4 mt-12 border-t-4 border-[#4318ff]">
+        <p class="text-white font-bold text-sm mb-1">Komisi Pemilihan OSIS (KPO) - SMAN 2 BAYAN</p>
+        <p class="text-xs mb-2">Dusun Ancak, Desa Karang Bajo, Kec. Bayan, Kabupaten Lombok Utara 83354</p>
+        <p class="text-[11px] text-slate-500">&copy; 2026 Smart E-Learning SMAN 2 BAYAN. Jujur, Adil, dan Rahasia.</p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: VERIFIKASI DATA PEMILIH           -->
+    <!-- ========================================== -->
+    <div id="voter-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl modal-enter">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-extrabold text-[#2b3674]">Verifikasi Identitas Pemilih</h3>
+                <button onclick="closeVoterModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Masukkan identitas Anda dengan benar. Setiap NISN (Siswa) atau NIP/NUPTK (Guru) hanya dapat digunakan <strong>1 kali</strong> untuk memilih.
+            </p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Status Pemilih:</label>
+                    <select id="input-voter-role" onchange="toggleKelasField()" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#4318ff]">
+                        <option value="Siswa">Siswa / Siswi</option>
+                        <option value="Guru">Bapak / Ibu Guru & Staf</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label id="label-id-number" class="block text-xs font-bold text-slate-600 mb-1">NISN / Nomor Induk Siswa:</label>
+                    <input type="text" id="input-voter-id" placeholder="Masukkan NISN Anda..." class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#4318ff]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nama Lengkap:</label>
+                    <input type="text" id="input-voter-name" placeholder="Nama lengkap sesuai absen..." class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#4318ff]">
+                </div>
+
+                <div id="field-kelas-wrapper">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Kelas:</label>
+                    <select id="input-voter-kelas" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#4318ff]">
+                        <option value="X.A">Kelas X.A</option>
+                        <option value="X.B">Kelas X.B</option>
+                        <option value="X.C">Kelas X.C</option>
+                        <option value="X.D">Kelas X.D</option>
+                        <option value="XI.A">Kelas XI.A</option>
+                        <option value="XI.B">Kelas XI.B</option>
+                        <option value="XI.C">Kelas XI.C</option>
+                        <option value="XI.D">Kelas XI.D</option>
+                        <option value="XII.A">Kelas XII.A</option>
+                        <option value="XII.B">Kelas XII.B</option>
+                        <option value="XII.C">Kelas XII.C</option>
+                        <option value="XII.D">Kelas XII.D</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-2">
+                <button onclick="closeVoterModal()" class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">Batal</button>
+                <button id="btn-verify-submit" onclick="verifyVoter()" class="flex-1 py-2.5 px-4 bg-[#4318ff] hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition">Masuk Bilik Suara</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: DETAIL VISI & MISI KANDIDAT       -->
+    <!-- ========================================== -->
+    <div id="visimisi-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <span id="vm-badge" class="bg-indigo-100 text-[#4318ff] text-xs font-extrabold px-3 py-1 rounded-full">PASLON 01</span>
+                <button onclick="closeVisiMisiModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="text-center mb-5">
+                <img id="vm-foto" src="" alt="Foto Paslon" class="w-28 h-28 rounded-2xl object-cover mx-auto mb-3 shadow-md border-2 border-indigo-100">
+                <h3 id="vm-nama" class="text-lg font-extrabold text-[#2b3674]">Nama Ketua & Wakil</h3>
+                <p id="vm-kelas" class="text-xs text-slate-500 font-medium">Kelas XI.A & XI.B</p>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <h4 class="font-bold text-[#4318ff] mb-1"><i class="fa-solid fa-eye mr-1"></i> VISI:</h4>
+                    <p id="vm-visi" class="text-slate-700 italic leading-relaxed">...</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <h4 class="font-bold text-[#05cd99] mb-2"><i class="fa-solid fa-bullseye mr-1"></i> MISI:</h4>
+                    <ul id="vm-misi" class="list-disc list-inside text-slate-700 space-y-1.5 leading-relaxed">
+                        <!-- List misi -->
+                    </ul>
+                </div>
+            </div>
+
+            <button onclick="closeVisiMisiModal()" class="w-full mt-6 py-2.5 bg-slate-800 text-white font-semibold rounded-xl text-sm hover:bg-slate-700 transition">Tutup</button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 3: KONFIRMASI PILIHAN (PENGGANTI ALERT) -->
+    <!-- ========================================== -->
+    <div id="confirm-vote-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl modal-enter">
+            <div class="w-16 h-16 bg-indigo-100 text-[#4318ff] rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                <i class="fa-solid fa-check-to-slot"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-[#2b3674] mb-2">Konfirmasi Pilihan Anda</h3>
+            <p class="text-sm text-slate-600 mb-5">
+                Apakah Anda yakin ingin memilih <strong id="confirm-paslon-name" class="text-[#4318ff]">Paslon</strong>? Pilihan tidak dapat diubah setelah dikirim.
+            </p>
+            <div class="flex gap-2">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm">Batal</button>
+                <button id="btn-final-vote" onclick="executeVote()" class="flex-1 py-2.5 bg-[#05cd99] hover:bg-emerald-600 text-white font-bold rounded-xl text-sm shadow-md">Ya, Pilih Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 4: NOTIFIKASI PESAN (PENGGANTI ALERT)-->
+    <!-- ========================================== -->
+    <div id="toast-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl modal-enter">
+            <div id="toast-icon" class="w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"></div>
+            <h4 id="toast-title" class="font-bold text-lg text-slate-800 mb-1">Informasi</h4>
+            <p id="toast-message" class="text-sm text-slate-600 mb-5">Pesan notifikasi</p>
+            <button onclick="closeToast()" class="w-full py-2.5 bg-[#4318ff] text-white font-semibold rounded-xl text-sm">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA PILKETOS -->
+    <script>
+        // 1. Konfigurasi Firebase (Sama dengan proyek SMAN 2 Bayan Anda)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKG-pHGN3Wz7X9q9BnSL-dChSNX87EpyY",
+            authDomain: "e-learning-sman-2-bayan.firebaseapp.com",
+            projectId: "e-learning-sman-2-bayan",
+            storageBucket: "e-learning-sman-2-bayan.firebasestorage.app",
+            messagingSenderId: "715837451881",
+            appId: "1:715837451881:web:48540594fe89d36d8c3cf8",
+            measurementId: "G-TTVZ22Z4H5"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Login anonim otomatis agar koneksi Firestore diizinkan
+        auth.signInAnonymously().catch(err => console.error("Auth Error:", err));
+
+        // 2. Data Pasangan Calon (Kandidat Ketua & Wakil Ketua OSIS)
+        // Anda dapat mengubah nama, foto, visi, dan misi di sini sesuai kandidat asli sekolah
+        const KANDIDAT_LIST = [
+            {
+                id: "paslon_1",
+                nomor: "01",
+                ketua: "Lalu Ahmad Rizki",
+                wakil: "Baiq Nabila Putri",
+                kelas: "XI.A & X.B",
+                warna: "from-blue-600 to-indigo-700",
+                badgeColor: "bg-blue-100 text-blue-700",
+                foto: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=500&q=80",
+                visi: "Mewujudkan OSIS SMAN 2 Bayan yang berkarakter, inovatif, berprestasi, dan berlandaskan Profil Pelajar Pancasila.",
+                misi: [
+                    "Meningkatkan keimanan dan ketakwaan melalui kegiatan keagamaan rutin.",
+                    "Mengoptimalkan ekstrakurikuler sebagai wadah pengembangan bakat dan minat siswa.",
+                    "Menciptakan lingkungan sekolah yang bersih, hijau, dan bebas perundungan (anti-bullying).",
+                    "Memanfaatkan media digital sekolah sebagai pusat informasi kreatif siswa."
+                ]
+            },
+            {
+                id: "paslon_2",
+                nomor: "02",
+                ketua: "Raden Bagus Pratama",
+                wakil: "Ni Putu Ayu Lestari",
+                kelas: "XI.C & XI.A",
+                warna: "from-emerald-500 to-teal-700",
+                badgeColor: "bg-emerald-100 text-emerald-700",
+                foto: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=500&q=80",
+                visi: "Menjadikan OSIS sebagai jembatan aspirasi siswa yang aktif, solid, disiplin, dan menjunjung tinggi kearifan lokal Bayan.",
+                misi: [
+                    "Membuka kotak aspirasi digital dan musyawarah rutin perwakilan kelas.",
+                    "Mengadakan pekan olahraga dan seni (PORSENI) antar kelas secara berkala.",
+                    "Melestarikan budaya dan kesenian tradisional Lombok Utara di lingkungan sekolah.",
+                    "Menegakkan kedisiplinan siswa dengan pendekatan yang humanis dan edukatif."
+                ]
+            },
+            {
+                id: "paslon_3",
+                nomor: "03",
+                ketua: "Muhammad Zulkifli",
+                wakil: "Siti Rahmawati",
+                kelas: "XI.B & X.D",
+                warna: "from-amber-500 to-orange-600",
+                badgeColor: "bg-amber-100 text-amber-700",
+                foto: "https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=500&q=80",
+                visi: "Membangun generasi SMAN 2 Bayan yang cerdas digital, peduli sosial, dan siap bersaing di tingkat nasional.",
+                misi: [
+                    "Membentuk komunitas belajar dan persiapan olimpiade sains & teknologi.",
+                    "Menggalakkan gerakan literasi digital dan jurnalistik siswa.",
+                    "Menyelenggarakan bakti sosial dan tanggap peduli lingkungan sekitar sekolah.",
+                    "Meningkatkan kerja sama yang harmonis antara siswa, guru, dan seluruh warga sekolah."
+                ]
+            }
+        ];
+
+        // State Pemilih Saat Ini
+        let currentVoter = null; // { idNumber, name, role, kelas, hasVoted }
+        let selectedPaslonId = null;
+
+        // 3. Render Kartu Kandidat di Halaman Utama
+        function renderCandidates() {
+            const grid = document.getElementById('candidates-grid');
+            grid.innerHTML = '';
+
+            KANDIDAT_LIST.forEach(paslon => {
+                const isVoted = currentVoter && currentVoter.hasVoted;
+                const btnText = isVoted ? '<i class="fa-solid fa-lock mr-1"></i> Sudah Memilih' : '<i class="fa-solid fa-check-to-slot mr-1"></i> Coblos / Pilih';
+                const btnClass = isVoted 
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
+                    : 'bg-[#4318ff] hover:bg-indigo-700 text-white shadow-md hover:shadow-lg cursor-pointer';
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 candidate-card flex flex-col">
+                        <!-- Header Nomor Urut -->
+                        <div class="bg-gradient-to-r ${paslon.warna} p-4 text-white flex justify-between items-center">
+                            <span class="text-xs font-bold uppercase tracking-wider opacity-90">Pasangan Calon</span>
+                            <span class="text-2xl font-black bg-white/20 px-3 py-0.5 rounded-xl backdrop-blur-sm">${paslon.nomor}</span>
+                        </div>
+
+                        <!-- Foto Paslon -->
+                        <div class="p-5 text-center flex-grow flex flex-col">
+                            <div class="relative w-32 h-32 mx-auto mb-4">
+                                <img src="${paslon.foto}" alt="Paslon ${paslon.nomor}" class="w-full h-full object-cover rounded-2xl shadow-md border-4 border-slate-50">
+                            </div>
+
+                            <span class="inline-block mx-auto ${paslon.badgeColor} text-[11px] font-bold px-2.5 py-0.5 rounded-full mb-2">
+                                Kelas ${paslon.kelas}
+                            </span>
+
+                            <h3 class="text-base font-extrabold text-[#2b3674] leading-snug">${paslon.ketua}</h3>
+                            <p class="text-xs text-slate-400 font-semibold my-0.5">&amp;</p>
+                            <h4 class="text-sm font-bold text-slate-700 mb-3">${paslon.wakil}</h4>
+
+                            <p class="text-xs text-slate-500 italic line-clamp-2 mb-5 flex-grow">
+                                "${paslon.visi}"
+                            </p>
+
+                            <!-- Tombol Aksi -->
+                            <div class="space-y-2 mt-auto">
+                                <button onclick="openVisiMisi('${paslon.id}')" class="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+                                    <i class="fa-solid fa-file-lines mr-1"></i> Lihat Visi & Misi
+                                </button>
+                                <button onclick="initiateVote('${paslon.id}')" ${isVoted ? 'disabled' : ''} class="w-full py-2.5 px-4 font-bold rounded-xl text-sm transition ${btnClass}">
+                                    ${btnText}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 4. Fungsi Modal & Notifikasi Kustom (Tanpa alert() bawaan browser)
+        function showToast(title, message, type = 'info') {
+            const modal = document.getElementById('toast-modal');
+            const iconDiv = document.getElementById('toast-icon');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+
+            if (type === 'success') {
+                iconDiv.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 bg-emerald-100 text-emerald-600';
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            } else if (type === 'error') {
+                iconDiv.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 bg-rose-100 text-rose-600';
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else {
+                iconDiv.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 bg-indigo-100 text-[#4318ff]';
+                iconDiv.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            }
+            modal.classList.remove('hidden');
+        }
+        function closeToast() { document.getElementById('toast-modal').classList.add('hidden'); }
+
+        function openVoterModal() { document.getElementById('voter-modal').classList.remove('hidden'); }
+        function closeVoterModal() { document.getElementById('voter-modal').classList.add('hidden'); }
+
+        function toggleKelasField() {
+            const role = document.getElementById('input-voter-role').value;
+            const kelasWrapper = document.getElementById('field-kelas-wrapper');
+            const labelId = document.getElementById('label-id-number');
+            const inputId = document.getElementById('input-voter-id');
+
+            if (role === 'Guru') {
+                kelasWrapper.classList.add('hidden');
+                labelId.innerText = 'NIP / NUPTK / Kode Guru:';
+                inputId.placeholder = 'Masukkan NIP atau Kode Guru...';
+            } else {
+                kelasWrapper.classList.remove('hidden');
+                labelId.innerText = 'NISN / Nomor Induk Siswa:';
+                inputId.placeholder = 'Masukkan NISN Anda...';
+            }
+        }
+
+        // 5. Verifikasi Pemilih ke Firestore (Mencegah Double Voting)
+        function verifyVoter() {
+            const role = document.getElementById('input-voter-role').value;
+            const idNumber = document.getElementById('input-voter-id').value.trim();
+            const name = document.getElementById('input-voter-name').value.trim();
+            const kelas = role === 'Guru' ? 'Dewan Guru' : document.getElementById('input-voter-kelas').value;
+
+            if (!idNumber || !name) {
+                showToast('Data Belum Lengkap', 'Harap isi Nomor Identitas (NISN/NIP) dan Nama Lengkap Anda.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-verify-submit');
+            btn.innerText = 'Memeriksa...';
+            btn.disabled = true;
+
+            // Cek di koleksi 'pilketos_voters' apakah ID ini sudah pernah memilih
+            const docId = `${role.toLowerCase()}_${idNumber.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+            db.collection('pilketos_voters').doc(docId).get().then(doc => {
+                const alreadyVoted = doc.exists;
+                currentVoter = {
+                    docId: docId,
+                    idNumber: idNumber,
+                    name: name,
+                    role: role,
+                    kelas: kelas,
+                    hasVoted: alreadyVoted
+                };
+
+                updateVoterUI();
+                renderCandidates();
+                closeVoterModal();
+
+                if (alreadyVoted) {
+                    showToast('Sudah Menggunakan Hak Suara', `Halo ${name}, identitas Anda tercatat sudah melakukan pemilihan sebelumnya.`, 'info');
+                } else {
+                    showToast('Verifikasi Berhasil', `Selamat datang ${name} (${kelas}). Silakan pilih pasangan calon pilihan Anda.`, 'success');
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast('Gagal Terhubung', 'Terjadi kesalahan koneksi ke server. Silakan coba lagi.', 'error');
+            }).finally(() => {
+                btn.innerText = 'Masuk Bilik Suara';
+                btn.disabled = false;
+            });
+        }
+
+        function updateVoterUI() {
+            if (!currentVoter) return;
+            const statusIcon = document.getElementById('status-icon');
+            const nameDisp = document.getElementById('voter-name-display');
+            const roleDisp = document.getElementById('voter-role-display');
+            const btnAuth = document.getElementById('btn-open-auth');
+
+            nameDisp.innerText = `${currentVoter.name} (${currentVoter.kelas})`;
+            
+            if (currentVoter.hasVoted) {
+                statusIcon.className = 'w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg shrink-0';
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                roleDisp.innerHTML = '<span class="text-emerald-600 font-bold">Status: Sudah Memilih (Suara Sah Tercatat)</span>';
+                btnAuth.innerText = 'Ganti Akun Pemilih';
+                btnAuth.className = 'w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl transition';
+            } else {
+                statusIcon.className = 'w-10 h-10 rounded-full bg-indigo-100 text-[#4318ff] flex items-center justify-center text-lg shrink-0';
+                statusIcon.innerHTML = '<i class="fa-solid fa-user-check"></i>';
+                roleDisp.innerHTML = '<span class="text-[#4318ff] font-semibold">Status: Terverifikasi • Silakan Pilih Kandidat</span>';
+                btnAuth.innerText = 'Ubah Data';
+            }
+        }
+
+        // 6. Modal Visi & Misi
+        function openVisiMisi(paslonId) {
+            const p = KANDIDAT_LIST.find(item => item.id === paslonId);
+            if (!p) return;
+
+            document.getElementById('vm-badge').innerText = `PASLON NOMOR URUT ${p.nomor}`;
+            document.getElementById('vm-foto').src = p.foto;
+            document.getElementById('vm-nama').innerText = `${p.ketua} & ${p.wakil}`;
+            document.getElementById('vm-kelas').innerText = `Kelas ${p.kelas}`;
+            document.getElementById('vm-visi').innerText = `"${p.visi}"`;
+
+            const misiList = document.getElementById('vm-misi');
+            misiList.innerHTML = '';
+            p.misi.forEach(m => {
+                misiList.innerHTML += `<li>${m}</li>`;
+            });
+
+            document.getElementById('visimisi-modal').classList.remove('hidden');
+        }
+        function closeVisiMisiModal() { document.getElementById('visimisi-modal').classList.add('hidden'); }
+
+        // 7. Proses Pemilihan (Voting)
+        function initiateVote(paslonId) {
+            if (!currentVoter) {
+                showToast('Verifikasi Diperlukan', 'Silakan klik tombol "Verifikasi Data Pemilih" terlebih dahulu sebelum mencoblos.', 'info');
+                openVoterModal();
+                return;
+            }
+            if (currentVoter.hasVoted) {
+                showToast('Akses Ditolak', 'Anda sudah menggunakan hak suara Anda.', 'error');
+                return;
+            }
+
+            const p = KANDIDAT_LIST.find(item => item.id === paslonId);
+            selectedPaslonId = paslonId;
+            document.getElementById('confirm-paslon-name').innerText = `Paslon ${p.nomor} (${p.ketua} & ${p.wakil})`;
+            document.getElementById('confirm-vote-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() { document.getElementById('confirm-vote-modal').classList.add('hidden'); }
+
+        function executeVote() {
+            if (!currentVoter || !selectedPaslonId) return;
+
+            const btn = document.getElementById('btn-final-vote');
+            btn.innerText = 'Mengirim Suara...';
+            btn.disabled = true;
+
+            const batch = db.batch();
+
+            // 1. Catat identitas pemilih agar tidak bisa memilih dua kali (Kerahasiaan pilihan tetap dijaga terpisah)
+            const voterRef = db.collection('pilketos_voters').doc(currentVoter.docId);
+            batch.set(voterRef, {
+                name: currentVoter.name,
+                role: currentVoter.role,
+                kelas: currentVoter.kelas,
+                votedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 2. Masukkan surat suara anonim ke kotak suara 'pilketos_ballots'
+            const ballotRef = db.collection('pilketos_ballots').doc();
+            batch.set(ballotRef, {
+                paslonId: selectedPaslonId,
+                voterRole: currentVoter.role,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            batch.commit().then(() => {
+                currentVoter.hasVoted = true;
+                updateVoterUI();
+                renderCandidates();
+                closeConfirmModal();
+                showToast('Suara Berhasil Dikirim!', 'Terima kasih telah berpartisipasi dalam Pemilihan Ketua OSIS SMAN 2 Bayan.', 'success');
+                switchPilketosTab('result');
+            }).catch(err => {
+                console.error("Vote Error:", err);
+                closeConfirmModal();
+                showToast('Gagal Menyimpan Suara', 'Terjadi gangguan jaringan. Silakan coba beberapa saat lagi.', 'error');
+            }).finally(() => {
+                btn.innerText = 'Ya, Pilih Sekarang';
+                btn.disabled = false;
+            });
+        }
+
+        // 8. Tab Navigasi & Quick Count Real-Time
+        function switchPilketosTab(tab) {
+            const secVote = document.getElementById('section-vote');
+            const secResult = document.getElementById('section-result');
+            const btnVote = document.getElementById('tab-vote');
+            const btnResult = document.getElementById('tab-result');
+
+            if (tab === 'vote') {
+                secVote.classList.remove('hidden');
+                secResult.classList.add('hidden');
+                btnVote.className = 'flex-1 py-2.5 px-4 rounded-lg text-sm font-bold bg-[#4318ff] text-white transition';
+                btnResult.className = 'flex-1 py-2.5 px-4 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition';
+            } else {
+                secVote.classList.add('hidden');
+                secResult.classList.remove('hidden');
+                btnResult.className = 'flex-1 py-2.5 px-4 rounded-lg text-sm font-bold bg-[#4318ff] text-white transition';
+                btnVote.className = 'flex-1 py-2.5 px-4 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition';
+            }
+        }
+
+        // Mendengarkan perubahan suara masuk secara real-time
+        function listenQuickCount() {
+            db.collection('pilketos_ballots').onSnapshot(snapshot => {
+                const totalVotes = snapshot.size;
+                document.getElementById('total-votes-count').innerText = totalVotes;
+
+                // Hitung suara per paslon
+                const counts = {};
+                KANDIDAT_LIST.forEach(p => counts[p.id] = 0);
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (counts[data.paslonId] !== undefined) {
+                        counts[data.paslonId]++;
+                    }
+                });
+
+                const container = document.getElementById('results-container');
+                container.innerHTML = '';
+
+                KANDIDAT_LIST.forEach(p => {
+                    const suara = counts[p.id];
+                    const persen = totalVotes > 0 ? ((suara / totalVotes) * 100).toFixed(1) : 0;
+
+                    container.innerHTML += `
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <img src="${p.foto}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                                    <div>
+                                        <span class="text-xs font-extrabold text-[#4318ff]">PASLON ${p.nomor}</span>
+                                        <h4 class="text-sm font-bold text-slate-800">${p.ketua} & ${p.wakil}</h4>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-[#2b3674]">${persen}%</span>
+                                    <p class="text-xs text-slate-500 font-semibold">${suara} Suara</p>
+                                </div>
+                            </div>
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r ${p.warna} h-3 rounded-full transition-all duration-500" style="width: ${persen}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }, err => {
+                console.error("Error Quick Count:", err);
+            });
+        }
+
+        // Inisialisasi Halaman saat Dimuat
+        window.onload = function() {
+            renderCandidates();
+            listenQuickCount();
+        };
+    </script>
+</body>
+</html>
