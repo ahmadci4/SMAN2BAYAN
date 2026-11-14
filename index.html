@@ -15,7 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
-    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px;">
+    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <img src="images/logo-sman2bayan.png" alt="Logo SMAN 2 Bayan" style="width: 45px; height: 45px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/45'">
             <div>
@@ -23,7 +23,9 @@
                 <p style="font-size: 0.75rem; margin: 0; color: #718096;"><i class="fa-solid fa-location-dot"></i> Dusun Ancak, Desa Karang Bajo, Kec. Bayan 83354</p>
             </div>
         </div>
-        <div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <a href="pilketos.html" style="background: #05cd99; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-check-to-slot"></i> PILKETOS</a>
+            <a href="guru.html" style="background: #f1f5f9; color: #2b3674; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; text-decoration: none; font-weight: bold;"><i class="fa-solid fa-lock"></i> Guru</a>
             <button onclick="openProfilSiswaModal()" style="background: #4318ff; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-user-gear"></i> Profil Saya</button>
         </div>
     </header>
@@ -45,6 +47,8 @@
     <nav class="bottom-nav">
         <button onclick="renderHome()" class="active"><i class="fa-solid fa-house"></i><br>Beranda</button>
         <button onclick="renderProfilGuru()"><i class="fa-solid fa-chalkboard-user"></i><br>Profil Guru</button>
+        <button onclick="window.location.href='pilketos.html'" style="color: #05cd99;"><i class="fa-solid fa-check-to-slot"></i><br>PILKETOS</button>
+        <button onclick="window.location.href='guru.html'"><i class="fa-solid fa-user-tie"></i><br>Panel Guru</button>
     </nav>
 
     <!-- Modal Profil Siswa & Login -->
