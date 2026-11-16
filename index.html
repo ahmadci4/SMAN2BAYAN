@@ -57,14 +57,14 @@
         .role-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 11px;
+            margin-top: 18px;
         }
         .role-btn {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 14px 18px;
+            gap: 14px;
+            padding: 13px 16px;
             border-radius: 14px;
             border: 2px solid #e2e8f0;
             background: #f8fafc;
@@ -78,13 +78,13 @@
             transform: translateY(-2px);
         }
         .role-icon {
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: white;
             flex-shrink: 0;
         }
@@ -129,14 +129,48 @@
         .menu-pill.active-home { background: #4318ff; color: white; }
         .menu-pill.mapel { background: #eef2ff; color: #4318ff; }
         .menu-pill.mapel:hover { background: #4318ff; color: white; }
+        .menu-pill.tendik { background: #f0fdf4; color: #15803d; }
+        .menu-pill.tendik:hover { background: #16a34a; color: white; }
         .menu-pill.pilketos { background: #ecfdf5; color: #059669; }
         .menu-pill.pilketos:hover { background: #05cd99; color: white; }
         .menu-pill.ekskul { background: #fffbeb; color: #d97706; }
         .menu-pill.ekskul:hover { background: #f59e0b; color: white; }
-        .menu-pill.profil { background: #f1f5f9; color: #2b3674; }
-        .menu-pill.profil:hover { background: #cbd5e1; }
-        .menu-pill.panel-guru { background: #fef2f2; color: #dc2626; }
-        .menu-pill.panel-guru:hover { background: #dc2626; color: white; }
+
+        /* Carousel Hero Banner */
+        .hero-carousel {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 240px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            background: #1e1b4b;
+        }
+        .carousel-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+        }
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            background: rgba(255,255,255,0.22);
+            backdrop-filter: blur(4px);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .carousel-btn:hover { background: rgba(67,24,255,0.85); }
 
         /* Statistik & Profil Sekolah Grid */
         .school-about-card {
@@ -147,15 +181,9 @@
             box-shadow: 0 4px 18px rgba(0,0,0,0.03);
             border: 1px solid #eef2f6;
         }
-        .info-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
-        }
         .info-item-box {
             background: #f8fafc;
-            padding: 12px 14px;
+            padding: 14px;
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -187,6 +215,53 @@
             font-weight: 600;
         }
 
+        /* Kartu Struktur & Daftar Guru */
+        .tendik-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 15px;
+        }
+        .tendik-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .tendik-card:hover {
+            transform: translateY(-3px);
+            border-color: #4318ff;
+            box-shadow: 0 10px 20px rgba(67,24,255,0.1);
+        }
+
+        /* Sosial Media Bar */
+        .sosmed-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .sosmed-btn {
+            flex: 1;
+            min-width: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .sosmed-btn:hover { opacity: 0.9; }
+
         /* Animasi Skeleton Loading */
         .skeleton-box {
             background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
@@ -201,7 +276,7 @@
             100% { background-position: -200% 0; }
         }
 
-        /* Tema Dark Mode (Mode Gelap) */
+        /* Tema Dark Mode */
         body.dark-mode {
             background-color: #0b1437 !important;
             color: #e2e8f0 !important;
@@ -211,6 +286,7 @@
         body.dark-mode .school-about-card,
         body.dark-mode .detail-box,
         body.dark-mode .material-item,
+        body.dark-mode .tendik-card,
         body.dark-mode .modal-content {
             background-color: #111c44 !important;
             color: #ffffff !important;
@@ -229,16 +305,12 @@
         body.dark-mode p, body.dark-mode .stat-lbl {
             color: #a3aed1 !important;
         }
-        body.dark-mode .skeleton-box {
-            background: linear-gradient(90deg, #1b254b 25%, #2b3674 50%, #1b254b 75%);
-            background-size: 200% 100%;
-        }
     </style>
 </head>
 <body>
 
     <!-- ==========================================
-         GERBANG LOGIN AWAL (3 PILIHAN PERAN)
+         GERBANG LOGIN AWAL (4 PILIHAN PERAN)
          ========================================== -->
     <div id="login-gate-screen">
         <div class="login-card">
@@ -249,13 +321,23 @@
 
             <!-- Langkah 1: Pilih Peran -->
             <div id="role-selection-box" class="role-grid">
-                <button class="role-btn" onclick="pilihPeranLogin('guru')">
-                    <div class="role-icon" style="background: linear-gradient(135deg, #4318ff, #290bb4);">
-                        <i class="fa-solid fa-user-tie"></i>
+                <button class="role-btn" onclick="pilihPeranLogin('operator')">
+                    <div class="role-icon" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+                        <i class="fa-solid fa-shield-halved"></i>
                     </div>
                     <div>
-                        <div style="font-weight: 800; font-size: 0.95rem; color: #2b3674;">Guru / Kepsek / Staf</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">Masuk dengan Email / NIP / Nama ID</div>
+                        <div style="font-weight: 800; font-size: 0.92rem; color: #2b3674;">Admin / Operator Sekolah</div>
+                        <div style="font-size: 0.74rem; color: #64748b;">Kelola pengumuman, struktur guru & database siswa</div>
+                    </div>
+                </button>
+
+                <button class="role-btn" onclick="pilihPeranLogin('guru')">
+                    <div class="role-icon" style="background: linear-gradient(135deg, #4318ff, #290bb4);">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.92rem; color: #2b3674;">Guru Mata Pelajaran</div>
+                        <div style="font-size: 0.74rem; color: #64748b;">Kelola materi, nilai tugas & data siswa kelas</div>
                     </div>
                 </button>
 
@@ -264,8 +346,8 @@
                         <i class="fa-solid fa-user-graduate"></i>
                     </div>
                     <div>
-                        <div style="font-weight: 800; font-size: 0.95rem; color: #2b3674;">Siswa / Siswi</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">Masuk dengan Nama Asli & Sandi Siswa</div>
+                        <div style="font-weight: 800; font-size: 0.92rem; color: #2b3674;">Siswa / Siswi</div>
+                        <div style="font-size: 0.74rem; color: #64748b;">Masuk menggunakan NIS & Password dari Guru</div>
                     </div>
                 </button>
 
@@ -274,80 +356,72 @@
                         <i class="fa-solid fa-door-open"></i>
                     </div>
                     <div>
-                        <div style="font-weight: 800; font-size: 0.95rem; color: #2b3674;">Tamu / Pengunjung</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">Langsung masuk ke Beranda tanpa password</div>
+                        <div style="font-weight: 800; font-size: 0.92rem; color: #2b3674;">Tamu / Pengunjung</div>
+                        <div style="font-size: 0.74rem; color: #64748b;">Lihat informasi sekolah tanpa akun</div>
                     </div>
                 </button>
             </div>
 
-            <!-- Langkah 2A: Form Login / Daftar Guru, Kepsek & Staf -->
-            <div id="form-login-guru" style="display: none; text-align: left; margin-top: 20px;">
+            <!-- Langkah 2A: Form Login Admin / Operator / Guru -->
+            <div id="form-login-guru" style="display: none; text-align: left; margin-top: 18px;">
                 <button onclick="kembaliPilihPeran()" style="background: none; border: none; color: #4318ff; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-bottom: 12px; padding: 0;">
                     <i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk
                 </button>
-                <div style="background: #eef2ff; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #3730a3; line-height: 1.4;">
-                    <strong>Login Guru / Kepsek / Staf:</strong> Gunakan Email, NIP, atau Nama ID. Password wajib minimal 8 karakter dan kombinasi <strong>huruf besar, huruf kecil, serta angka/simbol</strong>.
+                <div id="login-staff-banner" style="background: #eef2ff; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #3730a3; line-height: 1.4;">
+                    <strong>Login Guru:</strong> Gunakan Email, NIP, atau Nama ID yang terdaftar.
                 </div>
 
                 <label style="font-size: 0.8rem; font-weight: 700;">ID (Email / NIP / Nama ID):</label>
-                <input type="text" id="login-guru-id" class="form-input" placeholder="Contoh: Rianti, S.Pd. atau email@gmail.com">
+                <input type="text" id="login-guru-id" class="form-input" placeholder="Masukkan Email atau ID Anda">
 
                 <label style="font-size: 0.8rem; font-weight: 700;">Password:</label>
                 <div style="position: relative; margin-bottom: 12px;">
-                    <input type="password" id="login-guru-pass" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan#2026">
+                    <input type="password" id="login-guru-pass" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Masukkan Password">
                     <button type="button" onclick="togglePasswordVisibility('login-guru-pass', 'eye-guru')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
                         <i id="eye-guru" class="fa-solid fa-eye"></i>
                     </button>
                 </div>
 
                 <div id="register-guru-extra" style="display: none;">
-                    <label style="font-size: 0.8rem; font-weight: 700;">Jabatan / Mata Pelajaran (Untuk Akun Baru):</label>
-                    <input type="text" id="reg-guru-jabatan" class="form-input" placeholder="Contoh: Guru Fisika / Kepala Sekolah / Staf TU">
+                    <label style="font-size: 0.8rem; font-weight: 700;">Nama Lengkap & Gelar:</label>
+                    <input type="text" id="reg-guru-nama-lengkap" class="form-input" placeholder="Contoh: Ahmad Yani, S.Kom">
+                    <label style="font-size: 0.8rem; font-weight: 700;">Jabatan / Mata Pelajaran:</label>
+                    <input type="text" id="reg-guru-jabatan" class="form-input" placeholder="Contoh: Operator Sekolah / Guru Fisika">
                 </div>
 
                 <button id="btn-submit-guru" onclick="prosesLoginGuru()" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 8px;">Masuk Sekarang</button>
-                <button onclick="toggleDaftarGuru()" id="btn-toggle-reg-guru" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Belum punya akun? Daftar ID Guru/Staf</button>
+                <button onclick="toggleDaftarGuru()" id="btn-toggle-reg-guru" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Belum punya akun? Daftar Akun Baru</button>
             </div>
 
-            <!-- Langkah 2B: Form Login / Daftar Siswa -->
-            <div id="form-login-siswa" style="display: none; text-align: left; margin-top: 20px;">
+            <!-- Langkah 2B: Form Login Siswa (Hanya Login - Akun Dibuat oleh Guru/Operator) -->
+            <div id="form-login-siswa" style="display: none; text-align: left; margin-top: 18px;">
                 <button onclick="kembaliPilihPeran()" style="background: none; border: none; color: #059669; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-bottom: 12px; padding: 0;">
                     <i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk
                 </button>
                 <div style="background: #ecfdf5; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #065f46; line-height: 1.4;">
-                    <strong>Login Siswa:</strong> Gunakan <strong>Nama Asli</strong> dan Password siswa (minimal 8 karakter, kombinasi <strong>huruf besar, huruf kecil, dan angka</strong>, contoh: <code>Siswa2026</code>).
+                    <strong>Login Siswa:</strong> Masukkan <strong>NIS (Nomor Induk Siswa)</strong> atau Nama Lengkap beserta <strong>Password</strong> yang telah dibagikan oleh Guru / Operator Sekolah.
                 </div>
 
-                <label style="font-size: 0.8rem; font-weight: 700;">ID (Nama Asli Siswa):</label>
-                <input type="text" id="login-siswa-nama" class="form-input" placeholder="Ketik Nama Lengkap Asli Anda">
+                <label style="font-size: 0.8rem; font-weight: 700;">NIS atau Nama Lengkap Siswa:</label>
+                <input type="text" id="login-siswa-nama" class="form-input" placeholder="Contoh: 2026001 atau Nama Siswa">
 
-                <label style="font-size: 0.8rem; font-weight: 700;">Password / Sandi Siswa:</label>
-                <div style="position: relative; margin-bottom: 12px;">
-                    <input type="password" id="login-siswa-nis" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan1234">
+                <label style="font-size: 0.8rem; font-weight: 700;">Password Siswa (Dari Guru/Operator):</label>
+                <div style="position: relative; margin-bottom: 14px;">
+                    <input type="password" id="login-siswa-nis" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Masukkan Password dari Guru">
                     <button type="button" onclick="togglePasswordVisibility('login-siswa-nis', 'eye-siswa')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
                         <i id="eye-siswa" class="fa-solid fa-eye"></i>
                     </button>
                 </div>
 
-                <div id="register-siswa-extra" style="display: none;">
-                    <label style="font-size: 0.8rem; font-weight: 700;">Kelas (Untuk Pendaftaran Baru):</label>
-                    <select id="reg-siswa-kelas" class="form-input">
-                        <option value="X.A">Kelas X.A</option><option value="X.B">Kelas X.B</option><option value="X.C">Kelas X.C</option><option value="X.D">Kelas X.D</option>
-                        <option value="XI.A">Kelas XI.A</option><option value="XI.B">Kelas XI.B</option><option value="XI.C">Kelas XI.C</option><option value="XI.D">Kelas XI.D</option>
-                        <option value="XII.A">Kelas XII.A</option><option value="XII.B">Kelas XII.B</option><option value="XII.C">Kelas XII.C</option><option value="XII.D">Kelas XII.D</option>
-                    </select>
-                </div>
-
-                <button id="btn-submit-siswa" onclick="prosesLoginSiswa()" style="width: 100%; background: #05cd99; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px;">Masuk Sebagai Siswa</button>
-                <button onclick="toggleDaftarSiswa()" id="btn-toggle-reg-siswa" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Belum terdaftar? Buat Akun Siswa</button>
+                <button id="btn-submit-siswa" onclick="prosesLoginSiswa()" style="width: 100%; background: #05cd99; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;">Masuk Sebagai Siswa</button>
             </div>
         </div>
     </div>
 
     <!-- ==========================================
-         HEADER UTAMA APLIKASI
+         HEADER UTAMA APLIKASI (POJOK KANAN: PROFIL USER & AKSES DASHBOARD GURU/OPERATOR)
          ========================================== -->
-    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; flex-wrap: wrap; gap: 10px; background: white;">
+    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; flex-wrap: wrap; gap: 10px; background: white;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <img src="images/logo-sman2bayan.png" alt="Logo SMAN 2 Bayan" style="width: 46px; height: 46px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/46'">
             <div>
@@ -355,26 +429,34 @@
                 <p style="font-size: 0.75rem; margin: 2px 0 0 0; color: #718096;"><i class="fa-solid fa-location-dot"></i> Ancak, Kec. Bayan, Kab. Lombok Utara, NTB 83354</p>
             </div>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <!-- Tombol Dashboard Khusus muncul otomatis hanya jika Guru atau Operator yang login -->
+            <a id="btn-dashboard-staff" href="guru.html" style="display: none; background: #4318ff; color: white; text-decoration: none; padding: 7px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-sliders"></i> Ruang Kerja Guru/Operator
+            </a>
+
             <button onclick="toggleDarkMode()" id="btn-dark-mode" style="background: #f1f5f9; color: #2b3674; border: none; padding: 8px 11px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 700;" title="Ganti Mode Terang/Gelap"><i class="fa-solid fa-moon"></i></button>
-            <span id="user-badge-status" style="background: #eef2ff; color: #4318ff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;">Tamu</span>
+            
+            <!-- Tombol Profil User Pojok Kanan -->
+            <button onclick="openProfilSayaModal()" id="user-badge-status" style="background: #eef2ff; color: #4318ff; border: 1px solid #c7d2fe; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Klik untuk melihat profil akun Anda">
+                <i class="fa-solid fa-circle-user"></i> Tamu
+            </button>
+            
             <button onclick="keluarAkun()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 700;" title="Ganti Akun / Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
         </div>
     </header>
 
     <!-- ==========================================
-         MENU BAR SEJAJAR DI LUAR
+         NAVBAR UTAMA BERSIH (TANPA PROFIL GURU, PROFIL SISWA & PANEL GURU)
          ========================================== -->
     <nav class="top-menu-bar">
-        <a href="kartu-siswa.html" class="menu-pill" style="background: #e0e7ff; color: #3730a3;"><i class="fa-solid fa-id-card"></i> Kartu Pelajar</a>
-        <button id="btn-install-pwa" onclick="installAplikasiHP()" class="menu-pill" style="display: none; background: #05cd99; color: white;"><i class="fa-solid fa-mobile-screen-button"></i> Install App</button>
         <button onclick="renderHome()" class="menu-pill active-home" id="nav-home"><i class="fa-solid fa-house"></i> Beranda</button>
         <button onclick="renderDaftarMapel()" class="menu-pill mapel" id="nav-mapel"><i class="fa-solid fa-book-open"></i> Mata Pelajaran</button>
+        <button onclick="renderStrukturGuruTendik()" class="menu-pill tendik" id="nav-tendik"><i class="fa-solid fa-users-rectangle"></i> Guru & Tenaga Kependidikan</button>
         <a href="pilketos.html" class="menu-pill pilketos"><i class="fa-solid fa-check-to-slot"></i> PILKETOS</a>
         <a href="ekskul.html" class="menu-pill ekskul"><i class="fa-solid fa-trophy"></i> Ekskul</a>
-        <button onclick="renderProfilGuru()" class="menu-pill profil" id="nav-guru"><i class="fa-solid fa-chalkboard-user"></i> Profil Guru</button>
-        <button onclick="openProfilSayaModal()" class="menu-pill profil"><i class="fa-solid fa-user-gear"></i> Profil Saya</button>
-        <a href="guru.html" class="menu-pill panel-guru"><i class="fa-solid fa-lock"></i> Panel Guru</a>
+        <a href="kartu-siswa.html" class="menu-pill" style="background: #e0e7ff; color: #3730a3;"><i class="fa-solid fa-id-card"></i> Kartu Pelajar</a>
+        <button id="btn-install-pwa" onclick="installAplikasiHP()" class="menu-pill" style="display: none; background: #05cd99; color: white;"><i class="fa-solid fa-mobile-screen-button"></i> Install App</button>
     </nav>
 
     <!-- ==========================================
@@ -384,7 +466,7 @@
         <!-- Konten dirender oleh script.js -->
     </main>
 
-    <!-- Tombol WhatsApp Mengapung Guru -->
+    <!-- Tombol WhatsApp Mengapung (Hanya muncul saat masuk ke halaman Profil Guru) -->
     <div id="floating-wa-container"></div>
 
     <!-- Footer Sekolah -->
@@ -394,49 +476,67 @@
         <p style="font-size: 0.75rem; color: #64748b;">&copy; 2026 Ahmad Yani, S.Kom &mdash; All Rights Reserved.</p>
     </footer>
 
-    <!-- Modal Edit Profil & Ganti Sandi Pengguna (Siswa / Guru / Staf) -->
+    <!-- Modal Profil User yang Sedang Login (Pojok Kanan Atas) -->
     <div id="user-profile-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 420px; max-height: 90vh; overflow-y: auto;">
-            <h3 style="color: #2b3674; margin-bottom: 5px;">Edit Profil & Keamanan Akun</h3>
-            <p id="modal-prof-role-info" style="font-size: 0.8rem; color: #4318ff; font-weight: 700; margin-bottom: 15px;">Perbarui data profil akun Anda</p>
-            
-            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Nama Lengkap / ID:</label>
-            <input type="text" id="edit-prof-nama" class="form-input">
-            
-            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;" id="lbl-prof-sub">Kelas / Jabatan:</label>
-            <input type="text" id="edit-prof-sub" class="form-input">
-
-            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Email Kontak:</label>
-            <input type="email" id="edit-prof-email" class="form-input" placeholder="email@contoh.com">
-
-            <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Bio / Moto Singkat:</label>
-            <textarea id="edit-prof-bio" rows="2" class="form-input" placeholder="Tulis moto belajar Anda..."></textarea>
-
-            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
-            <label style="font-size: 0.8rem; font-weight: bold; color: #4318ff;"><i class="fa-solid fa-key"></i> Ganti Password Baru (Kosongkan jika tidak diubah):</label>
-            <div style="position: relative; margin-bottom: 12px; margin-top: 4px;">
-                <input type="password" id="edit-prof-pass-baru" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Min. 8 karakter (Huruf Besar, Kecil & Angka)">
-                <button type="button" onclick="togglePasswordVisibility('edit-prof-pass-baru', 'eye-prof-pass')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
-                    <i id="eye-prof-pass" class="fa-solid fa-eye"></i>
-                </button>
+        <div class="modal-content" style="max-width: 430px; max-height: 90vh; overflow-y: auto;">
+            <div style="text-align: center; margin-bottom: 14px;">
+                <img id="modal-prof-foto" src="https://ui-avatars.com/api/?name=User&background=4318ff&color=fff" style="width: 82px; height: 82px; border-radius: 50%; object-fit: cover; border: 3px solid #4318ff; margin-bottom: 8px;">
+                <h3 id="modal-prof-judul" style="color: #2b3674; margin: 0;">Profil Pengguna</h3>
+                <p id="modal-prof-role-info" style="font-size: 0.8rem; color: #4318ff; font-weight: 700; margin: 4px 0 0 0;"></p>
             </div>
 
-            <button onclick="simpanEditProfilUser()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:8px;">Simpan Perubahan</button>
-            <button onclick="closeProfilSayaModal()" class="btn-cancel" style="width:100%; padding:8px;">Tutup</button>
+            <!-- Tampilan Read-Only untuk Siswa (Data pokok hanya bisa diedit Guru/Operator) -->
+            <div id="view-profil-siswa-readonly" style="display: none;">
+                <div style="background: #fef3c7; color: #92400e; padding: 10px 12px; border-radius: 10px; font-size: 0.78rem; margin-bottom: 12px;">
+                    <i class="fa-solid fa-lock"></i> Data pokok siswa (Nama, NIS, Jenis Kelamin, Kelas, Foto, dan Password) dikelola oleh <strong>Guru / Operator Sekolah</strong>. Hubungi guru jika terdapat kesalahan data atau ingin mengganti sandi.
+                </div>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.85rem; line-height: 1.8;">
+                    <div><strong>Nama Lengkap:</strong> <span id="ro-siswa-nama">-</span></div>
+                    <div><strong>NIS:</strong> <span id="ro-siswa-nis">-</span></div>
+                    <div><strong>Jenis Kelamin:</strong> <span id="ro-siswa-jk">-</span></div>
+                    <div><strong>Kelas:</strong> <span id="ro-siswa-kelas">-</span></div>
+                </div>
+            </div>
+
+            <!-- Tampilan Edit untuk Guru / Operator -->
+            <div id="edit-profil-staff-form" style="display: none;">
+                <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Nama Lengkap & Gelar:</label>
+                <input type="text" id="edit-prof-nama" class="form-input">
+                
+                <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Jabatan / Mata Pelajaran:</label>
+                <input type="text" id="edit-prof-sub" class="form-input">
+
+                <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Email Kontak:</label>
+                <input type="email" id="edit-prof-email" class="form-input">
+
+                <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Bio / Moto:</label>
+                <textarea id="edit-prof-bio" rows="2" class="form-input"></textarea>
+
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
+                <label style="font-size: 0.8rem; font-weight: bold; color: #4318ff;"><i class="fa-solid fa-key"></i> Ganti Password Baru (Kosongkan jika tidak diubah):</label>
+                <div style="position: relative; margin-bottom: 12px; margin-top: 4px;">
+                    <input type="password" id="edit-prof-pass-baru" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Min. 8 karakter (Huruf Besar, Kecil & Angka)">
+                    <button type="button" onclick="togglePasswordVisibility('edit-prof-pass-baru', 'eye-prof-pass')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                        <i id="eye-prof-pass" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <button onclick="simpanEditProfilUser()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:8px;">Simpan Perubahan</button>
+            </div>
+
+            <button onclick="closeProfilSayaModal()" class="btn-cancel" style="width:100%; padding:9px; margin-top: 8px;">Tutup</button>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
-        // Daftarkan Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(() => {});
             });
         }
 
-        // Tangkap Event Install Aplikasi ke Layar Utama HP
-        let deferredPrompt; 
+        let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
