@@ -184,6 +184,57 @@
             font-weight: 600;
         }
     </style>
+    <!-- SweetAlert2 (Notifikasi Pop-up Modern Pengganti Alert Biasa) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Animasi Skeleton Loading */
+        .skeleton-box {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 14px;
+            height: 68px;
+            margin-bottom: 12px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Tema Dark Mode (Mode Gelap) */
+        body.dark-mode {
+            background-color: #0b1437 !important;
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode .app-header,
+        body.dark-mode .top-menu-bar,
+        body.dark-mode .school-about-card,
+        body.dark-mode .detail-box,
+        body.dark-mode .material-item,
+        body.dark-mode .modal-content {
+            background-color: #111c44 !important;
+            color: #ffffff !important;
+            border-color: #1b254b !important;
+        }
+        body.dark-mode .stat-box,
+        body.dark-mode .info-item-box,
+        body.dark-mode .form-input {
+            background-color: #1b254b !important;
+            color: #ffffff !important;
+            border-color: #2b3674 !important;
+        }
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode strong {
+            color: #ffffff !important;
+        }
+        body.dark-mode p, body.dark-mode .stat-lbl {
+            color: #a3aed1 !important;
+        }
+        body.dark-mode .skeleton-box {
+            background: linear-gradient(90deg, #1b254b 25%, #2b3674 50%, #1b254b 75%);
+            background-size: 200% 100%;
+        }
+    </style>
 </head>
 <body>
 
@@ -294,6 +345,11 @@
         <div style="display: flex; gap: 8px; align-items: center;">
             <span id="user-badge-status" style="background: #eef2ff; color: #4318ff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;">Tamu</span>
             <button onclick="keluarAkun()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 700;" title="Ganti Akun / Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+            <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="toggleDarkMode()" id="btn-dark-mode" style="background: #f1f5f9; color: #2b3674; border: none; padding: 8px 11px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 700;" title="Ganti Mode Terang/Gelap"><i class="fa-solid fa-moon"></i></button>
+            <span id="user-badge-status" style="background: #eef2ff; color: #4318ff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;">Tamu</span>
+            <button onclick="keluarAkun()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 700;" title="Ganti Akun / Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+        </div>
         </div>
     </header>
 
