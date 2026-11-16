@@ -36,6 +36,7 @@
                 <button onclick="switchTab('info')" id="tbtn-info" style="flex: 1; padding:10px; background:#8b5cf6;" class="btn-primary">Pengumuman</button>
                 <button onclick="switchTab('input')" id="tbtn-input" style="flex: 1; padding:10px;" class="btn-primary">Tambah Materi</button>
                 <button onclick="switchTab('list')" id="tbtn-list" style="flex: 1; padding:10px; background:#475569;" class="btn-primary">Daftar Materi</button>
+                <button onclick="switchTab('tugas')" id="tbtn-tugas" style="flex: 1; padding:10px; background:#ec4899;" class="btn-primary">Tugas & Nilai</button>
                 <button onclick="switchTab('profil')" id="tbtn-profil" style="flex: 1; padding:10px; background:#05cd99;" class="btn-primary">Edit Profil</button>
                 <button onclick="switchTab('notif')" id="tbtn-notif" style="flex: 1; padding:10px; background: #f2994a;" class="btn-primary">Diskusi <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 6px; font-size: 11px; display: none;">0</span></button>
                 <a href="absen.html" style="flex: 1; padding:10px; background: #0284c7; color: white; text-align: center; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 6px;"><i class="fa-solid fa-qrcode"></i> Absen QR</a>
@@ -137,6 +138,25 @@
 
             <!-- Tab 4: Diskusi & Balasan Guru -->
             <!-- Tab 5: Kelola Papan Pengumuman Sekolah -->
+            <!-- Tab 6: Pemeriksaan & Penilaian Tugas Siswa -->
+            <div id="tab-tugas" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 10px;">Tugas Masuk & Penilaian Siswa</h2>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Periksa link jawaban yang dikirim siswa dan berikan nilai (0–100) beserta catatan evaluasi.</p>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #a3aed1;">Filter Kelas:</label>
+                    <select id="filter-kelas-tugas" onchange="loadTugasSiswaGuru()" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <option value="SEMUA">Semua Kelas</option>
+                        <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                        <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                        <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                    </select>
+                </div>
+
+                <div id="daftar-tugas-siswa">
+                    <p style="color: grey; font-size: 0.85rem;">Memuat data tugas masuk...</p>
+                </div>
+            </div>
             <div id="tab-info" class="detail-box" style="display: none;">
                 <h2 style="color: #2b3674; margin-bottom: 15px;">Papan Pengumuman & Agenda Sekolah</h2>
                 
@@ -208,14 +228,82 @@
         });
 
         function switchTab(tab) {
-                    document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
-                    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
-                    document.getElementById('tab-profil').style.display = tab === 'profil' ? 'block' : 'none';
-                    document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
-                    document.getElementById('tab-info').style.display = tab === 'info' ? 'block' : 'none';
-                    if(tab === 'list') loadDaftarMateriGuru();
-                    if(tab === 'info') loadPengumumanGuru();
+            document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
+            document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
+            document.getElementById('tab-profil').style.display = tab === 'profil' ? 'block' : 'none';
+            document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
+            document.getElementById('tab-info').style.display = tab === 'info' ? 'block' : 'none';
+            document.getElementById('tab-tugas').style.display = tab === 'tugas' ? 'block' : 'none';
+            if(tab === 'list') loadDaftarMateriGuru();
+            if(tab === 'info') loadPengumumanGuru();
+            if(tab === 'tugas') loadTugasSiswaGuru();
+        }
+
+        function loadTugasSiswaGuru() {
+            const container = document.getElementById('daftar-tugas-siswa');
+            const filterKelas = document.getElementById('filter-kelas-tugas').value;
+            container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Memuat daftar tugas...</p>";
+
+            db.collection("pengumpulan_tugas").orderBy("waktuKumpul", "desc").get().then((snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Belum ada siswa yang mengumpulkan tugas.</p>";
+                    return;
                 }
+
+                let html = '';
+                let count = 0;
+                snapshot.forEach((doc) => {
+                    const t = doc.data();
+                    if (filterKelas !== "SEMUA" && t.kelas !== filterKelas) return;
+                    count++;
+
+                    const sudahDinilai = t.nilai !== null && t.nilai !== undefined && t.nilai !== "";
+                    const badgeStatus = sudahDinilai
+                        ? `<span style="background:#05cd99; color:white; font-size:0.75rem; padding:3px 8px; border-radius:6px; font-weight:bold;">Sudah Dinilai: ${t.nilai}</span>`
+                        : `<span style="background:#f59e0b; color:white; font-size:0.75rem; padding:3px 8px; border-radius:6px; font-weight:bold;">Belum Dinilai</span>`;
+
+                    html += `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; margin-bottom:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                                <div>
+                                    <span style="background:#4318ff; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${t.kelas}</span>
+                                    <strong style="color:#2b3674; margin-left:6px;">${t.namaSiswa}</strong>
+                                </div>
+                                ${badgeStatus}
+                            </div>
+                            <p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Materi/Bab:</strong> ${t.judulBab}</p>
+                            <p style="font-size:0.85rem; margin:6px 0;"><a href="${t.linkTugas}" target="_blank" style="color:#0284c7; font-weight:bold; text-decoration:underline;"><i class="fa-solid fa-up-right-from-square"></i> Buka File / Link Jawaban Siswa</a></p>
+                            ${t.catatanSiswa ? `<p style="font-size:0.82rem; color:#475569; background:white; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;"><em>"${t.catatanSiswa}"</em></p>` : ''}
+
+                            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                                <input type="number" id="nilai-${doc.id}" value="${sudahDinilai ? t.nilai : ''}" min="0" max="100" placeholder="Nilai (0-100)" style="width:115px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <input type="text" id="catatan-guru-${doc.id}" value="${t.catatanGuru || ''}" placeholder="Catatan evaluasi guru..." style="flex:1; min-width:160px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <button onclick="simpanNilaiTugas('${doc.id}')" style="background:#05cd99; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:0.85rem;">Simpan Nilai</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = count > 0 ? html : "<p style='color:grey; font-size:0.85rem;'>Tidak ada tugas untuk kelas yang dipilih.</p>";
+            });
+        }
+
+        function simpanNilaiTugas(docId) {
+            const nilaiVal = document.getElementById(`nilai-${docId}`).value.trim();
+            const catatanVal = document.getElementById(`catatan-guru-${docId}`).value.trim();
+
+            if (nilaiVal === "" || isNaN(nilaiVal) || Number(nilaiVal) < 0 || Number(nilaiVal) > 100) {
+                return alert("Harap masukkan angka nilai yang valid antara 0 sampai 100!");
+            }
+
+            db.collection("pengumpulan_tugas").doc(docId).update({
+                nilai: Number(nilaiVal),
+                catatanGuru: catatanVal
+            }).then(() => {
+                alert("Nilai dan catatan evaluasi berhasil disimpan!");
+                loadTugasSiswaGuru();
+            }).catch(err => alert("Gagal menyimpan nilai: " + err.message));
+        }
         
                 function tambahPengumuman() {
                     const kategori = document.getElementById('info-kategori').value;
