@@ -284,7 +284,8 @@ function renderHome() {
                 </div>
             </div>
         </div>
-
+        <!-- Papan Pengumuman Sekolah Dinamis -->
+        <div id="papan-pengumuman-home" style="margin-top: 20px;"></div>
         <h3 style="margin: 25px 0 15px 0; font-size: 1.15rem; color: #2b3674;">Semua Mata Pelajaran</h3>
         <div class="grid-container">
     `;
@@ -429,6 +430,48 @@ function renderMateri(kelas) {
         }
         html += `</div>`;
         contentDiv.innerHTML = html;
+        // ==========================================
+// 10. PAPAN PENGUMUMAN & AGENDA SEKOLAH
+// ==========================================
+function muatPengumumanHome() {
+    const wadah = document.getElementById('papan-pengumuman-home');
+    if (!wadah) return;
+
+    db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").limit(5).get().then((snapshot) => {
+        if (snapshot.empty) {
+            wadah.innerHTML = "";
+            return;
+        }
+
+        let html = `
+            <div class="school-about-card" style="margin-top: 0;">
+                <h3 style="margin:0 0 12px 0; font-size:1.05rem; color:#2b3674;"><i class="fa-solid fa-bullhorn" style="color:#f59e0b;"></i> Papan Pengumuman & Agenda Sekolah</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+        `;
+
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            let badgeBg = "#4318ff";
+            let borderCol = "#4318ff";
+            if (p.kategori === "PENTING") { badgeBg = "#dc2626"; borderCol = "#dc2626"; }
+            if (p.kategori === "KEGIATAN") { badgeBg = "#05cd99"; borderCol = "#05cd99"; }
+
+            html += `
+                <div class="info-item-box" style="flex-direction: column; align-items: flex-start; gap: 6px; border-left: 4px solid ${borderCol};">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <span style="background: ${badgeBg}; color: white; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 800;">${p.kategori}</span>
+                        <span style="font-size: 0.75rem; color: #64748b;"><i class="fa-regular fa-calendar"></i> ${p.tanggal || ''}</span>
+                    </div>
+                    <h4 style="margin: 2px 0 0 0; font-size: 0.95rem; color: #2b3674;">${p.judul}</h4>
+                    <p style="margin: 0; font-size: 0.84rem; color: #475569; line-height: 1.5; white-space: pre-wrap;">${p.isi}</p>
+                </div>
+            `;
+        });
+
+        html += `</div></div>`;
+        wadah.innerHTML = html;
+    }).catch(() => {});
+}
     }).catch(err => {
         console.error(err);
         contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi. Cek koneksi internet Anda.</p>`;
