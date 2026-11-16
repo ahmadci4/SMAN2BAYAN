@@ -45,7 +45,7 @@ let GURU_DATA = {
     foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
 };
 
-let currentUserSession = null; // Menyimpan sesi login lokal/Firebase
+let currentUserSession = null;
 let isRegisterGuruMode = false;
 let isRegisterSiswaMode = false;
 let currentMateriList = [];
@@ -108,14 +108,12 @@ function toggleDaftarSiswa() {
         : "Belum terdaftar? Buat Akun Siswa";
 }
 
-// Helper mengubah Nama ID / NIS menjadi format email internal Firebase jika bukan email
 function formatToAuthEmail(rawId, prefix) {
     if (rawId.includes('@')) return rawId.toLowerCase();
     const cleanId = rawId.toLowerCase().replace(/[^a-z0-9]/g, '');
     return `${prefix}_${cleanId}@sman2bayan.sch.id`;
 }
 
-// Proses Login / Daftar Guru, Kepsek & Staf
 function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
@@ -140,13 +138,11 @@ function prosesLoginGuru() {
                 selesaikanLogin(userData);
             });
         }).catch(() => {
-            // Jika gagal login, coba login langsung sebagai demo/lokal jika format valid
             alert("Akun tidak ditemukan atau password salah. Jika baru pertama kali masuk, silakan klik tombol 'Belum punya akun? Daftar ID Guru/Staf' di bawah.");
         });
     }
 }
 
-// Proses Login / Daftar Siswa
 function prosesLoginSiswa() {
     const nama = document.getElementById('login-siswa-nama').value.trim();
     const nis = document.getElementById('login-siswa-nis').value.trim();
@@ -167,7 +163,7 @@ function prosesLoginSiswa() {
     } else {
         auth.signInWithEmailAndPassword(authEmail, nis).then((cred) => {
             db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
-                const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, email: authEmail, bio: "" };
+                const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, nis: nis, email: authEmail, bio: "" };
                 selesaikanLogin(userData);
             });
         }).catch(() => {
@@ -176,7 +172,6 @@ function prosesLoginSiswa() {
     }
 }
 
-// Masuk Sebagai Tamu Tanpa Password
 function masukSebagaiTamu() {
     auth.signInAnonymously().catch(() => {});
     const guestData = { uid: "tamu", role: "Tamu", nama: "Tamu Pengunjung", sub: "Pengunjung Umum", email: "", bio: "" };
@@ -201,7 +196,6 @@ function keluarAkun() {
     }
 }
 
-// Cek sesi tersimpan saat halaman dimuat
 window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem("sman2bayan_session");
     if (saved) {
@@ -358,7 +352,6 @@ function renderKelas() {
     let html = `
         <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         
-        <!-- Kartu Profil Guru di Atas Pilihan Kelas -->
         <div style="background:white; padding:16px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:15px; border:1px solid #e2e8f0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.03);" onclick="renderProfilGuru()">
             <img src="${GURU_DATA.foto}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
             <div>
@@ -396,7 +389,6 @@ function renderKelas() {
 // 6. MENGAMBIL & MENAMPILKAN MATERI PELAJARAN
 // ==========================================
 function renderMateri(kelas) {
-    function renderMateri(kelas) {
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="skeleton-box" style="height: 82px;"></div>
@@ -671,6 +663,7 @@ function simpanEditProfilUser() {
     alert("Profil akun berhasil diperbarui!");
     closeProfilSayaModal();
 }
+
 // ==========================================
 // 9. FITUR DARK MODE & NOTIFIKASI MODERN (SWEETALERT2)
 // ==========================================
@@ -685,7 +678,6 @@ function toggleDarkMode() {
     }
 }
 
-// Aktifkan otomatis jika sebelumnya user memilih Dark Mode
 if (localStorage.getItem('sman2bayan_darkmode') === '1') {
     document.body.classList.add('dark-mode');
     window.addEventListener('DOMContentLoaded', () => {
@@ -694,16 +686,14 @@ if (localStorage.getItem('sman2bayan_darkmode') === '1') {
     });
 }
 
-// Ganti semua alert() kaku menjadi Pop-up Toast/Modal Modern otomatis
 window.alert = function(pesan) {
     if (typeof Swal !== 'undefined') {
-        const isSuccess = pesan.toLowerCase().includes('berhasil') || pesan.toLowerCase().includes('diperbarui');
+        const isSuccess = String(pesan).toLowerCase().includes('berhasil') || String(pesan).toLowerCase().includes('diperbarui');
         Swal.fire({
             text: pesan,
             icon: isSuccess ? 'success' : 'info',
             confirmButtonColor: '#4318ff',
-            confirmButtonText: 'Oke',
-            borderRadius: '16px'
+            confirmButtonText: 'Oke'
         });
     } else {
         console.log(pesan);
