@@ -487,14 +487,19 @@ function renderDetailMateriDinamis(kelas, index) {
     }
 
     let prHtml = '';
-    if (babData.pr && babData.pr.trim() !== "") {
-        prHtml = `
-            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
-                <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
-                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
-            </div>
-        `;
-    }
+        if (babData.pr && babData.pr.trim() !== "") {
+            prHtml = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
+                    <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
+                    <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
+                    
+                    <!-- Kotak Pengumpulan Tugas Online Siswa -->
+                    <div id="wadah-pengumpulan-tugas" style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #eab308;">
+                        <p style="font-size: 0.85rem; color: #713f12;">Memeriksa status pengumpulan tugas Anda...</p>
+                    </div>
+                </div>
+            `;
+        }
     
     const namaAktif = currentUserSession ? `${currentUserSession.nama} (${currentUserSession.sub})` : "Belum Login";
 
@@ -527,6 +532,9 @@ function renderDetailMateriDinamis(kelas, index) {
     `;
     
     listenDiskusi(babData.id);
+    if (babData.pr && babData.pr.trim() !== "") {
+        cekStatusTugasSiswa(babData.id, kelas, babData.bab);
+    }
 }
 
 // ==========================================
@@ -745,4 +753,79 @@ function muatPengumumanHome() {
         html += `</div></div>`;
         wadah.innerHTML = html;
     }).catch(() => {});
+}
+// ==========================================
+// 11. PENGUMPULAN TUGAS & CEK NILAI SISWA
+// ==========================================
+function cekStatusTugasSiswa(materiId, kelas, judulBab) {
+    const wadah = document.getElementById('wadah-pengumpulan-tugas');
+    if (!wadah) return;
+
+    if (!currentUserSession || currentUserSession.role !== "Siswa") {
+        wadah.innerHTML = `<p style="font-size:0.82rem; color:#856404; margin:0;"><i class="fa-solid fa-lock"></i> Masuk sebagai <strong>Siswa</strong> untuk mengumpulkan jawaban tugas dan melihat nilai.</p>`;
+        return;
+    }
+
+    const docId = `${materiId}_${currentUserSession.uid}`;
+    db.collection("pengumpulan_tugas").doc(docId).get().then((doc) => {
+        if (doc.exists) {
+            const d = doc.data();
+            const statusNilai = d.nilai !== null && d.nilai !== undefined && d.nilai !== ""
+                ? `<span style="background:#05cd99; color:white; padding:4px 10px; border-radius:6px; font-weight:800; font-size:0.85rem;">Nilai: ${d.nilai} / 100</span>`
+                : `<span style="background:#f59e0b; color:white; padding:4px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;">Menunggu Penilaian Guru</span>`;
+
+            const catatanGuruHtml = d.catatanGuru
+                ? `<div style="margin-top:8px; padding:8px 10px; background:#eff6ff; border-radius:6px; border-left:3px solid #4318ff; font-size:0.82rem; color:#1e3a8a;"><strong>Catatan Guru:</strong> ${d.catatanGuru}</div>`
+                : '';
+
+            wadah.innerHTML = `
+                <div style="background:white; padding:12px; border-radius:10px; border:1px solid #fde68a;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                        <strong style="color:#15803d; font-size:0.88rem;"><i class="fa-solid fa-circle-check"></i> Tugas Sudah Dikumpulkan</strong>
+                        ${statusNilai}
+                    </div>
+                    <p style="font-size:0.82rem; color:#475569; margin:4px 0;"><strong>Link Jawaban:</strong> <a href="${d.linkTugas}" target="_blank" style="color:#4318ff; text-decoration:underline; word-break:break-all;">${d.linkTugas}</a></p>
+                    ${d.catatanSiswa ? `<p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Catatan Anda:</strong> ${d.catatanSiswa}</p>` : ''}
+                    ${catatanGuruHtml}
+                </div>
+            `;
+        } else {
+            wadah.innerHTML = `
+                <div style="background:white; padding:12px; border-radius:10px; border:1px solid #fde68a;">
+                    <strong style="display:block; font-size:0.88rem; color:#2b3674; margin-bottom:8px;"><i class="fa-solid fa-paper-plane" style="color:#4318ff;"></i> Kumpulkan Jawaban Tugas Anda</strong>
+                    <input type="url" id="input-link-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Paste Link Google Drive / Foto Jawaban (https://...)">
+                    <input type="text" id="input-catatan-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Catatan tambahan untuk guru (opsional)...">
+                    <button onclick="kirimTugasSiswa('${materiId}', '${kelas}', '${judulBab.replace(/'/g, "\\'")}')" class="btn-primary" style="width:100%; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:700;">Kirim Jawaban Tugas</button>
+                </div>
+            `;
+        }
+    }).catch(() => {
+        wadah.innerHTML = `<p style="color:red; font-size:0.8rem;">Gagal memuat status tugas.</p>`;
+    });
+}
+
+function kirimTugasSiswa(materiId, kelas, judulBab) {
+    const linkTugas = document.getElementById('input-link-tugas').value.trim();
+    const catatanSiswa = document.getElementById('input-catatan-tugas').value.trim();
+
+    if (!linkTugas) return alert("Harap tempelkan link jawaban tugas (Google Drive / dokumen)!");
+    if (!linkTugas.startsWith("http")) return alert("Link jawaban harus diawali dengan http:// atau https://");
+
+    const docId = `${materiId}_${currentUserSession.uid}`;
+    db.collection("pengumpulan_tugas").doc(docId).set({
+        materiId: materiId,
+        judulBab: judulBab,
+        kelas: kelas,
+        uidSiswa: currentUserSession.uid,
+        namaSiswa: currentUserSession.nama,
+        nisSiswa: currentUserSession.nis || "-",
+        linkTugas: linkTugas,
+        catatanSiswa: catatanSiswa,
+        nilai: null,
+        catatanGuru: "",
+        waktuKumpul: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert("Jawaban tugas berhasil dikirim ke guru!");
+        cekStatusTugasSiswa(materiId, kelas, judulBab);
+    }).catch(err => alert("Gagal mengirim tugas: " + err.message));
 }
