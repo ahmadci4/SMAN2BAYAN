@@ -396,8 +396,14 @@ function renderKelas() {
 // 6. MENGAMBIL & MENAMPILKAN MATERI PELAJARAN
 // ==========================================
 function renderMateri(kelas) {
-    contentDiv.innerHTML = `<button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-                            <h3 style="color:#a3aed1;">Mengambil materi dari server... <i class="fa-solid fa-spinner fa-spin"></i></h3>`;
+    function renderMateri(kelas) {
+    contentDiv.innerHTML = `
+        <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <div class="skeleton-box" style="height: 82px;"></div>
+        <div class="skeleton-box"></div>
+        <div class="skeleton-box"></div>
+        <div class="skeleton-box"></div>
+    `;
     
     db.collection("materi_pelajaran").where("mapel", "==", "Fisika").where("kelas", "==", kelas).get().then((querySnapshot) => {
         let html = `
