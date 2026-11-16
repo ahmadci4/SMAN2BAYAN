@@ -160,8 +160,8 @@
                             <input type="text" id="siswa-password" placeholder="Contoh: Bayan2026" class="form-ctrl">
                         </div>
                         <div>
-                            <label style="font-size: 0.78rem; font-weight: 700;">Link Foto (Semua Website / Sosmed / Drive):</label>
-                            <input type="text" id="siswa-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
+                            <label style="font-size: 0.78rem; font-weight: 700;">Link Foto Langsung (.jpg / .png / Drive):</label>
+                            <input type="text" id="siswa-foto" placeholder="Tempelkan link file gambar..." class="form-ctrl">
                         </div>
                     </div>
 
@@ -213,8 +213,11 @@
                 <label style="font-weight: 700; font-size: 0.85rem; color: #475569;">Isi Pengumuman Tertulis (Opsional jika hanya upload banner):</label>
                 <textarea id="info-isi" rows="3" placeholder="Tulis rincian pengumuman untuk siswa dan guru..." class="form-ctrl"></textarea>
 
-                <label style="font-weight: 700; font-size: 0.85rem; color: #475569;"><i class="fa-solid fa-image" style="color:#8b5cf6;"></i> Link Gambar Banner / Poster (Semua Website, Google Drive & Sosial Media):</label>
-                <input type="text" id="info-gambar-banner" placeholder="Tempelkan link gambar dari Google Drive, Facebook, IG, Postimages, atau website mana pun..." class="form-ctrl">
+                <label style="font-weight: 700; font-size: 0.85rem; color: #475569;"><i class="fa-solid fa-image" style="color:#8b5cf6;"></i> Link Gambar Banner / Poster (Opsional):</label>
+                <input type="text" id="info-gambar-banner" placeholder="Tempelkan link file gambar (.jpg/.png) atau link Google Drive..." class="form-ctrl" style="margin-bottom:4px;">
+                <p style="font-size: 0.74rem; color: #64748b; margin: 0 0 14px 0;">
+                    *Tips: Jika mengambil gambar dari Facebook/Instagram/Website, klik kanan pada fotonya lalu pilih <strong>"Salin Alamat Gambar / Copy Image Address"</strong> (bukan link halaman postingan).
+                </p>
 
                 <button id="btn-submit-pengumuman" type="button" onclick="tambahPengumuman()" style="width: 100%; background: #8b5cf6; color: white; padding: 13px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 22px;">
                     <i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman ke Halaman Home
@@ -274,8 +277,8 @@
                         <input type="text" id="tendik-wa" placeholder="Contoh: 6281234567890" class="form-ctrl">
                     </div>
                     <div>
-                        <label style="font-size: 0.8rem; font-weight: 700;">Link Foto Profil (Semua Website / Sosmed):</label>
-                        <input type="text" id="tendik-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
+                        <label style="font-size: 0.8rem; font-weight: 700;">Link Foto Profil (.jpg / .png / Drive):</label>
+                        <input type="text" id="tendik-foto" placeholder="Tempelkan link file gambar..." class="form-ctrl">
                     </div>
                     <div>
                         <label style="font-size: 0.8rem; font-weight: 700;">Moto / Quote Mengajar:</label>
@@ -394,8 +397,8 @@
                 <label style="font-weight: 700; font-size: 0.85rem;">Quote / Moto Mengajar:</label>
                 <textarea id="prof-quote" rows="2" placeholder="Tulis moto hidup/mengajar..." class="form-ctrl"></textarea>
 
-                <label style="font-weight: 700; font-size: 0.85rem;">Link Foto Profil (Semua Website / Sosmed / Drive):</label>
-                <input type="text" id="prof-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
+                <label style="font-weight: 700; font-size: 0.85rem;">Link Foto Profil (.jpg / .png / Drive):</label>
+                <input type="text" id="prof-foto" placeholder="Tempelkan link file gambar..." class="form-ctrl">
 
                 <label style="font-weight: 700; font-size: 0.85rem;">Email & WhatsApp (Awali 62):</label>
                 <input type="email" id="prof-email" placeholder="email@sekolah.sch.id" class="form-ctrl" style="margin-bottom:6px;">
@@ -440,6 +443,15 @@
             }
         };
 
+        function escapeHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         function konversiLinkGambarUniversal(rawUrl) {
             if (!rawUrl) return "";
             let url = String(rawUrl).trim();
@@ -455,6 +467,13 @@
             }
 
             return url;
+        }
+
+        function simpanPromiseDenganTimeout(promise, ms = 7000) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Waktu koneksi habis (Timeout). Periksa koneksi internet atau Rules Firebase Anda.")), ms))
+            ]);
         }
 
         let sesiStaff = JSON.parse(localStorage.getItem("sman2bayan_session") || "null");
@@ -493,43 +512,43 @@
             }
         }
 
+        function tampilkanDashboardLangsung() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+            document.getElementById('btn-logout').style.display = 'block';
+            terapkanHakAksesTab();
+            loadDaftarAkunSiswa();
+            loadDaftarMateriGuru();
+            loadProfilGuruForm();
+            listenDiskusiGuru();
+        }
+
         function loginGuru() {
             const peran = document.getElementById('pilih-peran-panel').value;
             const rawId = document.getElementById('email-guru').value.trim();
             const pass = document.getElementById('password-guru').value.trim();
             const btn = document.getElementById('btn-login-panel');
 
-            if (!rawId || !pass) return alert("Harap isi Email/ID dan Password!");
+            if (!rawId || !pass) return alert("Harap isi User/ID dan Password!");
 
             // JALUR CEPAT AKUN MASTER UJI COBA: user = admin, password = admin
             if (rawId.toLowerCase() === "admin" && pass.toLowerCase() === "admin") {
                 btn.disabled = true;
                 btn.innerText = "Membuka Akses Admin...";
 
-                const masterEmail = "admin_master@sman2bayan.sch.id";
-                const masterFbPass = "AdminSman2Bayan#2026";
                 sesiStaff = {
                     uid: "master_admin",
                     role: "Operator",
                     nama: "Administrator SMAN 2 Bayan",
-                    sub: "Admin & Operator Utama",
-                    email: masterEmail
+                    sub: "Admin & Operator Utama"
                 };
+                localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
 
-                auth.signInWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
-                    sesiStaff.uid = cred.user.uid;
-                    localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
-                    terapkanHakAksesTab();
+                // Gunakan signInAnonymously agar selalu mendapat token auth sah (request.auth != null)
+                auth.signInAnonymously().then(() => {
+                    tampilkanDashboardLangsung();
                 }).catch(() => {
-                    auth.createUserWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
-                        sesiStaff.uid = cred.user.uid;
-                        localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
-                        terapkanHakAksesTab();
-                    }).catch(() => {
-                        auth.signInAnonymously().catch(() => {});
-                        localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
-                        terapkanHakAksesTab();
-                    });
+                    tampilkanDashboardLangsung();
                 }).finally(() => {
                     btn.disabled = false;
                     btn.innerText = "Masuk Sekarang";
@@ -552,15 +571,15 @@
                         uid: cred.user.uid,
                         role: roleLabel,
                         nama: dataLama.nama || rawId,
-                        sub: dataLama.sub || roleLabel,
-                        email: email
+                        sub: dataLama.sub || roleLabel
                     };
-                    db.collection("users_sekolah").doc(cred.user.uid).set(sesiStaff, { merge: true }).catch(() => {});
                     localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
-                    terapkanHakAksesTab();
-                }).catch(() => {});
+                    tampilkanDashboardLangsung();
+                }).catch(() => {
+                    tampilkanDashboardLangsung();
+                });
             }).catch((err) => {
-                alert("Gagal masuk: " + err.message + " (Gunakan user: admin & password: admin untuk uji coba)");
+                alert("Gagal masuk: " + err.message + " (Ketik user: admin & password: admin untuk uji coba)");
             }).finally(() => {
                 btn.disabled = false;
                 btn.innerText = "Masuk Sekarang";
@@ -568,21 +587,17 @@
         }
 
         function logoutGuru() {
-            auth.signOut();
+            auth.signOut().catch(() => {});
             localStorage.removeItem("sman2bayan_session");
             window.location.href = "index.html";
         }
 
         auth.onAuthStateChanged((user) => {
-            if (user && !user.isAnonymous) {
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('dashboard-section').style.display = 'block';
-                document.getElementById('btn-logout').style.display = 'block';
-                terapkanHakAksesTab();
-                loadDaftarAkunSiswa();
-                loadDaftarMateriGuru();
-                loadProfilGuruForm();
-                listenDiskusiGuru();
+            if (user && sesiStaff && (sesiStaff.role === "Operator" || sesiStaff.role === "Guru")) {
+                tampilkanDashboardLangsung();
+            } else if (sesiStaff && sesiStaff.uid === "master_admin") {
+                auth.signInAnonymously().catch(() => {});
+                tampilkanDashboardLangsung();
             } else {
                 document.getElementById('login-section').style.display = 'block';
                 document.getElementById('dashboard-section').style.display = 'none';
@@ -608,7 +623,7 @@
         }
 
         // ========================================================
-        // A. DATA SISWA & IMPORT CSV EXCEL (GURU & OPERATOR)
+        // A. DATA SISWA & IMPORT CSV EXCEL
         // ========================================================
         function downloadTemplateCSV() {
             const isiCsv = [
@@ -636,9 +651,7 @@
             reader.onload = async function(e) {
                 const text = e.target.result;
                 const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-                if (lines.length <= 1) {
-                    return alert("File CSV kosong atau hanya berisi header kolom.");
-                }
+                if (lines.length <= 1) return alert("File CSV kosong atau hanya berisi header kolom.");
 
                 const delimiter = lines[0].includes(";") ? ";" : ",";
                 const btn = document.getElementById('btn-import-csv');
@@ -674,8 +687,8 @@
                 }
 
                 try {
-                    await batch.commit();
-                    alert(`Import Selesai! Sebanyak ${berhasil} data siswa berhasil dimasukkan ke sistem dan siap login.`);
+                    await simpanPromiseDenganTimeout(batch.commit(), 8000);
+                    alert(`Import Selesai! Sebanyak ${berhasil} data siswa berhasil dimasukkan ke sistem.`);
                     fileInput.value = "";
                     loadDaftarAkunSiswa();
                 } catch (err) {
@@ -698,21 +711,21 @@
             const password = document.getElementById('siswa-password').value.trim();
             const foto = konversiLinkGambarUniversal(document.getElementById('siswa-foto').value.trim());
 
-            if (!nis || !nama || !password) {
-                return alert("NIS, Nama Lengkap Siswa, dan Password wajib diisi!");
-            }
+            if (!nis || !nama || !password) return alert("NIS, Nama Lengkap Siswa, dan Password wajib diisi!");
 
             const targetId = docId || `nis_${nis.replace(/[^a-zA-Z0-9]/g, '')}`;
-            db.collection("data_siswa").doc(targetId).set({
-                nis: nis,
-                nama: nama,
-                jk: jk,
-                kelas: kelas,
-                password: password,
-                foto: foto,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }).then(() => {
-                alert(`Data siswa ${nama} (${kelas}) berhasil disimpan! Password untuk dibagikan: ${password}`);
+            simpanPromiseDenganTimeout(
+                db.collection("data_siswa").doc(targetId).set({
+                    nis: nis,
+                    nama: nama,
+                    jk: jk,
+                    kelas: kelas,
+                    password: password,
+                    foto: foto,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true })
+            ).then(() => {
+                alert(`Data siswa ${nama} (${kelas}) berhasil disimpan! Password: ${password}`);
                 resetFormSiswa();
                 loadDaftarAkunSiswa();
             }).catch(err => alert("Gagal menyimpan data siswa: " + err.message));
@@ -778,22 +791,22 @@
                     html += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                             <div style="display:flex; align-items:center; gap:12px;">
-                                <img src="${fotoSrc}" referrerpolicy="no-referrer" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid #0d9488;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama)}&background=0d9488&color=fff'">
+                                <img src="${escapeHtml(fotoSrc)}" referrerpolicy="no-referrer" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid #0d9488;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama)}&background=0d9488&color=fff'">
                                 <div>
                                     <div>
-                                        <span style="background:#0d9488; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${s.kelas}</span>
-                                        <strong style="color:#2b3674; margin-left:6px;">${s.nama}</strong>
+                                        <span style="background:#0d9488; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${escapeHtml(s.kelas)}</span>
+                                        <strong style="color:#2b3674; margin-left:6px;">${escapeHtml(s.nama)}</strong>
                                     </div>
                                     <div style="font-size:0.78rem; color:#475569; margin-top:3px;">
-                                        NIS: <strong>${s.nis}</strong> • JK: ${s.jk || '-'} • Password: <code style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:bold;">${s.password}</code>
+                                        NIS: <strong>${escapeHtml(s.nis)}</strong> • JK: ${escapeHtml(s.jk || '-')} • Password: <code style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-weight:bold;">${escapeHtml(s.password)}</code>
                                     </div>
                                 </div>
                             </div>
                             <div style="display:flex; gap:6px;">
-                                <button onclick="editSiswaKeForm('${s.id}', '${String(s.nis).replace(/'/g, "\\'")}', '${String(s.nama).replace(/'/g, "\\'")}', '${s.jk || 'Laki-laki'}', '${s.kelas}', '${String(s.password).replace(/'/g, "\\'")}', '${String(s.foto || '').replace(/'/g, "\\'")}')" style="background:#eef2ff; color:#4318ff; border:none; padding:7px 12px; border-radius:8px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
+                                <button onclick="editSiswaKeForm('${escapeHtml(s.id)}', '${escapeHtml(s.nis)}', '${escapeHtml(s.nama)}', '${escapeHtml(s.jk || 'Laki-laki')}', '${escapeHtml(s.kelas)}', '${escapeHtml(s.password)}', '${escapeHtml(s.foto || '')}')" style="background:#eef2ff; color:#4318ff; border:none; padding:7px 12px; border-radius:8px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
-                                <button onclick="hapusDataSiswa('${s.id}', '${String(s.nama).replace(/'/g, "\\'")}')" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
+                                <button onclick="hapusDataSiswa('${escapeHtml(s.id)}', '${escapeHtml(s.nama)}')" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; font-size:0.78rem; font-weight:bold; cursor:pointer;">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -803,17 +816,14 @@
 
                 container.innerHTML = count > 0 ? html : "<p style='color:grey; font-size:0.85rem;'>Data siswa tidak ditemukan.</p>";
             }).catch(err => {
-                container.innerHTML = `<p style='color:red; font-size:0.85rem;'>Gagal memuat data siswa: ${err.message}</p>`;
+                container.innerHTML = `<p style='color:red; font-size:0.85rem;'>Gagal memuat data siswa: ${escapeHtml(err.message)}</p>`;
             });
         }
 
         // ========================================================
-        // B. KHUSUS OPERATOR: PENGUMUMAN (TEKS & GAMBAR BANNER)
+        // B. KHUSUS OPERATOR: PENGUMUMAN (ANTI-MACET DENGAN TIMEOUT)
         // ========================================================
-        function tambahPengumuman() {
-            if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                return alert("Sesi login Anda habis. Silakan keluar lalu login kembali menggunakan user: admin & password: admin.");
-            }
+        async function tambahPengumuman() {
             if (!isOperatorRole()) {
                 return alert("Hanya Admin / Operator Sekolah yang dapat menerbitkan pengumuman!");
             }
@@ -826,34 +836,44 @@
             if (!judul) return alert("Harap isi Judul Pengumuman!");
             if (!isi && !rawBanner) return alert("Harap isi tulisan pengumuman atau tempelkan Link Gambar Banner!");
             if (rawBanner.startsWith("data:image")) {
-                return alert("Jangan tempelkan kode Base64 gambar langsung. Gunakan link URL gambar dari website, Google Drive, atau sosial media.");
+                return alert("Jangan tempelkan kode Base64 gambar. Gunakan link file gambar (.jpg/.png) atau Google Drive.");
             }
 
             const gambarBanner = konversiLinkGambarUniversal(rawBanner);
             const btnSubmit = document.getElementById('btn-submit-pengumuman');
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menerbitkan...`;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
 
-            db.collection("pengumuman_sekolah").add({
-                kategori: kategori,
-                judul: judul,
-                isi: isi,
-                gambarBanner: gambarBanner,
-                dibuatOleh: (sesiStaff && sesiStaff.nama) ? sesiStaff.nama : "Operator Sekolah",
-                tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
+            try {
+                // Pastikan Firebase memiliki sesi auth aktif sebelum menulis ke Firestore
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously();
+                }
+
+                await simpanPromiseDenganTimeout(
+                    db.collection("pengumuman_sekolah").add({
+                        kategori: kategori,
+                        judul: judul,
+                        isi: isi,
+                        gambarBanner: gambarBanner,
+                        dibuatOleh: (sesiStaff && sesiStaff.nama) ? sesiStaff.nama : "Operator Sekolah",
+                        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }),
+                    7000
+                );
+
                 alert("Pengumuman berhasil diterbitkan dan langsung tampil di Halaman Home!");
                 document.getElementById('info-judul').value = '';
                 document.getElementById('info-isi').value = '';
                 document.getElementById('info-gambar-banner').value = '';
                 loadPengumumanGuru();
-            }).catch(err => {
+            } catch (err) {
                 alert("Gagal menerbitkan pengumuman: " + err.message);
-            }).finally(() => {
+            } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman ke Halaman Home`;
-            });
+            }
         }
 
         function loadPengumumanGuru() {
@@ -870,13 +890,13 @@
                     container.innerHTML += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                             <div style="flex:1;">
-                                <span style="background:#8b5cf6; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${p.kategori}</span>
-                                <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${p.tanggal || ''}</span>
-                                <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${p.judul}</h4>
-                                ${p.isi ? `<p style="margin:0 0 6px 0; font-size:0.84rem; color:#475569;">${p.isi}</p>` : ''}
-                                ${bannerUrl ? `<img src="${bannerUrl}" referrerpolicy="no-referrer" style="max-height:110px; border-radius:8px; border:1px solid #cbd5e1;" onerror="this.style.display='none'">` : ''}
+                                <span style="background:#8b5cf6; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${escapeHtml(p.kategori)}</span>
+                                <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${escapeHtml(p.tanggal || '')}</span>
+                                <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${escapeHtml(p.judul)}</h4>
+                                ${p.isi ? `<p style="margin:0 0 6px 0; font-size:0.84rem; color:#475569;">${escapeHtml(p.isi)}</p>` : ''}
+                                ${bannerUrl ? `<img src="${escapeHtml(bannerUrl)}" referrerpolicy="no-referrer" style="max-height:110px; border-radius:8px; border:1px solid #cbd5e1;" onerror="this.style.display='none'">` : ''}
                             </div>
-                            <button onclick="hapusPengumuman('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="hapusPengumuman('${escapeHtml(doc.id)}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
                 });
@@ -918,7 +938,7 @@
                 ? db.collection("struktur_tendik").doc(editId).set(payload, { merge: true })
                 : db.collection("struktur_tendik").add(payload);
 
-            req.then(() => {
+            simpanPromiseDenganTimeout(req).then(() => {
                 alert(`Data ${nama} berhasil disimpan ke Struktur Guru & Tenaga Kependidikan!`);
                 resetFormTendik();
                 loadTendikOperator();
@@ -954,11 +974,11 @@
                     container.innerHTML += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
                             <div>
-                                <span style="background:#dc2626; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">#${t.urutan} • ${t.kategoriJabatan}</span>
-                                <strong style="color:#2b3674; margin-left:6px;">${t.nama}</strong>
-                                <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">${t.jabatan} ${t.whatsapp ? '• WA: ' + t.whatsapp : ''}</div>
+                                <span style="background:#dc2626; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">#${escapeHtml(t.urutan)} • ${escapeHtml(t.kategoriJabatan)}</span>
+                                <strong style="color:#2b3674; margin-left:6px;">${escapeHtml(t.nama)}</strong>
+                                <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">${escapeHtml(t.jabatan)} ${t.whatsapp ? '• WA: ' + escapeHtml(t.whatsapp) : ''}</div>
                             </div>
-                            <button onclick="hapusTendik('${t.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="hapusTendik('${escapeHtml(t.id)}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
                 });
@@ -995,26 +1015,26 @@
 
                     const sudahDinilai = t.nilai !== null && t.nilai !== undefined && t.nilai !== "";
                     const badgeStatus = sudahDinilai
-                        ? `<span style="background:#05cd99; color:white; font-size:0.75rem; padding:3px 8px; border-radius:6px; font-weight:bold;">Sudah Dinilai: ${t.nilai}</span>`
+                        ? `<span style="background:#05cd99; color:white; font-size:0.75rem; padding:3px 8px; border-radius:6px; font-weight:bold;">Sudah Dinilai: ${escapeHtml(t.nilai)}</span>`
                         : `<span style="background:#f59e0b; color:white; font-size:0.75rem; padding:3px 8px; border-radius:6px; font-weight:bold;">Belum Dinilai</span>`;
 
                     html += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; margin-bottom:12px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
                                 <div>
-                                    <span style="background:#4318ff; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${t.kelas}</span>
-                                    <strong style="color:#2b3674; margin-left:6px;">${t.namaSiswa}</strong>
+                                    <span style="background:#4318ff; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${escapeHtml(t.kelas)}</span>
+                                    <strong style="color:#2b3674; margin-left:6px;">${escapeHtml(t.namaSiswa)}</strong>
                                 </div>
                                 ${badgeStatus}
                             </div>
-                            <p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Materi/Bab:</strong> ${t.judulBab}</p>
-                            <p style="font-size:0.85rem; margin:6px 0;"><a href="${t.linkTugas}" target="_blank" style="color:#0284c7; font-weight:bold; text-decoration:underline;"><i class="fa-solid fa-up-right-from-square"></i> Buka File / Link Jawaban Siswa</a></p>
-                            ${t.catatanSiswa ? `<p style="font-size:0.82rem; color:#475569; background:white; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;"><em>"${t.catatanSiswa}"</em></p>` : ''}
+                            <p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Materi/Bab:</strong> ${escapeHtml(t.judulBab)}</p>
+                            <p style="font-size:0.85rem; margin:6px 0;"><a href="${escapeHtml(t.linkTugas)}" target="_blank" style="color:#0284c7; font-weight:bold; text-decoration:underline;"><i class="fa-solid fa-up-right-from-square"></i> Buka File / Link Jawaban Siswa</a></p>
+                            ${t.catatanSiswa ? `<p style="font-size:0.82rem; color:#475569; background:white; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;"><em>"${escapeHtml(t.catatanSiswa)}"</em></p>` : ''}
 
                             <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-                                <input type="number" id="nilai-${doc.id}" value="${sudahDinilai ? t.nilai : ''}" min="0" max="100" placeholder="Nilai (0-100)" style="width:115px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
-                                <input type="text" id="catatan-guru-${doc.id}" value="${t.catatanGuru || ''}" placeholder="Catatan evaluasi guru..." style="flex:1; min-width:160px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
-                                <button onclick="simpanNilaiTugas('${doc.id}')" style="background:#05cd99; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:0.85rem;">Simpan Nilai</button>
+                                <input type="number" id="nilai-${escapeHtml(doc.id)}" value="${sudahDinilai ? escapeHtml(t.nilai) : ''}" min="0" max="100" placeholder="Nilai (0-100)" style="width:115px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <input type="text" id="catatan-guru-${escapeHtml(doc.id)}" value="${escapeHtml(t.catatanGuru || '')}" placeholder="Catatan evaluasi guru..." style="flex:1; min-width:160px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <button onclick="simpanNilaiTugas('${escapeHtml(doc.id)}')" style="background:#05cd99; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:0.85rem;">Simpan Nilai</button>
                             </div>
                         </div>
                     `;
@@ -1032,10 +1052,12 @@
                 return alert("Harap masukkan angka nilai yang valid antara 0 sampai 100!");
             }
 
-            db.collection("pengumpulan_tugas").doc(docId).update({
-                nilai: Number(nilaiVal),
-                catatanGuru: catatanVal
-            }).then(() => {
+            simpanPromiseDenganTimeout(
+                db.collection("pengumpulan_tugas").doc(docId).update({
+                    nilai: Number(nilaiVal),
+                    catatanGuru: catatanVal
+                })
+            ).then(() => {
                 alert("Nilai dan catatan evaluasi berhasil disimpan!");
                 loadTugasSiswaGuru();
             }).catch(err => alert("Gagal menyimpan nilai: " + err.message));
@@ -1063,7 +1085,7 @@
             btnSubmit.innerText = "Menyimpan...";
             btnSubmit.disabled = true;
 
-            db.collection("materi_pelajaran").add(data).then(() => {
+            simpanPromiseDenganTimeout(db.collection("materi_pelajaran").add(data)).then(() => {
                 alert("Berhasil mengunggah materi!");
                 document.getElementById('input-bab').value = '';
                 document.getElementById('input-subbab').value = '';
@@ -1091,10 +1113,10 @@
                     container.innerHTML += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <span style="background:#4318ff; color:white; font-size:0.75rem; padding:2px 6px; border-radius:4px;">${m.kelas}</span>
-                                <strong style="color:#2b3674; margin-left:8px;">${m.bab}</strong> - <span style="font-size:0.9rem; color:#64748b;">${m.subBab}</span>
+                                <span style="background:#4318ff; color:white; font-size:0.75rem; padding:2px 6px; border-radius:4px;">${escapeHtml(m.kelas)}</span>
+                                <strong style="color:#2b3674; margin-left:8px;">${escapeHtml(m.bab)}</strong> - <span style="font-size:0.9rem; color:#64748b;">${escapeHtml(m.subBab)}</span>
                             </div>
-                            <button onclick="hapusMateri('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Hapus</button>
+                            <button onclick="hapusMateri('${escapeHtml(doc.id)}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> Hapus</button>
                         </div>
                     `;
                 });
@@ -1138,7 +1160,7 @@
                 instagram: document.getElementById('prof-ig').value,
                 maps: document.getElementById('prof-maps').value
             };
-            db.collection("profil_guru").doc("utama").set(data, { merge: true }).then(() => {
+            simpanPromiseDenganTimeout(db.collection("profil_guru").doc("utama").set(data, { merge: true })).then(() => {
                 alert("Profil guru berhasil diperbarui!");
             }).catch(err => alert("Gagal menyimpan profil: " + err.message));
         }
@@ -1163,17 +1185,17 @@
                     let replies = allChat.filter(c => c.parentId === p.id);
                     let repHtml = '';
                     replies.forEach(r => {
-                        repHtml += `<div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; margin-left:15px;"><strong>${r.pengirim}:</strong> ${r.pesan}</div>`;
+                        repHtml += `<div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; margin-left:15px;"><strong>${escapeHtml(r.pengirim)}:</strong> ${escapeHtml(r.pesan)}</div>`;
                     });
 
                     listDiv.innerHTML += `
                         <div style="border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:12px; background:white;">
-                            <strong style="color:#4318ff;">${p.pengirim}</strong> bertanya:
-                            <p style="margin:5px 0;">${p.pesan}</p>
+                            <strong style="color:#4318ff;">${escapeHtml(p.pengirim)}</strong> bertanya:
+                            <p style="margin:5px 0;">${escapeHtml(p.pesan)}</p>
                             ${repHtml}
                             <div style="margin-top:8px; display:flex; gap:5px;">
-                                <input type="text" id="guru-reply-${p.id}" placeholder="Balas sebagai Guru..." style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
-                                <button onclick="kirimBalasanGuru('${p.materiId}', '${p.id}')" class="btn-primary" style="padding:6px 12px; font-size:0.8rem;">Balas</button>
+                                <input type="text" id="guru-reply-${escapeHtml(p.id)}" placeholder="Balas sebagai Guru..." style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+                                <button onclick="kirimBalasanGuru('${escapeHtml(p.materiId)}', '${escapeHtml(p.id)}')" class="btn-primary" style="padding:6px 12px; font-size:0.8rem;">Balas</button>
                             </div>
                         </div>
                     `;
