@@ -75,6 +75,37 @@ const subjectsList = [
 // ==========================================
 // 3. LOGIKA GERBANG LOGIN AWAL (3 PERAN)
 // ==========================================
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+function validasiKekuatanPassword(pass) {
+    if (pass.length < 8) {
+        return "Password terlalu pendek! Minimal harus 8 karakter.";
+    }
+    if (!/[A-Z]/.test(pass)) {
+        return "Password wajib mengandung minimal 1 HURUF BESAR (A-Z). Contoh: Bayan2026";
+    }
+    if (!/[a-z]/.test(pass)) {
+        return "Password wajib mengandung minimal 1 HURUF KECIL (a-z). Contoh: Bayan2026";
+    }
+    if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) {
+        return "Password wajib mengandung minimal 1 ANGKA (0-9) atau SIMBOL (!@#). Contoh: Bayan#2026";
+    }
+    return null;
+}
+
 function pilihPeranLogin(role) {
     document.getElementById('role-selection-box').style.display = 'none';
     if (role === 'guru') {
@@ -95,6 +126,9 @@ function kembaliPilihPeran() {
 function toggleDaftarGuru() {
     isRegisterGuruMode = !isRegisterGuruMode;
     document.getElementById('register-guru-extra').style.display = isRegisterGuruMode ? 'block' : 'none';
+    document.getElementById('btn-submit-guru').innerText = isRegisterGuruMode 
+        ? "Daftar & Buat Akun Guru/Staf" 
+        : "Masuk Sekarang";
     document.getElementById('btn-toggle-reg-guru').innerText = isRegisterGuruMode 
         ? "Sudah punya akun? Kembali ke Login" 
         : "Belum punya akun? Daftar ID Guru/Staf";
@@ -103,6 +137,9 @@ function toggleDaftarGuru() {
 function toggleDaftarSiswa() {
     isRegisterSiswaMode = !isRegisterSiswaMode;
     document.getElementById('register-siswa-extra').style.display = isRegisterSiswaMode ? 'block' : 'none';
+    document.getElementById('btn-submit-siswa').innerText = isRegisterSiswaMode 
+        ? "Daftar & Buat Akun Siswa" 
+        : "Masuk Sebagai Siswa";
     document.getElementById('btn-toggle-reg-siswa').innerText = isRegisterSiswaMode 
         ? "Sudah terdaftar? Kembali ke Login" 
         : "Belum terdaftar? Buat Akun Siswa";
@@ -118,56 +155,126 @@ function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
     const jabatan = document.getElementById('reg-guru-jabatan').value.trim() || "Guru / Staf";
+    const btn = document.getElementById('btn-submit-guru');
 
     if (!rawId || !pass) return alert("Harap isi ID (Email/NIP/Nama) dan Password!");
-    if (pass.length < 6) return alert("Password minimal 6 karakter!");
 
     const authEmail = formatToAuthEmail(rawId, "staf");
 
     if (isRegisterGuruMode) {
+        const pesanErrorPass = validasiKekuatanPassword(pass);
+        if (pesanErrorPass) return alert(pesanErrorPass);
+
+        btn.disabled = true;
+        btn.innerText = "Mendaftarkan Akun...";
+
         auth.createUserWithEmailAndPassword(authEmail, pass).then((cred) => {
-            const userData = { uid: cred.user.uid, role: "Guru / Staf", nama: rawId, sub: jabatan, email: authEmail, bio: "" };
-            db.collection("users_sekolah").doc(cred.user.uid).set(userData).then(() => {
-                selesaikanLogin(userData);
-            });
-        }).catch(err => alert("Gagal mendaftar akun Guru/Staf: " + err.message));
+            const userData = { 
+                uid: cred.user.uid, 
+                role: "Guru / Staf", 
+                nama: rawId, 
+                sub: jabatan, 
+                email: authEmail, 
+                bio: "" 
+            };
+            db.collection("users_sekolah").doc(cred.user.uid).set(userData).catch(() => {});
+            alert("Pendaftaran Berhasil! Akun Guru/Staf Anda telah dibuat dan siap digunakan.");
+            selesaikanLogin(userData);
+        }).catch(err => {
+            if (err.code === 'auth/email-already-in-use') {
+                alert("Email atau ID ini sudah terdaftar! Silakan klik 'Sudah punya akun? Kembali ke Login' lalu masuk.");
+            } else {
+                alert("Gagal mendaftar akun Guru/Staf: " + err.message);
+            }
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerText = isRegisterGuruMode ? "Daftar & Buat Akun Guru/Staf" : "Masuk Sekarang";
+        });
     } else {
+        btn.disabled = true;
+        btn.innerText = "Memproses Masuk...";
+
         auth.signInWithEmailAndPassword(authEmail, pass).then((cred) => {
             db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
                 const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Guru / Staf", nama: rawId, sub: "Guru SMAN 2 Bayan", email: authEmail, bio: "" };
                 selesaikanLogin(userData);
+            }).catch(() => {
+                selesaikanLogin({ uid: cred.user.uid, role: "Guru / Staf", nama: rawId, sub: "Guru SMAN 2 Bayan", email: authEmail, bio: "" });
             });
-        }).catch(() => {
-            alert("Akun tidak ditemukan atau password salah. Jika baru pertama kali masuk, silakan klik tombol 'Belum punya akun? Daftar ID Guru/Staf' di bawah.");
+        }).catch((err) => {
+            if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                alert("Password yang Anda masukkan salah! Klik ikon mata untuk memeriksa tulisan password Anda.");
+            } else {
+                alert("Akun belum terdaftar. Silakan klik tombol 'Belum punya akun? Daftar ID Guru/Staf' di bawah.");
+            }
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Masuk Sekarang";
         });
     }
 }
 
 function prosesLoginSiswa() {
     const nama = document.getElementById('login-siswa-nama').value.trim();
-    const nis = document.getElementById('login-siswa-nis').value.trim();
+    const pass = document.getElementById('login-siswa-nis').value.trim();
     const kelas = document.getElementById('reg-siswa-kelas').value.trim() || "Siswa SMAN 2 Bayan";
+    const btn = document.getElementById('btn-submit-siswa');
 
-    if (!nama || !nis) return alert("Harap isi Nama Asli dan NIS Anda!");
-    if (nis.length < 6) return alert("Password NIS minimal 6 digit/karakter (tambahkan angka 0 di depan jika NIS kurang dari 6 digit)!");
+    if (!nama || !pass) return alert("Harap isi Nama Lengkap dan Password Siswa!");
 
     const authEmail = formatToAuthEmail(nama, "siswa");
 
     if (isRegisterSiswaMode) {
-        auth.createUserWithEmailAndPassword(authEmail, nis).then((cred) => {
-            const userData = { uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, nis: nis, email: authEmail, bio: "" };
-            db.collection("users_sekolah").doc(cred.user.uid).set(userData).then(() => {
-                selesaikanLogin(userData);
-            });
-        }).catch(err => alert("Gagal mendaftar Siswa: " + err.message));
+        const pesanErrorPass = validasiKekuatanPassword(pass);
+        if (pesanErrorPass) return alert(pesanErrorPass);
+
+        btn.disabled = true;
+        btn.innerText = "Mendaftarkan Siswa...";
+
+        auth.createUserWithEmailAndPassword(authEmail, pass).then((cred) => {
+            const userData = { 
+                uid: cred.user.uid, 
+                role: "Siswa", 
+                nama: nama, 
+                sub: kelas, 
+                nis: pass, 
+                sandiTersimpan: pass,
+                email: authEmail, 
+                bio: "" 
+            };
+            db.collection("users_sekolah").doc(cred.user.uid).set(userData).catch(() => {});
+            alert("Pendaftaran Siswa Berhasil! Selamat belajar di E-Learning SMAN 2 Bayan.");
+            selesaikanLogin(userData);
+        }).catch(err => {
+            if (err.code === 'auth/email-already-in-use') {
+                alert("Nama siswa ini sudah terdaftar! Silakan klik 'Sudah terdaftar? Kembali ke Login' lalu masukkan password Anda.");
+            } else {
+                alert("Gagal mendaftar Siswa: " + err.message);
+            }
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerText = isRegisterSiswaMode ? "Daftar & Buat Akun Siswa" : "Masuk Sebagai Siswa";
+        });
     } else {
-        auth.signInWithEmailAndPassword(authEmail, nis).then((cred) => {
+        btn.disabled = true;
+        btn.innerText = "Memproses Masuk...";
+
+        auth.signInWithEmailAndPassword(authEmail, pass).then((cred) => {
             db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
-                const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, nis: nis, email: authEmail, bio: "" };
+                const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, nis: pass, sandiTersimpan: pass, email: authEmail, bio: "" };
                 selesaikanLogin(userData);
+            }).catch(() => {
+                selesaikanLogin({ uid: cred.user.uid, role: "Siswa", nama: nama, sub: kelas, nis: pass, sandiTersimpan: pass, email: authEmail, bio: "" });
             });
-        }).catch(() => {
-            alert("Nama atau NIS belum terdaftar. Silakan klik tombol 'Belum terdaftar? Buat Akun Siswa' terlebih dahulu.");
+        }).catch((err) => {
+            if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                alert("Password siswa salah! Klik ikon mata untuk memastikan penulisan huruf besar/kecil sudah sesuai, atau hubungi guru untuk reset sandi.");
+            } else {
+                alert("Nama siswa belum terdaftar. Silakan klik tombol 'Belum terdaftar? Buat Akun Siswa' terlebih dahulu.");
+            }
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Masuk Sebagai Siswa";
         });
     }
 }
@@ -487,19 +594,19 @@ function renderDetailMateriDinamis(kelas, index) {
     }
 
     let prHtml = '';
-        if (babData.pr && babData.pr.trim() !== "") {
-            prHtml = `
-                <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
-                    <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
-                    <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
-                    
-                    <!-- Kotak Pengumpulan Tugas Online Siswa -->
-                    <div id="wadah-pengumpulan-tugas" style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #eab308;">
-                        <p style="font-size: 0.85rem; color: #713f12;">Memeriksa status pengumpulan tugas Anda...</p>
-                    </div>
+    if (babData.pr && babData.pr.trim() !== "") {
+        prHtml = `
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
+                <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
+                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
+                
+                <!-- Kotak Pengumpulan Tugas Online Siswa -->
+                <div id="wadah-pengumpulan-tugas" style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #eab308;">
+                    <p style="font-size: 0.85rem; color: #713f12;">Memeriksa status pengumpulan tugas Anda...</p>
                 </div>
-            `;
-        }
+            </div>
+        `;
+    }
     
     const namaAktif = currentUserSession ? `${currentUserSession.nama} (${currentUserSession.sub})` : "Belum Login";
 
@@ -640,7 +747,7 @@ function kirimBalasan(materiId, parentId) {
 }
 
 // ==========================================
-// 8. MODAL EDIT PROFIL PENGGUNA
+// 8. MODAL EDIT PROFIL PENGGUNA & GANTI SANDI
 // ==========================================
 function openProfilSayaModal() {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
@@ -652,6 +759,7 @@ function openProfilSayaModal() {
     document.getElementById('edit-prof-sub').value = currentUserSession.sub || '';
     document.getElementById('edit-prof-email').value = currentUserSession.email || '';
     document.getElementById('edit-prof-bio').value = currentUserSession.bio || '';
+    document.getElementById('edit-prof-pass-baru').value = '';
     document.getElementById('user-profile-modal').classList.remove('hidden');
 }
 
@@ -661,19 +769,41 @@ function closeProfilSayaModal() {
 
 function simpanEditProfilUser() {
     if (!currentUserSession || currentUserSession.role === "Tamu") return;
+
+    const passBaru = document.getElementById('edit-prof-pass-baru').value.trim();
+    if (passBaru !== "") {
+        const errPass = validasiKekuatanPassword(passBaru);
+        if (errPass) return alert(errPass);
+    }
+
     currentUserSession.nama = document.getElementById('edit-prof-nama').value.trim() || currentUserSession.nama;
     currentUserSession.sub = document.getElementById('edit-prof-sub').value.trim() || currentUserSession.sub;
     currentUserSession.email = document.getElementById('edit-prof-email').value.trim();
     currentUserSession.bio = document.getElementById('edit-prof-bio').value.trim();
+    if (passBaru !== "" && currentUserSession.role === "Siswa") {
+        currentUserSession.sandiTersimpan = passBaru;
+        currentUserSession.nis = passBaru;
+    }
 
     localStorage.setItem("sman2bayan_session", JSON.stringify(currentUserSession));
     document.getElementById('user-badge-status').innerText = `${currentUserSession.nama} (${currentUserSession.role})`;
 
     if (currentUserSession.uid && currentUserSession.uid !== "tamu") {
-        db.collection("users_sekolah").doc(currentUserSession.uid).set(currentUserSession, { merge: true });
+        db.collection("users_sekolah").doc(currentUserSession.uid).set(currentUserSession, { merge: true }).catch(() => {});
     }
-    alert("Profil akun berhasil diperbarui!");
-    closeProfilSayaModal();
+
+    if (passBaru !== "" && auth.currentUser) {
+        auth.currentUser.updatePassword(passBaru).then(() => {
+            alert("Profil dan Password baru Anda berhasil diperbarui!");
+            closeProfilSayaModal();
+        }).catch(() => {
+            alert("Data profil tersimpan! Untuk mengganti password akun login, silakan keluar (Logout) lalu masuk kembali terlebih dahulu demi keamanan sesi.");
+            closeProfilSayaModal();
+        });
+    } else {
+        alert("Profil akun berhasil diperbarui!");
+        closeProfilSayaModal();
+    }
 }
 
 // ==========================================
@@ -754,6 +884,7 @@ function muatPengumumanHome() {
         wadah.innerHTML = html;
     }).catch(() => {});
 }
+
 // ==========================================
 // 11. PENGUMPULAN TUGAS & CEK NILAI SISWA
 // ==========================================
