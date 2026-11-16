@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kartu Pelajar Digital - SMAN 2 BAYAN</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4318ff">
+    
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Library QR Code & HTML2Canvas (Unduh Kartu) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        body {
+            background: #f4f7fe;
+            color: #2b3674;
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .top-bar {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            background: white;
+            color: #2b3674;
+            padding: 10px 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Desain Kartu Pelajar Digital Premium */
+        .id-card-wrapper {
+            width: 100%;
+            max-width: 380px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+        .id-card {
+            background: linear-gradient(145deg, #1e1b4b 0%, #4318ff 65%, #05cd99 100%);
+            border-radius: 24px;
+            padding: 22px;
+            color: white;
+            box-shadow: 0 20px 40px rgba(67, 24, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .id-card::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 160px;
+            height: 160px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+        .card-header img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            background: white;
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .card-header h2 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .card-header p {
+            font-size: 0.68rem;
+            opacity: 0.85;
+        }
+
+        .student-profile {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .avatar-circle {
+            width: 78px;
+            height: 78px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            border: 3px solid #05cd99;
+            margin: 0 auto 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: 800;
+        }
+        .student-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .student-badge {
+            display: inline-block;
+            background: rgba(5, 205, 153, 0.25);
+            border: 1px solid #05cd99;
+            color: #a7f3d0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .qr-section {
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            text-align: center;
+            color: #1e1b4b;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        #qrcode-container {
+            display: flex;
+            justify-content: center;
+            margin: 8px auto;
+        }
+        .nis-text {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #4318ff;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .card-footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.68rem;
+            opacity: 0.85;
+        }
+
+        /* Tombol Aksi */
+        .action-group {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-action {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-download { background: #4318ff; color: white; box-shadow: 0 6px 18px rgba(67, 24, 255, 0.25); }
+        .btn-brightness { background: #f59e0b; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Beranda</a>
+        <span style="font-weight: 800; font-size: 0.9rem; color: #4318ff;">E-ID CARD SISWA</span>
+    </div>
+
+    <!-- Kartu Pelajar Digital -->
+    <div class="id-card-wrapper">
+        <div class="id-card" id="kartu-pelajar-area">
+            <div class="card-header">
+                <img src="images/logo-sman2bayan.png" alt="Logo" onerror="this.src='https://via.placeholder.com/44'">
+                <div>
+                    <h2>KARTU PELAJAR DIGITAL</h2>
+                    <p>SMA NEGERI 2 BAYAN • NPSN 69807689</p>
+                </div>
+            </div>
+
+            <div class="student-profile">
+                <div class="avatar-circle" id="kartu-inisial">S</div>
+                <div class="student-name" id="kartu-nama">MEMUAT NAMA...</div>
+                <div class="student-badge" id="kartu-kelas">Kelas -</div>
+            </div>
+
+            <div class="qr-section">
+                <p style="font-size: 0.72rem; font-weight: 700; color: #64748b;">SCAN QR CODE UNTUK ABSENSI</p>
+                <div id="qrcode-container"></div>
+                <div class="nis-text" id="kartu-nis">NIS: -</div>
+            </div>
+
+            <div class="card-footer">
+                <span>Berlaku Selama Menjadi Siswa</span>
+                <span>Lombok Utara, NTB</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-group">
+        <button onclick="unduhKartuPNG()" class="btn-action btn-download">
+            <i class="fa-solid fa-download"></i> Simpan Kartu ke Galeri HP
+        </button>
+        <button onclick="modeScanTerang()" class="btn-action btn-brightness">
+            <i class="fa-solid fa-sun"></i> Terangkan Layar (Siap Scan Guru)
+        </button>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSession = localStorage.getItem("sman2bayan_session");
+            if (!savedSession) {
+                alert("Silakan login menggunakan akun Siswa terlebih dahulu di halaman Beranda!");
+                window.location.href = "index.html";
+                return;
+            }
+
+            const user = JSON.parse(savedSession);
+            if (user.role !== "Siswa") {
+                alert("Fitur Kartu Pelajar Digital khusus untuk akun Siswa. Anda saat ini masuk sebagai: " + user.role);
+                window.location.href = "index.html";
+                return;
+            }
+
+            const nama = user.nama || "Siswa SMAN 2 Bayan";
+            const kelas = user.sub || "Kelas Umum";
+            const nis = user.nis || "000000";
+
+            document.getElementById('kartu-nama').innerText = nama;
+            document.getElementById('kartu-kelas').innerText = kelas;
+            document.getElementById('kartu-nis').innerText = `NIS: ${nis}`;
+            document.getElementById('kartu-inisial').innerText = nama.charAt(0).toUpperCase();
+
+            // Generate QR Code sesuai NIS siswa
+            new QRCode(document.getElementById("qrcode-container"), {
+                text: nis,
+                width: 155,
+                height: 155,
+                colorDark: "#1e1b4b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        });
+
+        function unduhKartuPNG() {
+            const cardElement = document.getElementById('kartu-pelajar-area');
+            html2canvas(cardElement, { scale: 2, backgroundColor: null }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Kartu_Pelajar_${document.getElementById('kartu-nama').innerText.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+
+        function modeScanTerang() {
+            document.body.style.backgroundColor = "#ffffff";
+            alert("Layar telah disetel ke latar putih terang. Silakan arahkan QR Code ke kamera HP Guru!");
+        }
+    </script>
+</body>
+</html>
