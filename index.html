@@ -21,6 +21,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
         body { background-color: #f4f7fe; margin: 0; color: #2b3674; }
@@ -183,11 +186,7 @@
             color: #64748b;
             font-weight: 600;
         }
-    </style>
-    <!-- SweetAlert2 (Notifikasi Pop-up Modern Pengganti Alert Biasa) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <style>
         /* Animasi Skeleton Loading */
         .skeleton-box {
             background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
@@ -266,7 +265,7 @@
                     </div>
                     <div>
                         <div style="font-weight: 800; font-size: 0.95rem; color: #2b3674;">Siswa / Siswi</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">Masuk dengan Nama Asli & NIS</div>
+                        <div style="font-size: 0.75rem; color: #64748b;">Masuk dengan Nama Asli & Sandi Siswa</div>
                     </div>
                 </button>
 
@@ -286,22 +285,27 @@
                 <button onclick="kembaliPilihPeran()" style="background: none; border: none; color: #4318ff; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-bottom: 12px; padding: 0;">
                     <i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk
                 </button>
-                <div style="background: #eef2ff; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #3730a3;">
-                    <strong>Login Guru / Kepsek / Staf:</strong> Gunakan Email, NIP, atau Nama ID (contoh: <code>Rianti, S.Pd.</code>). Password wajib kombinasi huruf besar, huruf kecil, dan angka/simbol.
+                <div style="background: #eef2ff; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #3730a3; line-height: 1.4;">
+                    <strong>Login Guru / Kepsek / Staf:</strong> Gunakan Email, NIP, atau Nama ID. Password wajib minimal 8 karakter dan kombinasi <strong>huruf besar, huruf kecil, serta angka/simbol</strong>.
                 </div>
 
                 <label style="font-size: 0.8rem; font-weight: 700;">ID (Email / NIP / Nama ID):</label>
-                <input type="text" id="login-guru-id" class="form-input" placeholder="Contoh: Rianti, S.Pd. atau email@sekolah.id">
+                <input type="text" id="login-guru-id" class="form-input" placeholder="Contoh: Rianti, S.Pd. atau email@gmail.com">
 
                 <label style="font-size: 0.8rem; font-weight: 700;">Password:</label>
-                <input type="password" id="login-guru-pass" class="form-input" placeholder="Kombinasi Huruf Besar, Kecil & Angka">
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="login-guru-pass" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan#2026">
+                    <button type="button" onclick="togglePasswordVisibility('login-guru-pass', 'eye-guru')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                        <i id="eye-guru" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
 
                 <div id="register-guru-extra" style="display: none;">
                     <label style="font-size: 0.8rem; font-weight: 700;">Jabatan / Mata Pelajaran (Untuk Akun Baru):</label>
                     <input type="text" id="reg-guru-jabatan" class="form-input" placeholder="Contoh: Guru Fisika / Kepala Sekolah / Staf TU">
                 </div>
 
-                <button onclick="prosesLoginGuru()" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 8px;">Masuk Sekarang</button>
+                <button id="btn-submit-guru" onclick="prosesLoginGuru()" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 8px;">Masuk Sekarang</button>
                 <button onclick="toggleDaftarGuru()" id="btn-toggle-reg-guru" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Belum punya akun? Daftar ID Guru/Staf</button>
             </div>
 
@@ -310,22 +314,31 @@
                 <button onclick="kembaliPilihPeran()" style="background: none; border: none; color: #059669; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-bottom: 12px; padding: 0;">
                     <i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk
                 </button>
-                <div style="background: #ecfdf5; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #065f46;">
-                    <strong>Login Siswa:</strong> ID wajib menggunakan <strong>Nama Asli</strong> dan Password menggunakan <strong>NIS (Nomor Induk Siswa)</strong>.
+                <div style="background: #ecfdf5; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #065f46; line-height: 1.4;">
+                    <strong>Login Siswa:</strong> Gunakan <strong>Nama Asli</strong> dan Password siswa (minimal 8 karakter, kombinasi <strong>huruf besar, huruf kecil, dan angka</strong>, contoh: <code>Siswa2026</code>).
                 </div>
 
                 <label style="font-size: 0.8rem; font-weight: 700;">ID (Nama Asli Siswa):</label>
                 <input type="text" id="login-siswa-nama" class="form-input" placeholder="Ketik Nama Lengkap Asli Anda">
 
-                <label style="font-size: 0.8rem; font-weight: 700;">Password (NIS - Nomor Induk Siswa):</label>
-                <input type="password" id="login-siswa-nis" class="form-input" placeholder="Masukkan Nomor Induk Siswa (Angka)">
+                <label style="font-size: 0.8rem; font-weight: 700;">Password / Sandi Siswa:</label>
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="login-siswa-nis" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan1234">
+                    <button type="button" onclick="togglePasswordVisibility('login-siswa-nis', 'eye-siswa')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                        <i id="eye-siswa" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
 
                 <div id="register-siswa-extra" style="display: none;">
                     <label style="font-size: 0.8rem; font-weight: 700;">Kelas (Untuk Pendaftaran Baru):</label>
-                    <input type="text" id="reg-siswa-kelas" class="form-input" placeholder="Contoh: X.A atau XI.B">
+                    <select id="reg-siswa-kelas" class="form-input">
+                        <option value="X.A">Kelas X.A</option><option value="X.B">Kelas X.B</option><option value="X.C">Kelas X.C</option><option value="X.D">Kelas X.D</option>
+                        <option value="XI.A">Kelas XI.A</option><option value="XI.B">Kelas XI.B</option><option value="XI.C">Kelas XI.C</option><option value="XI.D">Kelas XI.D</option>
+                        <option value="XII.A">Kelas XII.A</option><option value="XII.B">Kelas XII.B</option><option value="XII.C">Kelas XII.C</option><option value="XII.D">Kelas XII.D</option>
+                    </select>
                 </div>
 
-                <button onclick="prosesLoginSiswa()" style="width: 100%; background: #05cd99; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px;">Masuk Sebagai Siswa</button>
+                <button id="btn-submit-siswa" onclick="prosesLoginSiswa()" style="width: 100%; background: #05cd99; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px;">Masuk Sebagai Siswa</button>
                 <button onclick="toggleDaftarSiswa()" id="btn-toggle-reg-siswa" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Belum terdaftar? Buat Akun Siswa</button>
             </div>
         </div>
@@ -342,7 +355,7 @@
                 <p style="font-size: 0.75rem; margin: 2px 0 0 0; color: #718096;"><i class="fa-solid fa-location-dot"></i> Ancak, Kec. Bayan, Kab. Lombok Utara, NTB 83354</p>
             </div>
         </div>
-    <div style="display: flex; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
             <button onclick="toggleDarkMode()" id="btn-dark-mode" style="background: #f1f5f9; color: #2b3674; border: none; padding: 8px 11px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 700;" title="Ganti Mode Terang/Gelap"><i class="fa-solid fa-moon"></i></button>
             <span id="user-badge-status" style="background: #eef2ff; color: #4318ff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;">Tamu</span>
             <button onclick="keluarAkun()" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 700;" title="Ganti Akun / Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
@@ -381,11 +394,11 @@
         <p style="font-size: 0.75rem; color: #64748b;">&copy; 2026 Ahmad Yani, S.Kom &mdash; All Rights Reserved.</p>
     </footer>
 
-    <!-- Modal Edit Profil Pengguna (Siswa / Guru / Staf) -->
+    <!-- Modal Edit Profil & Ganti Sandi Pengguna (Siswa / Guru / Staf) -->
     <div id="user-profile-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 420px;">
-            <h3 style="color: #2b3674; margin-bottom: 5px;">Edit Profil Saya</h3>
-            <p id="modal-prof-role-info" style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Perbarui data profil akun Anda</p>
+        <div class="modal-content" style="max-width: 420px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: #2b3674; margin-bottom: 5px;">Edit Profil & Keamanan Akun</h3>
+            <p id="modal-prof-role-info" style="font-size: 0.8rem; color: #4318ff; font-weight: 700; margin-bottom: 15px;">Perbarui data profil akun Anda</p>
             
             <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Nama Lengkap / ID:</label>
             <input type="text" id="edit-prof-nama" class="form-input">
@@ -398,6 +411,15 @@
 
             <label style="font-size: 0.8rem; font-weight: bold; color: #475569;">Bio / Moto Singkat:</label>
             <textarea id="edit-prof-bio" rows="2" class="form-input" placeholder="Tulis moto belajar Anda..."></textarea>
+
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
+            <label style="font-size: 0.8rem; font-weight: bold; color: #4318ff;"><i class="fa-solid fa-key"></i> Ganti Password Baru (Kosongkan jika tidak diubah):</label>
+            <div style="position: relative; margin-bottom: 12px; margin-top: 4px;">
+                <input type="password" id="edit-prof-pass-baru" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Min. 8 karakter (Huruf Besar, Kecil & Angka)">
+                <button type="button" onclick="togglePasswordVisibility('edit-prof-pass-baru', 'eye-prof-pass')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                    <i id="eye-prof-pass" class="fa-solid fa-eye"></i>
+                </button>
+            </div>
 
             <button onclick="simpanEditProfilUser()" class="btn-primary" style="width:100%; padding:12px; margin-bottom:8px;">Simpan Perubahan</button>
             <button onclick="closeProfilSayaModal()" class="btn-cancel" style="width:100%; padding:8px;">Tutup</button>
@@ -414,7 +436,7 @@
         }
 
         // Tangkap Event Install Aplikasi ke Layar Utama HP
-        let deferredPrompt;
+        let deferredPrompt; 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
