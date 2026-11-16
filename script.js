@@ -16,6 +16,26 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // ==========================================
+// KONVERTER LINK GAMBAR UNIVERSAL (SEMUA WEBSITE, GOOGLE DRIVE & SOSMED)
+// ==========================================
+function formatUrlGambar(rawUrl) {
+    if (!rawUrl) return "";
+    let url = String(rawUrl).trim();
+    if (!url) return "";
+
+    if (!/^https?:\/\//i.test(url) && !url.startsWith("images/") && !url.startsWith("./")) {
+        url = "https://" + url;
+    }
+
+    const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+    if (gdriveMatch && gdriveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
+    }
+
+    return url;
+}
+
+// ==========================================
 // 2. DATA SEKOLAH (DAPODIK), CAROUSEL & DEFAULT TENDIK
 // ==========================================
 const DATA_SEKOLAH = {
@@ -231,9 +251,16 @@ function prosesLoginGuru() {
 
         auth.signInWithEmailAndPassword(authEmail, pass).then((cred) => {
             db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
-                const userData = doc.exists 
-                    ? { ...doc.data(), role: doc.data().role || roleLabel } 
-                    : { uid: cred.user.uid, role: roleLabel, nama: rawId, sub: jabatan, email: authEmail, bio: "" };
+                const dataLama = doc.exists ? doc.data() : {};
+                const userData = {
+                    ...dataLama,
+                    uid: cred.user.uid,
+                    role: roleLabel,
+                    nama: dataLama.nama || rawId,
+                    sub: dataLama.sub || jabatan,
+                    email: authEmail
+                };
+                db.collection("users_sekolah").doc(cred.user.uid).set(userData, { merge: true }).catch(() => {});
                 selesaikanLogin(userData);
             }).catch(() => {
                 selesaikanLogin({ uid: cred.user.uid, role: roleLabel, nama: rawId, sub: jabatan, email: authEmail, bio: "" });
@@ -282,7 +309,7 @@ function prosesLoginSiswa() {
                 nis: ditemukan.nis,
                 jk: ditemukan.jk || "-",
                 sub: ditemukan.kelas || "-",
-                foto: ditemukan.foto || "",
+                foto: formatUrlGambar(ditemukan.foto || ""),
                 email: "",
                 bio: ""
             };
@@ -415,7 +442,7 @@ function geserCarousel(step) {
 
 // ==========================================
 // 6. RENDER BERANDA (SUSUNAN SESUAI PERMINTAAN)
-//    1. Navbar (sudah di atas)
+//    1. Navbar
 //    2. Hero Carousel
 //    3. Tentang Profil Sekolah
 //    4. Papan Pengumuman (Admin/Operator - Teks & Gambar Banner)
@@ -523,7 +550,7 @@ function renderHome() {
     muatAktivitasDanAbsensiHome();
 }
 
-// Memuat Papan Pengumuman (Mendukung Teks maupun Gambar Banner)
+// Memuat Papan Pengumuman (Mendukung Teks maupun Gambar Banner dari Semua Website & Sosmed)
 function muatPengumumanHome() {
     const wadah = document.getElementById('papan-pengumuman-home');
     if (!wadah) return;
@@ -552,8 +579,9 @@ function muatPengumumanHome() {
             if (p.kategori === "PENTING") { badgeBg = "#dc2626"; borderCol = "#dc2626"; }
             if (p.kategori === "KEGIATAN") { badgeBg = "#05cd99"; borderCol = "#05cd99"; }
 
-            const gambarBannerHtml = p.gambarBanner && p.gambarBanner.trim() !== ""
-                ? `<img src="${p.gambarBanner}" alt="${p.judul}" style="width: 100%; max-height: 340px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid #cbd5e1;" onerror="this.style.display='none'">`
+            const urlBanner = formatUrlGambar(p.gambarBanner);
+            const gambarBannerHtml = urlBanner !== ""
+                ? `<img src="${urlBanner}" referrerpolicy="no-referrer" alt="${p.judul}" style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid #cbd5e1;" onerror="this.style.display='none'">`
                 : '';
 
             html += `
@@ -710,7 +738,6 @@ function renderStrukturGuruTendik() {
             daftarGuruTendikCache.push({ id: doc.id, ...doc.data() });
         });
 
-        // Pastikan profil guru utama selalu ada jika koleksi belum diisi operator
         if (daftarGuruTendikCache.length === 0) {
             daftarGuruTendikCache.push(GURU_DATA);
         }
@@ -738,13 +765,14 @@ function renderStrukturGuruTendik() {
 
             anggota.forEach((person) => {
                 const idx = daftarGuruTendikCache.findIndex(x => x.id === person.id);
-                const fotoUrl = person.foto && person.foto.trim() !== ""
-                    ? person.foto
+                const validFoto = formatUrlGambar(person.foto);
+                const fotoUrl = validFoto !== ""
+                    ? validFoto
                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff`;
 
                 html += `
                     <div class="tendik-card" onclick="renderProfilDetailGuru(${idx})">
-                        <img src="${fotoUrl}" alt="${person.nama}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:3px solid ${kat.warna}; margin-bottom:10px;">
+                        <img src="${fotoUrl}" referrerpolicy="no-referrer" alt="${person.nama}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:3px solid ${kat.warna}; margin-bottom:10px;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
                         <h4 style="margin:0 0 4px 0; font-size:0.95rem; color:#2b3674;">${person.nama}</h4>
                         <div style="font-size:0.78rem; font-weight:700; color:${kat.warna}; margin-bottom:4px;">${person.jabatan || person.mapel || 'Guru'}</div>
                         ${person.nip && person.nip !== '-' ? `<div style="font-size:0.72rem; color:#64748b;">NIP: ${person.nip}</div>` : ''}
@@ -768,14 +796,15 @@ function renderProfilDetailGuru(index) {
     // Aktifkan WhatsApp mengapung KHUSUS di halaman profil guru ini
     setFloatingWAVisible(true, person);
 
-    const fotoUrl = person.foto && person.foto.trim() !== ""
-        ? person.foto
+    const validFoto = formatUrlGambar(person.foto);
+    const fotoUrl = validFoto !== ""
+        ? validFoto
         : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff`;
 
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderStrukturGuruTendik()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar Guru & Tendik</button>
         <div class="detail-box" style="text-align:center; padding: 30px; background:white; border-radius:20px;">
-            <img src="${fotoUrl}" style="width:125px; height:125px; border-radius:50%; object-fit:cover; margin-bottom:15px; border: 4px solid #4318ff;">
+            <img src="${fotoUrl}" referrerpolicy="no-referrer" style="width:125px; height:125px; border-radius:50%; object-fit:cover; margin-bottom:15px; border: 4px solid #4318ff;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
             <h2 style="color:#2b3674; margin-bottom:5px;">${person.nama}</h2>
             <p style="color:#4318ff; font-weight:700; margin-bottom:4px;">${person.jabatan || ('Guru Mata Pelajaran ' + (person.mapel || ''))}</p>
             ${person.nip && person.nip !== '-' ? `<p style="font-size:0.82rem; color:#64748b; margin-top:0;">NIP: ${person.nip}</p>` : ''}
@@ -804,11 +833,12 @@ function renderProfilDetailGuru(index) {
 // ==========================================
 function renderKelas() {
     setFloatingWAVisible(false);
+    const fotoGuru = formatUrlGambar(GURU_DATA.foto);
     let html = `
         <button class="btn-back" onclick="renderDaftarMapel()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Mata Pelajaran</button>
         
         <div style="background:white; padding:16px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:15px; border:1px solid #e2e8f0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.03);" onclick="daftarGuruTendikCache=[GURU_DATA]; renderProfilDetailGuru(0)">
-            <img src="${GURU_DATA.foto}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
+            <img src="${fotoGuru}" referrerpolicy="no-referrer" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
             <div>
                 <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">${GURU_DATA.nama}</h4>
                 <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Guru Pengampu: <strong>${GURU_DATA.mapel}</strong> • <span style="color:#4318ff; font-weight:600;">Lihat Profil & Kontak Guru</span></p>
@@ -1087,9 +1117,11 @@ function openProfilSayaModal() {
     }
 
     const fotoEl = document.getElementById('modal-prof-foto');
-    const fotoSrc = currentUserSession.foto && currentUserSession.foto.trim() !== ""
-        ? currentUserSession.foto
+    const validFoto = formatUrlGambar(currentUserSession.foto);
+    const fotoSrc = validFoto !== ""
+        ? validFoto
         : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserSession.nama)}&background=4318ff&color=fff`;
+    fotoEl.setAttribute("referrerpolicy", "no-referrer");
     fotoEl.src = fotoSrc;
 
     document.getElementById('modal-prof-judul').innerText = currentUserSession.nama;
