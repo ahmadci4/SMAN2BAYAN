@@ -133,7 +133,7 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. LOGIKA GERBANG LOGIN AWAL (4 PERAN)
+// 3. LOGIKA GERBANG LOGIN AWAL (DENGAN AKUN MASTER: admin / admin)
 // ==========================================
 function togglePasswordVisibility(inputId, iconId) {
     const input = document.getElementById(inputId);
@@ -151,10 +151,7 @@ function togglePasswordVisibility(inputId, iconId) {
 }
 
 function validasiKekuatanPassword(pass) {
-    if (pass.length < 8) return "Password terlalu pendek! Minimal harus 8 karakter.";
-    if (!/[A-Z]/.test(pass)) return "Password wajib mengandung minimal 1 HURUF BESAR (A-Z). Contoh: Bayan2026";
-    if (!/[a-z]/.test(pass)) return "Password wajib mengandung minimal 1 HURUF KECIL (a-z). Contoh: Bayan2026";
-    if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) return "Password wajib mengandung minimal 1 ANGKA atau SIMBOL. Contoh: Bayan#2026";
+    if (pass.length < 5) return "Password minimal 5 karakter (contoh: admin).";
     return null;
 }
 
@@ -169,11 +166,11 @@ function pilihPeranLogin(role) {
         if (role === 'operator') {
             banner.style.background = '#fef2f2';
             banner.style.color = '#991b1b';
-            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Kelola pengumuman beranda, struktur guru/tendik, dan import CSV data siswa.';
+            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Untuk uji coba cepat, ketik User: <code>admin</code> & Password: <code>admin</code>';
         } else {
             banner.style.background = '#eef2ff';
             banner.style.color = '#3730a3';
-            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Kelola materi, penilaian tugas siswa, dan data siswa kelas.';
+            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Untuk uji coba cepat, ketik User: <code>admin</code> & Password: <code>admin</code>';
         }
     } else if (role === 'siswa') {
         document.getElementById('form-login-siswa').style.display = 'block';
@@ -204,6 +201,11 @@ function formatToAuthEmail(rawId, prefix) {
     return `${prefix}_${cleanId}@sman2bayan.sch.id`;
 }
 
+function formatFirebasePass(rawPass) {
+    if (rawPass.length >= 6) return rawPass;
+    return `${rawPass}_sman2bayan`;
+}
+
 function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
@@ -211,10 +213,47 @@ function prosesLoginGuru() {
     const jabatan = document.getElementById('reg-guru-jabatan')?.value.trim() || (selectedStaffLoginType === 'operator' ? "Operator Sekolah" : "Guru Mata Pelajaran");
     const btn = document.getElementById('btn-submit-guru');
 
-    if (!rawId || !pass) return alert("Harap isi ID (Email/NIP/Nama) dan Password!");
+    if (!rawId || !pass) return alert("Harap isi ID dan Password!");
+
+    // JALUR CEPAT AKUN MASTER UJI COBA: user = admin, password = admin
+    if (rawId.toLowerCase() === "admin" && pass.toLowerCase() === "admin") {
+        btn.disabled = true;
+        btn.innerText = "Membuka Akses Admin...";
+
+        const masterEmail = "admin_master@sman2bayan.sch.id";
+        const masterFbPass = "AdminSman2Bayan#2026";
+        const masterUser = {
+            uid: "master_admin",
+            role: "Operator",
+            nama: "Administrator SMAN 2 Bayan",
+            sub: "Admin & Operator Utama",
+            email: masterEmail,
+            bio: "Akun Master Uji Coba Semua Fitur"
+        };
+
+        auth.signInWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
+            masterUser.uid = cred.user.uid;
+            db.collection("users_sekolah").doc(cred.user.uid).set(masterUser, { merge: true }).catch(() => {});
+            selesaikanLogin(masterUser);
+        }).catch(() => {
+            auth.createUserWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
+                masterUser.uid = cred.user.uid;
+                db.collection("users_sekolah").doc(cred.user.uid).set(masterUser, { merge: true }).catch(() => {});
+                selesaikanLogin(masterUser);
+            }).catch(() => {
+                auth.signInAnonymously().catch(() => {});
+                selesaikanLogin(masterUser);
+            });
+        }).finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Masuk Sekarang";
+        });
+        return;
+    }
 
     const roleLabel = selectedStaffLoginType === 'operator' ? "Operator" : "Guru";
     const authEmail = formatToAuthEmail(rawId, selectedStaffLoginType);
+    const fbPass = formatFirebasePass(pass);
 
     if (isRegisterGuruMode) {
         const pesanErrorPass = validasiKekuatanPassword(pass);
@@ -223,7 +262,7 @@ function prosesLoginGuru() {
         btn.disabled = true;
         btn.innerText = "Mendaftarkan Akun...";
 
-        auth.createUserWithEmailAndPassword(authEmail, pass).then((cred) => {
+        auth.createUserWithEmailAndPassword(authEmail, fbPass).then((cred) => {
             const userData = { 
                 uid: cred.user.uid, 
                 role: roleLabel, 
@@ -237,7 +276,7 @@ function prosesLoginGuru() {
             selesaikanLogin(userData);
         }).catch(err => {
             if (err.code === 'auth/email-already-in-use') {
-                alert("Email atau ID ini sudah terdaftar! Silakan klik 'Sudah punya akun? Kembali ke Login' lalu masuk.");
+                alert("ID ini sudah terdaftar! Silakan klik 'Sudah punya akun? Kembali ke Login' lalu masuk.");
             } else {
                 alert("Gagal mendaftar akun: " + err.message);
             }
@@ -249,7 +288,7 @@ function prosesLoginGuru() {
         btn.disabled = true;
         btn.innerText = "Memproses Masuk...";
 
-        auth.signInWithEmailAndPassword(authEmail, pass).then((cred) => {
+        auth.signInWithEmailAndPassword(authEmail, fbPass).then((cred) => {
             db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
                 const dataLama = doc.exists ? doc.data() : {};
                 const userData = {
@@ -265,12 +304,8 @@ function prosesLoginGuru() {
             }).catch(() => {
                 selesaikanLogin({ uid: cred.user.uid, role: roleLabel, nama: rawId, sub: jabatan, email: authEmail, bio: "" });
             });
-        }).catch((err) => {
-            if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-                alert("Password yang Anda masukkan salah! Klik ikon mata untuk memeriksa penulisan password.");
-            } else {
-                alert("Akun belum terdaftar. Silakan klik tombol 'Belum punya akun? Daftar Akun Baru' di bawah.");
-            }
+        }).catch(() => {
+            alert("Akun belum terdaftar. Untuk uji coba cepat tanpa daftar, ketik user: admin dan password: admin.");
         }).finally(() => {
             btn.disabled = false;
             btn.innerText = "Masuk Sekarang";
@@ -278,13 +313,31 @@ function prosesLoginGuru() {
     }
 }
 
-// Login Siswa berdasarkan Database Master Siswa yang diinput/di-CSV oleh Guru/Operator
+// Login Siswa (Mendukung akun uji coba cepat: admin / admin, maupun data siswa dari CSV)
 function prosesLoginSiswa() {
     const idInput = document.getElementById('login-siswa-nama').value.trim();
     const passInput = document.getElementById('login-siswa-nis').value.trim();
     const btn = document.getElementById('btn-submit-siswa');
 
-    if (!idInput || !passInput) return alert("Harap isi NIS (atau Nama Lengkap) dan Password dari Guru!");
+    if (!idInput || !passInput) return alert("Harap isi NIS (atau Nama Lengkap) dan Password!");
+
+    if (idInput.toLowerCase() === "admin" && passInput.toLowerCase() === "admin") {
+        auth.signInAnonymously().catch(() => {});
+        const demoSiswa = {
+            uid: "siswa_demo_admin",
+            role: "Siswa",
+            nama: "Siswa Uji Coba (Admin)",
+            nis: "2026999",
+            jk: "Laki-laki",
+            sub: "X.A",
+            foto: "",
+            email: "",
+            bio: ""
+        };
+        alert("Masuk ke Mode Uji Coba Siswa (Kelas X.A)!");
+        selesaikanLogin(demoSiswa);
+        return;
+    }
 
     btn.disabled = true;
     btn.innerText = "Memeriksa Data Siswa...";
@@ -316,7 +369,7 @@ function prosesLoginSiswa() {
             alert(`Selamat datang, ${ditemukan.nama} (${ditemukan.kelas})!`);
             selesaikanLogin(sessionSiswa);
         } else {
-            alert("NIS / Nama atau Password tidak cocok! Pastikan menggunakan password resmi yang dibagikan oleh Guru atau Operator Sekolah.");
+            alert("NIS / Nama atau Password tidak cocok! Untuk uji coba cepat ketik: admin & admin.");
         }
     }).catch((err) => {
         alert("Gagal terhubung ke database siswa: " + err.message);
@@ -397,7 +450,6 @@ function loadProfilGuruData(callback) {
     });
 }
 
-// WhatsApp mengapung HANYA tampil ketika membuka halaman profil guru tertentu
 function setFloatingWAVisible(show, guruObj = GURU_DATA) {
     const waContainer = document.getElementById('floating-wa-container');
     if (!waContainer) return;
@@ -441,13 +493,7 @@ function geserCarousel(step) {
 }
 
 // ==========================================
-// 6. RENDER BERANDA (SUSUNAN SESUAI PERMINTAAN)
-//    1. Navbar
-//    2. Hero Carousel
-//    3. Tentang Profil Sekolah
-//    4. Papan Pengumuman (Admin/Operator - Teks & Gambar Banner)
-//    5. Kegiatan Berlangsung & Rekap Absensi Hari Ini (Guru & Siswa)
-//    6. Sosial Media Sekolah (Paling Bawah)
+// 6. RENDER BERANDA
 // ==========================================
 function renderHome() {
     setActiveNav('nav-home');
@@ -468,14 +514,12 @@ function renderHome() {
     });
 
     let html = `
-        <!-- 2. HERO BANNER CAROUSEL -->
         <div class="hero-carousel">
             ${slidesHtml}
             <button class="carousel-btn" style="left: 12px;" onclick="geserCarousel(-1)"><i class="fa-solid fa-chevron-left"></i></button>
             <button class="carousel-btn" style="right: 12px;" onclick="geserCarousel(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
 
-        <!-- 3. TENTANG PROFIL SEKOLAH -->
         <div class="school-about-card">
             <h3 style="margin:0 0 8px 0; font-size:1.12rem; color:#2b3674;"><i class="fa-solid fa-school" style="color:#4318ff;"></i> Tentang Profil ${DATA_SEKOLAH.nama}</h3>
             <p style="font-size:0.86rem; color:#64748b; line-height:1.6; margin:0;">
@@ -506,21 +550,18 @@ function renderHome() {
             </div>
         </div>
 
-        <!-- 4. PAPAN PENGUMUMAN & BANNER INFO (DIBUAT ADMIN / OPERATOR SEKOLAH) -->
         <div id="papan-pengumuman-home" style="margin-top: 20px;">
             <div class="school-about-card" style="margin-top:0;">
                 <p style="color:#64748b; font-size:0.85rem; margin:0;">Memuat pengumuman sekolah...</p>
             </div>
         </div>
 
-        <!-- 5. KEGIATAN SEDANG BERLANGSUNG & KEHADIRAN HARI INI -->
         <div id="kegiatan-berlangsung-home" style="margin-top: 20px;">
             <div class="school-about-card" style="margin-top:0;">
                 <p style="color:#64748b; font-size:0.85rem; margin:0;">Memuat aktivitas kehadiran & kegiatan hari ini...</p>
             </div>
         </div>
 
-        <!-- 6. SOSIAL MEDIA RESMI SEKOLAH (PALING BAWAH) -->
         <div class="school-about-card" style="margin-top: 20px;">
             <h3 style="margin:0 0 6px 0; font-size:1.05rem; color:#2b3674;"><i class="fa-solid fa-share-nodes" style="color:#4318ff;"></i> Kanal & Sosial Media Resmi Sekolah</h3>
             <p style="font-size:0.82rem; color:#64748b; margin:0;">Ikuti informasi kegiatan, dokumentasi prestasi, dan lokasi kampus SMAN 2 Bayan:</p>
@@ -550,7 +591,6 @@ function renderHome() {
     muatAktivitasDanAbsensiHome();
 }
 
-// Memuat Papan Pengumuman (Mendukung Teks maupun Gambar Banner dari Semua Website & Sosmed)
 function muatPengumumanHome() {
     const wadah = document.getElementById('papan-pengumuman-home');
     if (!wadah) return;
@@ -602,7 +642,6 @@ function muatPengumumanHome() {
     }).catch(() => {});
 }
 
-// Memuat Kegiatan Berlangsung: Siapa yang sudah absen (Guru & Siswa), Jumlah Siswa Hadir Hari Ini, & Agenda Aktif
 function muatAktivitasDanAbsensiHome() {
     const wadah = document.getElementById('kegiatan-berlangsung-home');
     if (!wadah) return;
@@ -659,7 +698,6 @@ function muatAktivitasDanAbsensiHome() {
                     <span style="font-size:0.76rem; background:#eef2ff; color:#4318ff; padding:4px 10px; border-radius:8px; font-weight:700;">${tanggalTampil}</span>
                 </div>
 
-                <!-- Ringkasan Angka Kehadiran Hari Ini -->
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
                     <div style="background: linear-gradient(135deg, #05cd99, #02946d); color:white; padding:14px 16px; border-radius:14px;">
                         <div style="font-size:0.78rem; opacity:0.9; font-weight:600;">Siswa Hadir Hari Ini</div>
@@ -673,7 +711,6 @@ function muatAktivitasDanAbsensiHome() {
                     </div>
                 </div>
 
-                <!-- Daftar Nama yang Sudah Absen -->
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:14px;">
                     <div style="font-size:0.82rem; font-weight:800; color:#2b3674; margin-bottom:6px;"><i class="fa-solid fa-chalkboard-user" style="color:#4318ff;"></i> Guru & Staf Sudah Absen:</div>
                     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">${badgeGuruHadir}</div>
@@ -682,7 +719,6 @@ function muatAktivitasDanAbsensiHome() {
                     <div style="display:flex; flex-wrap:wrap; gap:6px;">${badgeSiswaHadir}</div>
                 </div>
 
-                <!-- Aktivitas Diskusi Kelas & Agenda Pembelajaran Berlangsung -->
                 <div>
                     <div style="font-size:0.84rem; font-weight:800; color:#2b3674; margin-bottom:8px;"><i class="fa-solid fa-comments" style="color:#f59e0b;"></i> Aktivitas Diskusi Pembelajaran Terbaru:</div>
                     <div style="display:flex; flex-direction:column; gap:6px;">${diskusiTerbaruHtml}</div>
@@ -693,7 +729,7 @@ function muatAktivitasDanAbsensiHome() {
 }
 
 // ==========================================
-// 7. MENU MATA PELAJARAN (MUNCUL HANYA SAAT TOMBOL DIKLIK)
+// 7. MENU MATA PELAJARAN
 // ==========================================
 function renderDaftarMapel() {
     setActiveNav('nav-mapel');
@@ -717,7 +753,7 @@ function renderDaftarMapel() {
 }
 
 // ==========================================
-// 8. MENU GURU & TENAGA KEPENDIDIKAN (STRUKTUR ORGANISASI & PROFIL DETAIL)
+// 8. MENU GURU & TENAGA KEPENDIDIKAN
 // ==========================================
 function renderStrukturGuruTendik() {
     setActiveNav('nav-tendik');
@@ -793,7 +829,6 @@ function renderStrukturGuruTendik() {
 
 function renderProfilDetailGuru(index) {
     const person = daftarGuruTendikCache[index] || GURU_DATA;
-    // Aktifkan WhatsApp mengapung KHUSUS di halaman profil guru ini
     setFloatingWAVisible(true, person);
 
     const validFoto = formatUrlGambar(person.foto);
@@ -1175,7 +1210,8 @@ function simpanEditProfilUser() {
     }
 
     if (passBaru !== "" && auth.currentUser) {
-        auth.currentUser.updatePassword(passBaru).then(() => {
+        const fbPassBaru = formatFirebasePass(passBaru);
+        auth.currentUser.updatePassword(fbPassBaru).then(() => {
             alert("Profil dan Password baru Anda berhasil diperbarui!");
             closeProfilSayaModal();
         }).catch(() => {
