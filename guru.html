@@ -10,73 +10,47 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body style="background-color: #f4f7fe; padding: 20px;">
-    <header class="app-header" style="max-width: 800px; margin: 0 auto; border-radius: 20px; display:flex; justify-content:space-between; align-items:center; padding:15px 20px;">
-        <div class="school-info">
-            <h1>Panel Guru SMAN 2 BAYAN</h1>
+    <header class="app-header" style="max-width: 820px; margin: 0 auto; border-radius: 20px; display:flex; justify-content:space-between; align-items:center; padding:15px 20px;">
+        <div class="school-info" style="display:flex; align-items:center; gap:12px;">
+            <a href="index.html" style="background:#eef2ff; color:#4318ff; padding:8px 12px; border-radius:10px; text-decoration:none; font-weight:700; font-size:0.85rem;"><i class="fa-solid fa-house"></i> Beranda</a>
+            <h1 style="margin:0; font-size:1.15rem;">Panel Guru SMAN 2 BAYAN</h1>
         </div>
         <button id="btn-logout" style="display: none; background: #fee2e2; color: #dc2626; padding: 8px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="logoutGuru()">Logout</button>
     </header>
 
-    <main style="max-width: 800px; margin: 20px auto;">
+    <main style="max-width: 820px; margin: 20px auto;">
         
-        <!-- Login Section -->
-        <!-- FORM LOGIN GURU / STAF -->
-            <div id="form-login-guru" style="display: none;">
-                <button onclick="kembaliPilihPeran()" style="background:none; border:none; color:#4318ff; font-weight:700; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; gap:5px; padding:0;"><i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk</button>
-                <div style="background:#eef2ff; padding:10px 12px; border-radius:10px; margin-bottom:14px; font-size:0.78rem; color:#3730a3; line-height:1.4;">
-                    <strong>Login Guru / Kepsek / Staf:</strong> Gunakan Email, NIP, atau Nama ID. Password wajib minimal 8 karakter dan mengandung <strong>huruf besar, huruf kecil, serta angka/simbol</strong>.
-                </div>
-                <label class="form-label">ID (Email / NIP / Nama ID):</label>
-                <input type="text" id="login-guru-id" class="form-input" placeholder="Contoh: Rianti, S.Pd. atau email@gmail.com">
-                
-                <label class="form-label">Password:</label>
-                <div style="position: relative; margin-bottom: 12px;">
-                    <input type="password" id="login-guru-pass" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan#2026">
-                    <button type="button" onclick="togglePasswordVisibility('login-guru-pass', 'eye-guru')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
-                        <i id="eye-guru" class="fa-solid fa-eye"></i>
-                    </button>
-                </div>
+        <!-- Login & Daftar Section Panel Guru -->
+        <div id="login-section" class="detail-box" style="max-width: 440px; margin: 30px auto; padding: 28px; border-radius: 20px;">
+            <h2 style="text-align: center; color: #2b3674; margin-bottom: 8px;">Akses Panel Guru / Admin</h2>
+            <p style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 16px;">Masuk atau daftarkan akun baru Guru / Staf SMAN 2 Bayan</p>
 
-                <div id="register-guru-extra" style="display:none;">
-                    <label class="form-label">Jabatan / Mata Pelajaran (Untuk Akun Baru):</label>
-                    <input type="text" id="reg-guru-jabatan" class="form-input" placeholder="Contoh: Guru Fisika / Staf TU">
-                </div>
-
-                <button id="btn-submit-guru" onclick="prosesLoginGuru()" class="btn-primary" style="width:100%; padding:13px; border-radius:12px; font-size:0.95rem; font-weight:700; margin-top:4px;">Masuk Sekarang</button>
-                <button onclick="toggleDaftarGuru()" id="btn-toggle-reg-guru" style="width:100%; background:#f1f5f9; color:#334155; border:none; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:700; margin-top:8px; cursor:pointer;">Belum punya akun? Daftar ID Guru/Staf</button>
+            <div style="background: #eef2ff; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #3730a3; line-height: 1.4;">
+                <strong>Aturan Password:</strong> Minimal 8 karakter dan wajib kombinasi <strong>huruf besar, huruf kecil, serta angka/simbol</strong> (contoh: <code>Bayan#2026</code>).
             </div>
 
-            <!-- FORM LOGIN SISWA -->
-            <div id="form-login-siswa" style="display: none;">
-                <button onclick="kembaliPilihPeran()" style="background:none; border:none; color:#05cd99; font-weight:700; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; gap:5px; padding:0;"><i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk</button>
-                <div style="background:#ecfdf5; padding:10px 12px; border-radius:10px; margin-bottom:14px; font-size:0.78rem; color:#065f46; line-height:1.4;">
-                    <strong>Login Siswa:</strong> Masukkan Nama Asli dan Password/NIS. Password wajib kombinasi <strong>huruf besar, huruf kecil, dan angka</strong> (minimal 8 karakter, contoh: <code>Siswa2026</code>).
-                </div>
-                <label class="form-label">Nama Lengkap Siswa:</label>
-                <input type="text" id="login-siswa-nama" class="form-input" placeholder="Ketik Nama Asli Anda">
-                
-                <label class="form-label">Password / Sandi Siswa:</label>
-                <div style="position: relative; margin-bottom: 12px;">
-                    <input type="password" id="login-siswa-nis" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan1234">
-                    <button type="button" onclick="togglePasswordVisibility('login-siswa-nis', 'eye-siswa')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
-                        <i id="eye-siswa" class="fa-solid fa-eye"></i>
-                    </button>
-                </div>
+            <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Email / ID Guru:</label>
+            <input type="text" id="email-guru" placeholder="Contoh: ahmadstimik15@gmail.com" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;">
 
-                <div id="register-siswa-extra" style="display:none;">
-                    <label class="form-label">Kelas Anda Saat Ini:</label>
-                    <select id="reg-siswa-kelas" class="form-input">
-                        <option value="X.A">Kelas X.A</option><option value="X.B">Kelas X.B</option><option value="X.C">Kelas X.C</option><option value="X.D">Kelas X.D</option>
-                        <option value="XI.A">Kelas XI.A</option><option value="XI.B">Kelas XI.B</option><option value="XI.C">Kelas XI.C</option><option value="XI.D">Kelas XI.D</option>
-                        <option value="XII.A">Kelas XII.A</option><option value="XII.B">Kelas XII.B</option><option value="XII.C">Kelas XII.C</option><option value="XII.D">Kelas XII.D</option>
-                    </select>
-                </div>
-
-                <button id="btn-submit-siswa" onclick="prosesLoginSiswa()" style="width:100%; background:#05cd99; color:white; border:none; padding:13px; border-radius:12px; font-size:0.95rem; font-weight:700; margin-top:4px; cursor:pointer;">Masuk sebagai Siswa</button>
-                <button onclick="toggleDaftarSiswa()" id="btn-toggle-reg-siswa" style="width:100%; background:#f1f5f9; color:#334155; border:none; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:700; margin-top:8px; cursor:pointer;">Belum terdaftar? Buat Akun Siswa</button>
+            <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Password:</label>
+            <div style="position: relative; margin-top: 5px; margin-bottom: 14px;">
+                <input type="password" id="password-guru" placeholder="Masukkan Password" style="width: 100%; padding: 12px; padding-right: 42px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;">
+                <button type="button" onclick="togglePassGuruPanel()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                    <i id="eye-panel-guru" class="fa-solid fa-eye"></i>
+                </button>
             </div>
+
+            <div id="daftar-guru-panel-extra" style="display: none;">
+                <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Nama Lengkap & Jabatan:</label>
+                <input type="text" id="nama-jabatan-guru" placeholder="Contoh: Ahmad Yani, S.Kom (Admin IT)" style="width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 14px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;">
+            </div>
+
+            <button id="btn-login-panel" class="btn-primary" style="width: 100%; padding: 13px; border-radius: 12px; font-weight: 700; margin-bottom: 8px;" onclick="loginGuru()">Masuk ke Panel Guru</button>
+            <button id="btn-toggle-daftar-panel" type="button" onclick="toggleModeDaftarPanel()" style="width: 100%; background: #f1f5f9; color: #2b3674; border: none; padding: 10px; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">Belum punya akun? Daftar Akun Guru/Admin Baru</button>
+        </div>
 
         <!-- Dashboard Guru -->
         <div id="dashboard-section" style="display: none;">
@@ -86,6 +60,7 @@
                 <button onclick="switchTab('input')" id="tbtn-input" style="flex: 1; padding:10px;" class="btn-primary">Tambah Materi</button>
                 <button onclick="switchTab('list')" id="tbtn-list" style="flex: 1; padding:10px; background:#475569;" class="btn-primary">Daftar Materi</button>
                 <button onclick="switchTab('tugas')" id="tbtn-tugas" style="flex: 1; padding:10px; background:#ec4899;" class="btn-primary">Tugas & Nilai</button>
+                <button onclick="switchTab('siswa')" id="tbtn-siswa" style="flex: 1; padding:10px; background:#0d9488;" class="btn-primary">Akun Siswa</button>
                 <button onclick="switchTab('profil')" id="tbtn-profil" style="flex: 1; padding:10px; background:#05cd99;" class="btn-primary">Edit Profil</button>
                 <button onclick="switchTab('notif')" id="tbtn-notif" style="flex: 1; padding:10px; background: #f2994a;" class="btn-primary">Diskusi <span id="badge-notif" style="background: red; border-radius: 50%; padding: 2px 6px; font-size: 11px; display: none;">0</span></button>
                 <a href="absen.html" style="flex: 1; padding:10px; background: #0284c7; color: white; text-align: center; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 6px;"><i class="fa-solid fa-qrcode"></i> Absen QR</a>
@@ -186,26 +161,14 @@
             </div>
 
             <!-- Tab 4: Diskusi & Balasan Guru -->
-            <!-- Tab 5: Kelola Papan Pengumuman Sekolah -->
-            <!-- Tab 6: Pemeriksaan & Penilaian Tugas Siswa -->
-            <div id="tab-tugas" class="detail-box" style="display: none;">
-                <h2 style="color: #2b3674; margin-bottom: 10px;">Tugas Masuk & Penilaian Siswa</h2>
-                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Periksa link jawaban yang dikirim siswa dan berikan nilai (0–100) beserta catatan evaluasi.</p>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #a3aed1;">Filter Kelas:</label>
-                    <select id="filter-kelas-tugas" onchange="loadTugasSiswaGuru()" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <option value="SEMUA">Semua Kelas</option>
-                        <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
-                        <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
-                        <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
-                    </select>
-                </div>
-
-                <div id="daftar-tugas-siswa">
-                    <p style="color: grey; font-size: 0.85rem;">Memuat data tugas masuk...</p>
+            <div id="tab-notif" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Pertanyaan & Diskusi Siswa</h2>
+                <div id="list-pertanyaan">
+                    <p style="color:grey;">Memuat diskusi...</p>
                 </div>
             </div>
+
+            <!-- Tab 5: Kelola Papan Pengumuman Sekolah -->
             <div id="tab-info" class="detail-box" style="display: none;">
                 <h2 style="color: #2b3674; margin-bottom: 15px;">Papan Pengumuman & Agenda Sekolah</h2>
                 
@@ -229,10 +192,36 @@
                     <p style="color: grey; font-size: 0.85rem;">Memuat pengumuman...</p>
                 </div>
             </div>
-            <div id="tab-notif" class="detail-box" style="display: none;">
-                <h2 style="color: #2b3674; margin-bottom: 15px;">Pertanyaan & Diskusi Siswa</h2>
-                <div id="list-pertanyaan">
-                    <p style="color:grey;">Memuat diskusi...</p>
+
+            <!-- Tab 6: Pemeriksaan & Penilaian Tugas Siswa -->
+            <div id="tab-tugas" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 10px;">Tugas Masuk & Penilaian Siswa</h2>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Periksa link jawaban yang dikirim siswa dan berikan nilai (0–100) beserta catatan evaluasi.</p>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #a3aed1;">Filter Kelas:</label>
+                    <select id="filter-kelas-tugas" onchange="loadTugasSiswaGuru()" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <option value="SEMUA">Semua Kelas</option>
+                        <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                        <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                        <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                    </select>
+                </div>
+
+                <div id="daftar-tugas-siswa">
+                    <p style="color: grey; font-size: 0.85rem;">Memuat data tugas masuk...</p>
+                </div>
+            </div>
+
+            <!-- Tab 7: Kelola Akun & Sandi Siswa -->
+            <div id="tab-siswa" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 10px;">Daftar Akun & Sandi Siswa</h2>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px;">Lihat atau perbarui catatan kata sandi akun siswa apabila ada siswa yang lupa password login mereka.</p>
+                
+                <input type="text" id="cari-akun-siswa" onkeyup="loadDaftarAkunSiswa()" placeholder="Cari nama atau kelas siswa..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <div id="daftar-akun-siswa-guru">
+                    <p style="color: grey; font-size: 0.85rem;">Memuat data akun siswa...</p>
                 </div>
             </div>
 
@@ -254,15 +243,113 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        function loginGuru() {
-            const email = document.getElementById('email-guru').value;
-            const pass = document.getElementById('password-guru').value;
-            auth.signInWithEmailAndPassword(email, pass).catch((error) => alert("Gagal login: " + error.message));
+        window.alert = function(pesan) {
+            if (typeof Swal !== 'undefined') {
+                const isSuccess = String(pesan).toLowerCase().includes('berhasil') || String(pesan).toLowerCase().includes('diperbarui');
+                Swal.fire({
+                    text: pesan,
+                    icon: isSuccess ? 'success' : 'info',
+                    confirmButtonColor: '#4318ff',
+                    confirmButtonText: 'Oke'
+                });
+            } else {
+                console.log(pesan);
+            }
+        };
+
+        let isDaftarPanelMode = false;
+
+        function togglePassGuruPanel() {
+            const inp = document.getElementById('password-guru');
+            const icon = document.getElementById('eye-panel-guru');
+            if (inp.type === "password") {
+                inp.type = "text";
+                icon.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                inp.type = "password";
+                icon.classList.replace("fa-eye-slash", "fa-eye");
+            }
         }
+
+        function toggleModeDaftarPanel() {
+            isDaftarPanelMode = !isDaftarPanelMode;
+            document.getElementById('daftar-guru-panel-extra').style.display = isDaftarPanelMode ? 'block' : 'none';
+            document.getElementById('btn-login-panel').innerText = isDaftarPanelMode ? "Daftar & Masuk ke Panel Guru" : "Masuk ke Panel Guru";
+            document.getElementById('btn-toggle-daftar-panel').innerText = isDaftarPanelMode ? "Sudah punya akun? Kembali ke Login" : "Belum punya akun? Daftar Akun Guru/Admin Baru";
+        }
+
+        function validasiPasswordPanel(pass) {
+            if (pass.length < 8) return "Password minimal harus 8 karakter!";
+            if (!/[A-Z]/.test(pass)) return "Password wajib mengandung minimal 1 HURUF BESAR (A-Z)!";
+            if (!/[a-z]/.test(pass)) return "Password wajib mengandung minimal 1 HURUF KECIL (a-z)!";
+            if (!/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) return "Password wajib mengandung minimal 1 ANGKA atau SIMBOL!";
+            return null;
+        }
+
+        function loginGuru() {
+            const rawId = document.getElementById('email-guru').value.trim();
+            const pass = document.getElementById('password-guru').value.trim();
+            const jabatan = document.getElementById('nama-jabatan-guru').value.trim() || "Guru / Admin SMAN 2 Bayan";
+            const btn = document.getElementById('btn-login-panel');
+
+            if (!rawId || !pass) return alert("Harap isi Email/ID dan Password!");
+            const email = rawId.includes('@') ? rawId.toLowerCase() : `staf_${rawId.toLowerCase().replace(/[^a-z0-9]/g, '')}@sman2bayan.sch.id`;
+
+            if (isDaftarPanelMode) {
+                const errPass = validasiPasswordPanel(pass);
+                if (errPass) return alert(errPass);
+
+                btn.disabled = true;
+                btn.innerText = "Mendaftarkan Akun...";
+
+                auth.createUserWithEmailAndPassword(email, pass).then((cred) => {
+                    const userData = {
+                        uid: cred.user.uid,
+                        role: "Guru / Staf",
+                        nama: rawId,
+                        sub: jabatan,
+                        email: email,
+                        bio: ""
+                    };
+                    db.collection("users_sekolah").doc(cred.user.uid).set(userData).catch(() => {});
+                    localStorage.setItem("sman2bayan_session", JSON.stringify(userData));
+                    alert("Pendaftaran Berhasil! Selamat datang di Panel Guru SMAN 2 Bayan.");
+                }).catch((error) => {
+                    if (error.code === 'auth/email-already-in-use') {
+                        alert("Email/ID sudah terdaftar! Silakan klik 'Sudah punya akun? Kembali ke Login' lalu masuk.");
+                    } else {
+                        alert("Gagal mendaftar: " + error.message);
+                    }
+                }).finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = isDaftarPanelMode ? "Daftar & Masuk ke Panel Guru" : "Masuk ke Panel Guru";
+                });
+            } else {
+                btn.disabled = true;
+                btn.innerText = "Memproses Masuk...";
+
+                auth.signInWithEmailAndPassword(email, pass).then((cred) => {
+                    db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
+                        const userData = doc.exists ? doc.data() : { uid: cred.user.uid, role: "Guru / Staf", nama: rawId, sub: "Guru SMAN 2 Bayan", email: email, bio: "" };
+                        localStorage.setItem("sman2bayan_session", JSON.stringify(userData));
+                    }).catch(() => {});
+                }).catch((error) => {
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        alert("Password salah! Klik ikon mata untuk memastikan huruf besar/kecil sudah benar.");
+                    } else {
+                        alert("Akun belum terdaftar. Klik 'Belum punya akun? Daftar Akun Guru/Admin Baru' di bawah.");
+                    }
+                }).finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Masuk ke Panel Guru";
+                });
+            }
+        }
+
         function logoutGuru() { auth.signOut(); }
 
         auth.onAuthStateChanged((user) => {
-            if (user) {
+            if (user && !user.isAnonymous) {
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
                 document.getElementById('btn-logout').style.display = 'block';
@@ -283,9 +370,67 @@
             document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
             document.getElementById('tab-info').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tab-tugas').style.display = tab === 'tugas' ? 'block' : 'none';
+            document.getElementById('tab-siswa').style.display = tab === 'siswa' ? 'block' : 'none';
             if(tab === 'list') loadDaftarMateriGuru();
             if(tab === 'info') loadPengumumanGuru();
             if(tab === 'tugas') loadTugasSiswaGuru();
+            if(tab === 'siswa') loadDaftarAkunSiswa();
+        }
+
+        function loadDaftarAkunSiswa() {
+            const container = document.getElementById('daftar-akun-siswa-guru');
+            const keyword = (document.getElementById('cari-akun-siswa')?.value || "").toLowerCase();
+            container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Memuat data siswa...</p>";
+
+            db.collection("users_sekolah").where("role", "==", "Siswa").get().then((snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Belum ada siswa yang mendaftar akun.</p>";
+                    return;
+                }
+
+                let html = '';
+                let count = 0;
+                snapshot.forEach((doc) => {
+                    const s = doc.data();
+                    if (keyword && !s.nama.toLowerCase().includes(keyword) && !(s.sub || "").toLowerCase().includes(keyword)) return;
+                    count++;
+
+                    const sandiSaatIni = s.sandiTersimpan || s.nis || "-";
+                    html += `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                                <div>
+                                    <span style="background:#0d9488; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${s.sub || 'Siswa'}</span>
+                                    <strong style="color:#2b3674; margin-left:6px;">${s.nama}</strong>
+                                </div>
+                                <span style="font-size:0.78rem; color:#64748b;">ID Login: ${s.email || '-'}</span>
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#475569;">Sandi / Password:</label>
+                                <input type="text" id="sandi-siswa-${doc.id}" value="${sandiSaatIni}" style="flex:1; min-width:140px; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-family:monospace;">
+                                <button onclick="simpanSandiSiswa('${doc.id}', '${s.nama.replace(/'/g, "\\'")}')" style="background:#4318ff; color:white; border:none; padding:7px 12px; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer;">Simpan Sandi</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = count > 0 ? html : "<p style='color:grey; font-size:0.85rem;'>Nama atau kelas siswa tidak ditemukan.</p>";
+            }).catch(err => {
+                container.innerHTML = `<p style='color:red; font-size:0.85rem;'>Gagal memuat akun siswa: ${err.message}</p>`;
+            });
+        }
+
+        function simpanSandiSiswa(uidSiswa, namaSiswa) {
+            const sandiBaru = document.getElementById(`sandi-siswa-${uidSiswa}`).value.trim();
+            const errPass = validasiPasswordPanel(sandiBaru);
+            if (errPass) return alert(errPass);
+
+            db.collection("users_sekolah").doc(uidSiswa).update({
+                sandiTersimpan: sandiBaru,
+                nis: sandiBaru
+            }).then(() => {
+                alert(`Catatan sandi untuk siswa ${namaSiswa} berhasil diperbarui menjadi: ${sandiBaru}`);
+            }).catch(err => alert("Gagal memperbarui sandi: " + err.message));
         }
 
         function loadTugasSiswaGuru() {
@@ -354,56 +499,56 @@
             }).catch(err => alert("Gagal menyimpan nilai: " + err.message));
         }
         
-                function tambahPengumuman() {
-                    const kategori = document.getElementById('info-kategori').value;
-                    const judul = document.getElementById('info-judul').value.trim();
-                    const isi = document.getElementById('info-isi').value.trim();
-                    if (!judul || !isi) return alert("Harap isi Judul dan Isi Pengumuman!");
-        
-                    db.collection("pengumuman_sekolah").add({
-                        kategori: kategori,
-                        judul: judul,
-                        isi: isi,
-                        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        alert("Pengumuman berhasil diterbitkan ke halaman Beranda!");
-                        document.getElementById('info-judul').value = '';
-                        document.getElementById('info-isi').value = '';
-                        loadPengumumanGuru();
-                    }).catch(err => alert("Gagal menerbitkan: " + err.message));
+        function tambahPengumuman() {
+            const kategori = document.getElementById('info-kategori').value;
+            const judul = document.getElementById('info-judul').value.trim();
+            const isi = document.getElementById('info-isi').value.trim();
+            if (!judul || !isi) return alert("Harap isi Judul dan Isi Pengumuman!");
+
+            db.collection("pengumuman_sekolah").add({
+                kategori: kategori,
+                judul: judul,
+                isi: isi,
+                tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("Pengumuman berhasil diterbitkan ke halaman Beranda!");
+                document.getElementById('info-judul').value = '';
+                document.getElementById('info-isi').value = '';
+                loadPengumumanGuru();
+            }).catch(err => alert("Gagal menerbitkan: " + err.message));
+        }
+
+        function loadPengumumanGuru() {
+            const container = document.getElementById('daftar-pengumuman-guru');
+            db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").get().then((snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Belum ada pengumuman yang diterbitkan.</p>";
+                    return;
                 }
-        
-                function loadPengumumanGuru() {
-                    const container = document.getElementById('daftar-pengumuman-guru');
-                    db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").get().then((snapshot) => {
-                        if (snapshot.empty) {
-                            container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Belum ada pengumuman yang diterbitkan.</p>";
-                            return;
-                        }
-                        container.innerHTML = '';
-                        snapshot.forEach((doc) => {
-                            const p = doc.data();
-                            container.innerHTML += `
-                                <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                                    <div>
-                                        <span style="background:#8b5cf6; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${p.kategori}</span>
-                                        <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${p.tanggal || ''}</span>
-                                        <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${p.judul}</h4>
-                                        <p style="margin:0; font-size:0.85rem; color:#475569;">${p.isi}</p>
-                                    </div>
-                                    <button onclick="hapusPengumuman('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            `;
-                        });
-                    });
-                }
-        
-                function hapusPengumuman(id) {
-                    if (confirm("Hapus pengumuman ini dari Beranda?")) {
-                        db.collection("pengumuman_sekolah").doc(id).delete().then(() => loadPengumumanGuru());
-                    }
-                }                
+                container.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const p = doc.data();
+                    container.innerHTML += `
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                            <div>
+                                <span style="background:#8b5cf6; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${p.kategori}</span>
+                                <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${p.tanggal || ''}</span>
+                                <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${p.judul}</h4>
+                                <p style="margin:0; font-size:0.85rem; color:#475569;">${p.isi}</p>
+                            </div>
+                            <button onclick="hapusPengumuman('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function hapusPengumuman(id) {
+            if (confirm("Hapus pengumuman ini dari Beranda?")) {
+                db.collection("pengumuman_sekolah").doc(id).delete().then(() => loadPengumumanGuru());
+            }
+        }                
 
         function unggahMateri() {
             const btnSubmit = document.getElementById('btn-submit');
