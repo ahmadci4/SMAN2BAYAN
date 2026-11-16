@@ -56,7 +56,7 @@
 
     <main style="max-width: 920px; margin: 20px auto;">
         
-        <!-- Login Section (Jika dibuka langsung tanpa login dari index.html) -->
+        <!-- Login Section -->
         <div id="login-section" class="detail-box" style="max-width: 440px; margin: 30px auto; padding: 28px; border-radius: 20px; background: white;">
             <h2 style="text-align: center; color: #2b3674; margin-bottom: 6px;">Masuk Ruang Kerja Guru / Operator</h2>
             <p style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 16px;">Gunakan akun Guru atau Admin/Operator Sekolah Anda</p>
@@ -104,7 +104,7 @@
                  ======================================================== -->
             <div id="tab-siswa" class="detail-box" style="background: white; padding: 24px; border-radius: 20px;">
                 <h2 style="color: #2b3674; margin: 0 0 6px 0;"><i class="fa-solid fa-user-graduate" style="color:#0d9488;"></i> Manajemen Data Siswa & Import CSV</h2>
-                <p style="font-size: 0.84rem; color: #64748b; margin: 0 0 18px 0;">Data pokok siswa (Nama, NIS, Jenis Kelamin, Kelas, Foto, dan Password) dikelola sepenuhnya oleh Guru & Operator agar tidak terjadi kesalahan pengisian oleh siswa.</p>
+                <p style="font-size: 0.84rem; color: #64748b; margin: 0 0 18px 0;">Data pokok siswa (Nama, NIS, Jenis Kelamin, Kelas, Foto, dan Password) dikelola sepenuhnya oleh Guru & Operator.</p>
 
                 <!-- Kotak Import CSV Excel -->
                 <div style="background: #f0fdfa; border: 1.5px dashed #0d9488; padding: 16px; border-radius: 14px; margin-bottom: 20px;">
@@ -160,8 +160,8 @@
                             <input type="text" id="siswa-password" placeholder="Contoh: Bayan2026" class="form-ctrl">
                         </div>
                         <div>
-                            <label style="font-size: 0.78rem; font-weight: 700;">Link Foto Siswa (Opsional):</label>
-                            <input type="url" id="siswa-foto" placeholder="https://..." class="form-ctrl">
+                            <label style="font-size: 0.78rem; font-weight: 700;">Link Foto (Semua Website / Sosmed / Drive):</label>
+                            <input type="text" id="siswa-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
                         </div>
                     </div>
 
@@ -213,10 +213,10 @@
                 <label style="font-weight: 700; font-size: 0.85rem; color: #475569;">Isi Pengumuman Tertulis (Opsional jika hanya upload banner):</label>
                 <textarea id="info-isi" rows="3" placeholder="Tulis rincian pengumuman untuk siswa dan guru..." class="form-ctrl"></textarea>
 
-                <label style="font-weight: 700; font-size: 0.85rem; color: #475569;"><i class="fa-solid fa-image" style="color:#8b5cf6;"></i> URL Gambar Banner / Poster Pengumuman (Opsional):</label>
-                <input type="url" id="info-gambar-banner" placeholder="Tempelkan link gambar poster/banner (https://...)" class="form-ctrl">
+                <label style="font-weight: 700; font-size: 0.85rem; color: #475569;"><i class="fa-solid fa-image" style="color:#8b5cf6;"></i> Link Gambar Banner / Poster (Semua Website, Google Drive & Sosial Media):</label>
+                <input type="text" id="info-gambar-banner" placeholder="Tempelkan link gambar dari Google Drive, Facebook, IG, Postimages, atau website mana pun..." class="form-ctrl">
 
-                <button onclick="tambahPengumuman()" style="width: 100%; background: #8b5cf6; color: white; padding: 13px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 22px;">
+                <button id="btn-submit-pengumuman" type="button" onclick="tambahPengumuman()" style="width: 100%; background: #8b5cf6; color: white; padding: 13px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 22px;">
                     <i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman ke Halaman Home
                 </button>
 
@@ -274,8 +274,8 @@
                         <input type="text" id="tendik-wa" placeholder="Contoh: 6281234567890" class="form-ctrl">
                     </div>
                     <div>
-                        <label style="font-size: 0.8rem; font-weight: 700;">Link Foto Profil (URL):</label>
-                        <input type="url" id="tendik-foto" placeholder="https://..." class="form-ctrl">
+                        <label style="font-size: 0.8rem; font-weight: 700;">Link Foto Profil (Semua Website / Sosmed):</label>
+                        <input type="text" id="tendik-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
                     </div>
                     <div>
                         <label style="font-size: 0.8rem; font-weight: 700;">Moto / Quote Mengajar:</label>
@@ -328,12 +328,12 @@
                 <textarea id="input-deskripsi" rows="3" placeholder="Berikan penjelasan pengantar..." class="form-ctrl"></textarea>
 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
-                    <h3 style="font-size: 0.95rem; color: #4318ff; margin: 0 0 10px 0;">Lampiran Media & Literatur (YouTube/Drive)</h3>
+                    <h3 style="font-size: 0.95rem; color: #4318ff; margin: 0 0 10px 0;">Lampiran Media & Literatur (YouTube/Drive/Sosmed)</h3>
                     <input type="text" id="ket-link-1" placeholder="Keterangan 1 (Misal: Video YouTube)" class="form-ctrl" style="margin-bottom:6px;">
-                    <input type="url" id="url-link-1" placeholder="Paste URL..." class="form-ctrl">
+                    <input type="text" id="url-link-1" placeholder="Paste URL..." class="form-ctrl">
 
                     <input type="text" id="ket-link-2" placeholder="Keterangan 2 (Misal: Modul Drive)" class="form-ctrl" style="margin-bottom:6px;">
-                    <input type="url" id="url-link-2" placeholder="Paste URL..." class="form-ctrl" style="margin-bottom:0;">
+                    <input type="text" id="url-link-2" placeholder="Paste URL..." class="form-ctrl" style="margin-bottom:0;">
                 </div>
 
                 <label style="font-weight: 700; font-size: 0.85rem; color: #475569;">Tugas / PR (Opsional):</label>
@@ -394,16 +394,16 @@
                 <label style="font-weight: 700; font-size: 0.85rem;">Quote / Moto Mengajar:</label>
                 <textarea id="prof-quote" rows="2" placeholder="Tulis moto hidup/mengajar..." class="form-ctrl"></textarea>
 
-                <label style="font-weight: 700; font-size: 0.85rem;">URL Foto Profil (Link Gambar):</label>
-                <input type="url" id="prof-foto" placeholder="https://..." class="form-ctrl">
+                <label style="font-weight: 700; font-size: 0.85rem;">Link Foto Profil (Semua Website / Sosmed / Drive):</label>
+                <input type="text" id="prof-foto" placeholder="Tempelkan link foto..." class="form-ctrl">
 
                 <label style="font-weight: 700; font-size: 0.85rem;">Email & WhatsApp (Awali 62):</label>
                 <input type="email" id="prof-email" placeholder="email@sekolah.sch.id" class="form-ctrl" style="margin-bottom:6px;">
                 <input type="text" id="prof-wa" placeholder="62812..." class="form-ctrl">
 
                 <label style="font-weight: 700; font-size: 0.85rem;">Link Instagram & Google Maps:</label>
-                <input type="url" id="prof-ig" placeholder="https://instagram.com/..." class="form-ctrl" style="margin-bottom:6px;">
-                <input type="url" id="prof-maps" placeholder="https://maps.google.com/..." class="form-ctrl">
+                <input type="text" id="prof-ig" placeholder="https://instagram.com/..." class="form-ctrl" style="margin-bottom:6px;">
+                <input type="text" id="prof-maps" placeholder="https://maps.google.com/..." class="form-ctrl">
 
                 <button onclick="simpanProfilGuru()" style="width: 100%; background: #4318ff; color: white; padding: 13px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Simpan Perubahan Profil</button>
             </div>
@@ -439,6 +439,24 @@
                 console.log(pesan);
             }
         };
+
+        // Konverter link gambar universal (Google Drive, semua website & sosial media)
+        function konversiLinkGambarUniversal(rawUrl) {
+            if (!rawUrl) return "";
+            let url = String(rawUrl).trim();
+            if (!url) return "";
+
+            if (!/^https?:\/\//i.test(url) && !url.startsWith("images/") && !url.startsWith("./")) {
+                url = "https://" + url;
+            }
+
+            const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+            if (gdriveMatch && gdriveMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
+            }
+
+            return url;
+        }
 
         let sesiStaff = JSON.parse(localStorage.getItem("sman2bayan_session") || "null");
 
@@ -491,14 +509,21 @@
 
             auth.signInWithEmailAndPassword(email, pass).then((cred) => {
                 db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
-                    sesiStaff = doc.exists
-                        ? { ...doc.data(), role: doc.data().role || roleLabel }
-                        : { uid: cred.user.uid, role: roleLabel, nama: rawId, sub: roleLabel, email: email };
+                    const dataLama = doc.exists ? doc.data() : {};
+                    sesiStaff = {
+                        ...dataLama,
+                        uid: cred.user.uid,
+                        role: roleLabel,
+                        nama: dataLama.nama || rawId,
+                        sub: dataLama.sub || roleLabel,
+                        email: email
+                    };
+                    db.collection("users_sekolah").doc(cred.user.uid).set(sesiStaff, { merge: true }).catch(() => {});
                     localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
                     terapkanHakAksesTab();
                 }).catch(() => {});
-            }).catch(() => {
-                alert("Email/ID atau Password tidak cocok. Pastikan akun sudah didaftarkan dari halaman Beranda.");
+            }).catch((err) => {
+                alert("Gagal masuk: " + err.message);
             }).finally(() => {
                 btn.disabled = false;
                 btn.innerText = "Masuk Sekarang";
@@ -578,7 +603,6 @@
                     return alert("File CSV kosong atau hanya berisi header kolom.");
                 }
 
-                // Deteksi pemisah koma (,) atau titik koma (;) dari Excel regional Indonesia
                 const delimiter = lines[0].includes(";") ? ";" : ",";
                 const btn = document.getElementById('btn-import-csv');
                 btn.disabled = true;
@@ -597,7 +621,7 @@
                     const jk = (jkRaw === "P" || jkRaw.startsWith("PEREMPUAN")) ? "Perempuan" : "Laki-laki";
                     const kelas = (cols[3] || "X.A").toUpperCase();
                     const password = cols[4] || nis;
-                    const foto = cols[5] || "";
+                    const foto = konversiLinkGambarUniversal(cols[5] || "");
 
                     const docRef = db.collection("data_siswa").doc(`nis_${nis.replace(/[^a-zA-Z0-9]/g, '')}`);
                     batch.set(docRef, {
@@ -635,7 +659,7 @@
             const jk = document.getElementById('siswa-jk').value;
             const kelas = document.getElementById('siswa-kelas').value;
             const password = document.getElementById('siswa-password').value.trim();
-            const foto = document.getElementById('siswa-foto').value.trim();
+            const foto = konversiLinkGambarUniversal(document.getElementById('siswa-foto').value.trim());
 
             if (!nis || !nama || !password) {
                 return alert("NIS, Nama Lengkap Siswa, dan Password wajib diisi!");
@@ -709,14 +733,15 @@
                     if (keyword && !String(s.nama).toLowerCase().includes(keyword) && !String(s.nis).toLowerCase().includes(keyword) && !String(s.kelas).toLowerCase().includes(keyword)) return;
                     count++;
 
-                    const fotoSrc = s.foto && s.foto.trim() !== ""
-                        ? s.foto
+                    const validFoto = konversiLinkGambarUniversal(s.foto);
+                    const fotoSrc = validFoto !== ""
+                        ? validFoto
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama)}&background=0d9488&color=fff`;
 
                     html += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                             <div style="display:flex; align-items:center; gap:12px;">
-                                <img src="${fotoSrc}" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid #0d9488;">
+                                <img src="${fotoSrc}" referrerpolicy="no-referrer" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid #0d9488;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(s.nama)}&background=0d9488&color=fff'">
                                 <div>
                                     <div>
                                         <span style="background:#0d9488; color:white; font-size:0.72rem; padding:2px 7px; border-radius:5px; font-weight:bold;">${s.kelas}</span>
@@ -749,22 +774,35 @@
         // B. KHUSUS OPERATOR: PENGUMUMAN (TEKS & GAMBAR BANNER)
         // ========================================================
         function tambahPengumuman() {
-            if (!isOperatorRole()) return alert("Hanya Admin / Operator Sekolah yang dapat menerbitkan pengumuman!");
+            if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                return alert("Sesi login Anda habis. Silakan keluar lalu login kembali sebagai Operator.");
+            }
+            if (!isOperatorRole()) {
+                return alert("Hanya Admin / Operator Sekolah yang dapat menerbitkan pengumuman!");
+            }
 
             const kategori = document.getElementById('info-kategori').value;
             const judul = document.getElementById('info-judul').value.trim();
             const isi = document.getElementById('info-isi').value.trim();
-            const gambarBanner = document.getElementById('info-gambar-banner').value.trim();
+            const rawBanner = document.getElementById('info-gambar-banner').value.trim();
 
             if (!judul) return alert("Harap isi Judul Pengumuman!");
-            if (!isi && !gambarBanner) return alert("Harap isi tulisan pengumuman atau tempelkan URL Gambar Banner!");
+            if (!isi && !rawBanner) return alert("Harap isi tulisan pengumuman atau tempelkan Link Gambar Banner!");
+            if (rawBanner.startsWith("data:image")) {
+                return alert("Jangan tempelkan kode Base64 gambar langsung. Gunakan link URL gambar dari website, Google Drive, atau sosial media.");
+            }
+
+            const gambarBanner = konversiLinkGambarUniversal(rawBanner);
+            const btnSubmit = document.getElementById('btn-submit-pengumuman');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menerbitkan...`;
 
             db.collection("pengumuman_sekolah").add({
                 kategori: kategori,
                 judul: judul,
                 isi: isi,
                 gambarBanner: gambarBanner,
-                dibuatOleh: sesiStaff.nama || "Operator Sekolah",
+                dibuatOleh: (sesiStaff && sesiStaff.nama) ? sesiStaff.nama : "Operator Sekolah",
                 tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
@@ -773,7 +811,12 @@
                 document.getElementById('info-isi').value = '';
                 document.getElementById('info-gambar-banner').value = '';
                 loadPengumumanGuru();
-            }).catch(err => alert("Gagal menerbitkan: " + err.message));
+            }).catch(err => {
+                alert("Gagal menerbitkan pengumuman: " + err.message);
+            }).finally(() => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman ke Halaman Home`;
+            });
         }
 
         function loadPengumumanGuru() {
@@ -786,6 +829,7 @@
                 container.innerHTML = '';
                 snapshot.forEach((doc) => {
                     const p = doc.data();
+                    const bannerUrl = konversiLinkGambarUniversal(p.gambarBanner);
                     container.innerHTML += `
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                             <div style="flex:1;">
@@ -793,7 +837,7 @@
                                 <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${p.tanggal || ''}</span>
                                 <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${p.judul}</h4>
                                 ${p.isi ? `<p style="margin:0 0 6px 0; font-size:0.84rem; color:#475569;">${p.isi}</p>` : ''}
-                                ${p.gambarBanner ? `<img src="${p.gambarBanner}" style="max-height:110px; border-radius:8px; border:1px solid #cbd5e1;">` : ''}
+                                ${bannerUrl ? `<img src="${bannerUrl}" referrerpolicy="no-referrer" style="max-height:110px; border-radius:8px; border:1px solid #cbd5e1;" onerror="this.style.display='none'">` : ''}
                             </div>
                             <button onclick="hapusPengumuman('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
                         </div>
@@ -829,7 +873,7 @@
                 mapel: document.getElementById('tendik-mapel').value.trim(),
                 gelar: document.getElementById('tendik-gelar').value.trim(),
                 whatsapp: document.getElementById('tendik-wa').value.trim(),
-                foto: document.getElementById('tendik-foto').value.trim(),
+                foto: konversiLinkGambarUniversal(document.getElementById('tendik-foto').value.trim()),
                 quote: document.getElementById('tendik-quote').value.trim()
             };
 
@@ -963,8 +1007,8 @@
         function unggahMateri() {
             const btnSubmit = document.getElementById('btn-submit');
             let tautan = [];
-            if (document.getElementById('url-link-1').value) tautan.push({ label: document.getElementById('ket-link-1').value || 'Media 1', url: document.getElementById('url-link-1').value });
-            if (document.getElementById('url-link-2').value) tautan.push({ label: document.getElementById('ket-link-2').value || 'Media 2', url: document.getElementById('url-link-2').value });
+            if (document.getElementById('url-link-1').value) tautan.push({ label: document.getElementById('ket-link-1').value || 'Media 1', url: document.getElementById('url-link-1').value.trim() });
+            if (document.getElementById('url-link-2').value) tautan.push({ label: document.getElementById('ket-link-2').value || 'Media 2', url: document.getElementById('url-link-2').value.trim() });
 
             const data = {
                 mapel: document.getElementById('input-mapel').value,
@@ -1051,7 +1095,7 @@
                 kampus: document.getElementById('prof-kampus').value,
                 mapel: document.getElementById('prof-mapel').value,
                 quote: document.getElementById('prof-quote').value,
-                foto: document.getElementById('prof-foto').value,
+                foto: konversiLinkGambarUniversal(document.getElementById('prof-foto').value),
                 email: document.getElementById('prof-email').value,
                 whatsapp: document.getElementById('prof-wa').value,
                 instagram: document.getElementById('prof-ig').value,
