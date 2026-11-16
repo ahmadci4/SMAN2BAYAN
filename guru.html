@@ -33,6 +33,7 @@
         <div id="dashboard-section" style="display: none;">
             
             <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap:wrap;">
+                <button onclick="switchTab('info')" id="tbtn-info" style="flex: 1; padding:10px; background:#8b5cf6;" class="btn-primary">Pengumuman</button>
                 <button onclick="switchTab('input')" id="tbtn-input" style="flex: 1; padding:10px;" class="btn-primary">Tambah Materi</button>
                 <button onclick="switchTab('list')" id="tbtn-list" style="flex: 1; padding:10px; background:#475569;" class="btn-primary">Daftar Materi</button>
                 <button onclick="switchTab('profil')" id="tbtn-profil" style="flex: 1; padding:10px; background:#05cd99;" class="btn-primary">Edit Profil</button>
@@ -135,6 +136,30 @@
             </div>
 
             <!-- Tab 4: Diskusi & Balasan Guru -->
+            <!-- Tab 5: Kelola Papan Pengumuman Sekolah -->
+            <div id="tab-info" class="detail-box" style="display: none;">
+                <h2 style="color: #2b3674; margin-bottom: 15px;">Papan Pengumuman & Agenda Sekolah</h2>
+                
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Kategori Info:</label>
+                <select id="info-kategori" style="width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <option value="PENTING">Pengumuman Penting (Merah)</option>
+                    <option value="AKADEMIK">Jadwal Ujian / Akademik (Biru)</option>
+                    <option value="KEGIATAN">Agenda / Kegiatan Sekolah (Hijau)</option>
+                </select>
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Judul Pengumuman:</label>
+                <input type="text" id="info-judul" placeholder="Contoh: Jadwal Penilaian Akhir Semester Ganjil 2026" style="width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+                <label style="font-weight: 600; font-size: 0.9rem; color: #a3aed1;">Isi Pengumuman / Tanggal Pelaksanaan:</label>
+                <textarea id="info-isi" rows="3" placeholder="Tulis rincian pengumuman untuk siswa dan guru..." style="width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 8px;"></textarea>
+
+                <button onclick="tambahPengumuman()" style="width: 100%; background: #8b5cf6; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 20px;">Terbitkan ke Beranda</button>
+
+                <h3 style="font-size: 1rem; color: #2b3674; margin-bottom: 10px;">Daftar Pengumuman Aktif</h3>
+                <div id="daftar-pengumuman-guru">
+                    <p style="color: grey; font-size: 0.85rem;">Memuat pengumuman...</p>
+                </div>
+            </div>
             <div id="tab-notif" class="detail-box" style="display: none;">
                 <h2 style="color: #2b3674; margin-bottom: 15px;">Pertanyaan & Diskusi Siswa</h2>
                 <div id="list-pertanyaan">
@@ -183,12 +208,65 @@
         });
 
         function switchTab(tab) {
-            document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
-            document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
-            document.getElementById('tab-profil').style.display = tab === 'profil' ? 'block' : 'none';
-            document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
-            if(tab === 'list') loadDaftarMateriGuru();
-        }
+                    document.getElementById('tab-input').style.display = tab === 'input' ? 'block' : 'none';
+                    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
+                    document.getElementById('tab-profil').style.display = tab === 'profil' ? 'block' : 'none';
+                    document.getElementById('tab-notif').style.display = tab === 'notif' ? 'block' : 'none';
+                    document.getElementById('tab-info').style.display = tab === 'info' ? 'block' : 'none';
+                    if(tab === 'list') loadDaftarMateriGuru();
+                    if(tab === 'info') loadPengumumanGuru();
+                }
+        
+                function tambahPengumuman() {
+                    const kategori = document.getElementById('info-kategori').value;
+                    const judul = document.getElementById('info-judul').value.trim();
+                    const isi = document.getElementById('info-isi').value.trim();
+                    if (!judul || !isi) return alert("Harap isi Judul dan Isi Pengumuman!");
+        
+                    db.collection("pengumuman_sekolah").add({
+                        kategori: kategori,
+                        judul: judul,
+                        isi: isi,
+                        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        alert("Pengumuman berhasil diterbitkan ke halaman Beranda!");
+                        document.getElementById('info-judul').value = '';
+                        document.getElementById('info-isi').value = '';
+                        loadPengumumanGuru();
+                    }).catch(err => alert("Gagal menerbitkan: " + err.message));
+                }
+        
+                function loadPengumumanGuru() {
+                    const container = document.getElementById('daftar-pengumuman-guru');
+                    db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").get().then((snapshot) => {
+                        if (snapshot.empty) {
+                            container.innerHTML = "<p style='color:grey; font-size:0.85rem;'>Belum ada pengumuman yang diterbitkan.</p>";
+                            return;
+                        }
+                        container.innerHTML = '';
+                        snapshot.forEach((doc) => {
+                            const p = doc.data();
+                            container.innerHTML += `
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                                    <div>
+                                        <span style="background:#8b5cf6; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${p.kategori}</span>
+                                        <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">${p.tanggal || ''}</span>
+                                        <h4 style="margin:5px 0 3px 0; color:#2b3674; font-size:0.95rem;">${p.judul}</h4>
+                                        <p style="margin:0; font-size:0.85rem; color:#475569;">${p.isi}</p>
+                                    </div>
+                                    <button onclick="hapusPengumuman('${doc.id}')" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            `;
+                        });
+                    });
+                }
+        
+                function hapusPengumuman(id) {
+                    if (confirm("Hapus pengumuman ini dari Beranda?")) {
+                        db.collection("pengumuman_sekolah").doc(id).delete().then(() => loadPengumumanGuru());
+                    }
+                }                
 
         function unggahMateri() {
             const btnSubmit = document.getElementById('btn-submit');
