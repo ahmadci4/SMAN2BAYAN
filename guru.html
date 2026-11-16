@@ -22,12 +22,61 @@
     <main style="max-width: 800px; margin: 20px auto;">
         
         <!-- Login Section -->
-        <div id="login-section" style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-            <h2 style="color: #2b3674; margin-bottom: 15px;">Login Guru</h2>
-            <input type="email" id="email-guru" placeholder="Email Guru" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
-            <input type="password" id="password-guru" placeholder="Password" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
-            <button onclick="loginGuru()" style="width: 100%; background: #4318ff; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">Masuk</button>
-        </div>
+        <!-- FORM LOGIN GURU / STAF -->
+            <div id="form-login-guru" style="display: none;">
+                <button onclick="kembaliPilihPeran()" style="background:none; border:none; color:#4318ff; font-weight:700; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; gap:5px; padding:0;"><i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk</button>
+                <div style="background:#eef2ff; padding:10px 12px; border-radius:10px; margin-bottom:14px; font-size:0.78rem; color:#3730a3; line-height:1.4;">
+                    <strong>Login Guru / Kepsek / Staf:</strong> Gunakan Email, NIP, atau Nama ID. Password wajib minimal 8 karakter dan mengandung <strong>huruf besar, huruf kecil, serta angka/simbol</strong>.
+                </div>
+                <label class="form-label">ID (Email / NIP / Nama ID):</label>
+                <input type="text" id="login-guru-id" class="form-input" placeholder="Contoh: Rianti, S.Pd. atau email@gmail.com">
+                
+                <label class="form-label">Password:</label>
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="login-guru-pass" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan#2026">
+                    <button type="button" onclick="togglePasswordVisibility('login-guru-pass', 'eye-guru')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                        <i id="eye-guru" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <div id="register-guru-extra" style="display:none;">
+                    <label class="form-label">Jabatan / Mata Pelajaran (Untuk Akun Baru):</label>
+                    <input type="text" id="reg-guru-jabatan" class="form-input" placeholder="Contoh: Guru Fisika / Staf TU">
+                </div>
+
+                <button id="btn-submit-guru" onclick="prosesLoginGuru()" class="btn-primary" style="width:100%; padding:13px; border-radius:12px; font-size:0.95rem; font-weight:700; margin-top:4px;">Masuk Sekarang</button>
+                <button onclick="toggleDaftarGuru()" id="btn-toggle-reg-guru" style="width:100%; background:#f1f5f9; color:#334155; border:none; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:700; margin-top:8px; cursor:pointer;">Belum punya akun? Daftar ID Guru/Staf</button>
+            </div>
+
+            <!-- FORM LOGIN SISWA -->
+            <div id="form-login-siswa" style="display: none;">
+                <button onclick="kembaliPilihPeran()" style="background:none; border:none; color:#05cd99; font-weight:700; cursor:pointer; margin-bottom:12px; display:flex; align-items:center; gap:5px; padding:0;"><i class="fa-solid fa-arrow-left"></i> Ganti Peran Masuk</button>
+                <div style="background:#ecfdf5; padding:10px 12px; border-radius:10px; margin-bottom:14px; font-size:0.78rem; color:#065f46; line-height:1.4;">
+                    <strong>Login Siswa:</strong> Masukkan Nama Asli dan Password/NIS. Password wajib kombinasi <strong>huruf besar, huruf kecil, dan angka</strong> (minimal 8 karakter, contoh: <code>Siswa2026</code>).
+                </div>
+                <label class="form-label">Nama Lengkap Siswa:</label>
+                <input type="text" id="login-siswa-nama" class="form-input" placeholder="Ketik Nama Asli Anda">
+                
+                <label class="form-label">Password / Sandi Siswa:</label>
+                <div style="position: relative; margin-bottom: 12px;">
+                    <input type="password" id="login-siswa-nis" class="form-input" style="margin-bottom: 0; padding-right: 42px;" placeholder="Contoh: Bayan1234">
+                    <button type="button" onclick="togglePasswordVisibility('login-siswa-nis', 'eye-siswa')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
+                        <i id="eye-siswa" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <div id="register-siswa-extra" style="display:none;">
+                    <label class="form-label">Kelas Anda Saat Ini:</label>
+                    <select id="reg-siswa-kelas" class="form-input">
+                        <option value="X.A">Kelas X.A</option><option value="X.B">Kelas X.B</option><option value="X.C">Kelas X.C</option><option value="X.D">Kelas X.D</option>
+                        <option value="XI.A">Kelas XI.A</option><option value="XI.B">Kelas XI.B</option><option value="XI.C">Kelas XI.C</option><option value="XI.D">Kelas XI.D</option>
+                        <option value="XII.A">Kelas XII.A</option><option value="XII.B">Kelas XII.B</option><option value="XII.C">Kelas XII.C</option><option value="XII.D">Kelas XII.D</option>
+                    </select>
+                </div>
+
+                <button id="btn-submit-siswa" onclick="prosesLoginSiswa()" style="width:100%; background:#05cd99; color:white; border:none; padding:13px; border-radius:12px; font-size:0.95rem; font-weight:700; margin-top:4px; cursor:pointer;">Masuk sebagai Siswa</button>
+                <button onclick="toggleDaftarSiswa()" id="btn-toggle-reg-siswa" style="width:100%; background:#f1f5f9; color:#334155; border:none; padding:10px; border-radius:10px; font-size:0.8rem; font-weight:700; margin-top:8px; cursor:pointer;">Belum terdaftar? Buat Akun Siswa</button>
+            </div>
 
         <!-- Dashboard Guru -->
         <div id="dashboard-section" style="display: none;">
