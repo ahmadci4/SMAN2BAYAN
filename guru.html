@@ -59,20 +59,20 @@
         <!-- Login Section -->
         <div id="login-section" class="detail-box" style="max-width: 440px; margin: 30px auto; padding: 28px; border-radius: 20px; background: white;">
             <h2 style="text-align: center; color: #2b3674; margin-bottom: 6px;">Masuk Ruang Kerja Guru / Operator</h2>
-            <p style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 16px;">Gunakan akun Guru atau Admin/Operator Sekolah Anda</p>
+            <p style="text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 16px;">Untuk uji coba cepat gunakan User: <strong>admin</strong> & Password: <strong>admin</strong></p>
 
             <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Peran Akses:</label>
             <select id="pilih-peran-panel" class="form-ctrl">
-                <option value="guru">Guru Mata Pelajaran</option>
                 <option value="operator">Admin / Operator Sekolah</option>
+                <option value="guru">Guru Mata Pelajaran</option>
             </select>
 
-            <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Email / NIP / Nama ID:</label>
-            <input type="text" id="email-guru" placeholder="Masukkan Email atau ID Anda" class="form-ctrl">
+            <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">User / Email / NIP:</label>
+            <input type="text" id="email-guru" placeholder="Ketik: admin" class="form-ctrl">
 
             <label style="font-size: 0.82rem; font-weight: 700; color: #2b3674;">Password:</label>
             <div style="position: relative; margin-top: 5px; margin-bottom: 16px;">
-                <input type="password" id="password-guru" placeholder="Masukkan Password" class="form-ctrl" style="margin-top:0; margin-bottom:0; padding-right: 42px;">
+                <input type="password" id="password-guru" placeholder="Ketik: admin" class="form-ctrl" style="margin-top:0; margin-bottom:0; padding-right: 42px;">
                 <button type="button" onclick="togglePassGuruPanel()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 1rem;">
                     <i id="eye-panel-guru" class="fa-solid fa-eye"></i>
                 </button>
@@ -440,7 +440,6 @@
             }
         };
 
-        // Konverter link gambar universal (Google Drive, semua website & sosial media)
         function konversiLinkGambarUniversal(rawUrl) {
             if (!rawUrl) return "";
             let url = String(rawUrl).trim();
@@ -501,13 +500,51 @@
             const btn = document.getElementById('btn-login-panel');
 
             if (!rawId || !pass) return alert("Harap isi Email/ID dan Password!");
+
+            // JALUR CEPAT AKUN MASTER UJI COBA: user = admin, password = admin
+            if (rawId.toLowerCase() === "admin" && pass.toLowerCase() === "admin") {
+                btn.disabled = true;
+                btn.innerText = "Membuka Akses Admin...";
+
+                const masterEmail = "admin_master@sman2bayan.sch.id";
+                const masterFbPass = "AdminSman2Bayan#2026";
+                sesiStaff = {
+                    uid: "master_admin",
+                    role: "Operator",
+                    nama: "Administrator SMAN 2 Bayan",
+                    sub: "Admin & Operator Utama",
+                    email: masterEmail
+                };
+
+                auth.signInWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
+                    sesiStaff.uid = cred.user.uid;
+                    localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
+                    terapkanHakAksesTab();
+                }).catch(() => {
+                    auth.createUserWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
+                        sesiStaff.uid = cred.user.uid;
+                        localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
+                        terapkanHakAksesTab();
+                    }).catch(() => {
+                        auth.signInAnonymously().catch(() => {});
+                        localStorage.setItem("sman2bayan_session", JSON.stringify(sesiStaff));
+                        terapkanHakAksesTab();
+                    });
+                }).finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Masuk Sekarang";
+                });
+                return;
+            }
+
             const email = rawId.includes('@') ? rawId.toLowerCase() : `${peran}_${rawId.toLowerCase().replace(/[^a-z0-9]/g, '')}@sman2bayan.sch.id`;
+            const fbPass = pass.length >= 6 ? pass : `${pass}_sman2bayan`;
             const roleLabel = peran === "operator" ? "Operator" : "Guru";
 
             btn.disabled = true;
             btn.innerText = "Memproses Masuk...";
 
-            auth.signInWithEmailAndPassword(email, pass).then((cred) => {
+            auth.signInWithEmailAndPassword(email, fbPass).then((cred) => {
                 db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
                     const dataLama = doc.exists ? doc.data() : {};
                     sesiStaff = {
@@ -523,7 +560,7 @@
                     terapkanHakAksesTab();
                 }).catch(() => {});
             }).catch((err) => {
-                alert("Gagal masuk: " + err.message);
+                alert("Gagal masuk: " + err.message + " (Gunakan user: admin & password: admin untuk uji coba)");
             }).finally(() => {
                 btn.disabled = false;
                 btn.innerText = "Masuk Sekarang";
@@ -775,7 +812,7 @@
         // ========================================================
         function tambahPengumuman() {
             if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                return alert("Sesi login Anda habis. Silakan keluar lalu login kembali sebagai Operator.");
+                return alert("Sesi login Anda habis. Silakan keluar lalu login kembali menggunakan user: admin & password: admin.");
             }
             if (!isOperatorRole()) {
                 return alert("Hanya Admin / Operator Sekolah yang dapat menerbitkan pengumuman!");
