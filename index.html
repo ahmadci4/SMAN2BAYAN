@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart E-Learning SMAN 2 BAYAN</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4318ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="images/logo-sman2bayan.png">
     <link rel="stylesheet" href="style.css">
     
     <!-- Font Awesome -->
@@ -296,6 +301,8 @@
          MENU BAR SEJAJAR DI LUAR
          ========================================== -->
     <nav class="top-menu-bar">
+        <a href="kartu-siswa.html" class="menu-pill" style="background: #e0e7ff; color: #3730a3;"><i class="fa-solid fa-id-card"></i> Kartu Pelajar</a>
+        <button id="btn-install-pwa" onclick="installAplikasiHP()" class="menu-pill" style="display: none; background: #05cd99; color: white;"><i class="fa-solid fa-mobile-screen-button"></i> Install App</button>
         <button onclick="renderHome()" class="menu-pill active-home" id="nav-home"><i class="fa-solid fa-house"></i> Beranda</button>
         <button onclick="renderDaftarMapel()" class="menu-pill mapel" id="nav-mapel"><i class="fa-solid fa-book-open"></i> Mata Pelajaran</button>
         <a href="pilketos.html" class="menu-pill pilketos"><i class="fa-solid fa-check-to-slot"></i> PILKETOS</a>
@@ -346,5 +353,34 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Daftarkan Service Worker PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        // Tangkap Event Install Aplikasi ke Layar Utama HP
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btnInstall = document.getElementById('btn-install-pwa');
+            if (btnInstall) btnInstall.style.display = 'inline-flex';
+        });
+
+        function installAplikasiHP() {
+            if (!deferredPrompt) {
+                alert("Untuk memasang aplikasi di HP:\n• Android (Chrome): Ketuk titik tiga di pojok kanan atas > 'Tambahkan ke layar utama'\n• iPhone (Safari): Ketuk ikon Share > 'Add to Home Screen'");
+                return;
+            }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                document.getElementById('btn-install-pwa').style.display = 'none';
+            });
+        }
+    </script>
 </body>
 </html>
