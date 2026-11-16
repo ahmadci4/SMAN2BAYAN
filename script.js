@@ -665,3 +665,41 @@ function simpanEditProfilUser() {
     alert("Profil akun berhasil diperbarui!");
     closeProfilSayaModal();
 }
+// ==========================================
+// 9. FITUR DARK MODE & NOTIFIKASI MODERN (SWEETALERT2)
+// ==========================================
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('sman2bayan_darkmode', isDark ? '1' : '0');
+    
+    const btn = document.getElementById('btn-dark-mode');
+    if (btn) {
+        btn.innerHTML = isDark ? '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i>' : '<i class="fa-solid fa-moon"></i>';
+    }
+}
+
+// Aktifkan otomatis jika sebelumnya user memilih Dark Mode
+if (localStorage.getItem('sman2bayan_darkmode') === '1') {
+    document.body.classList.add('dark-mode');
+    window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('btn-dark-mode');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i>';
+    });
+}
+
+// Ganti semua alert() kaku menjadi Pop-up Toast/Modal Modern otomatis
+window.alert = function(pesan) {
+    if (typeof Swal !== 'undefined') {
+        const isSuccess = pesan.toLowerCase().includes('berhasil') || pesan.toLowerCase().includes('diperbarui');
+        Swal.fire({
+            text: pesan,
+            icon: isSuccess ? 'success' : 'info',
+            confirmButtonColor: '#4318ff',
+            confirmButtonText: 'Oke',
+            borderRadius: '16px'
+        });
+    } else {
+        console.log(pesan);
+    }
+};
