@@ -16,8 +16,17 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // ==========================================
-// KONVERTER LINK GAMBAR UNIVERSAL (SEMUA WEBSITE, GOOGLE DRIVE & SOSMED)
+// UTILITAS KEAMANAN & KONVERTER LINK GAMBAR UNIVERSAL
 // ==========================================
+function escapeHtml(str) {
+    return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function formatUrlGambar(rawUrl) {
     if (!rawUrl) return "";
     let url = String(rawUrl).trim();
@@ -220,30 +229,20 @@ function prosesLoginGuru() {
         btn.disabled = true;
         btn.innerText = "Membuka Akses Admin...";
 
-        const masterEmail = "admin_master@sman2bayan.sch.id";
-        const masterFbPass = "AdminSman2Bayan#2026";
         const masterUser = {
             uid: "master_admin",
             role: "Operator",
             nama: "Administrator SMAN 2 Bayan",
             sub: "Admin & Operator Utama",
-            email: masterEmail,
+            email: "admin_master@sman2bayan.sch.id",
             bio: "Akun Master Uji Coba Semua Fitur"
         };
 
-        auth.signInWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
-            masterUser.uid = cred.user.uid;
-            db.collection("users_sekolah").doc(cred.user.uid).set(masterUser, { merge: true }).catch(() => {});
+        auth.signInAnonymously().then((cred) => {
+            if (cred && cred.user) masterUser.uid = cred.user.uid;
             selesaikanLogin(masterUser);
         }).catch(() => {
-            auth.createUserWithEmailAndPassword(masterEmail, masterFbPass).then((cred) => {
-                masterUser.uid = cred.user.uid;
-                db.collection("users_sekolah").doc(cred.user.uid).set(masterUser, { merge: true }).catch(() => {});
-                selesaikanLogin(masterUser);
-            }).catch(() => {
-                auth.signInAnonymously().catch(() => {});
-                selesaikanLogin(masterUser);
-            });
+            selesaikanLogin(masterUser);
         }).finally(() => {
             btn.disabled = false;
             btn.innerText = "Masuk Sekarang";
@@ -399,7 +398,7 @@ function updateHeaderUserUI() {
     if (!currentUserSession) return;
 
     if (badge) {
-        badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${currentUserSession.nama} (${currentUserSession.role})`;
+        badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${escapeHtml(currentUserSession.nama)} (${escapeHtml(currentUserSession.role)})`;
     }
 
     if (btnStaff) {
@@ -461,7 +460,7 @@ function setFloatingWAVisible(show, guruObj = GURU_DATA) {
 
     const cleanWa = String(guruObj.whatsapp).replace(/[^0-9]/g, '');
     waContainer.innerHTML = `
-        <a href="https://wa.me/${cleanWa}?text=Assalamu'alaikum%20${encodeURIComponent(guruObj.nama)},%20saya%20ingin%20bertanya%20terkait%20pembelajaran%20di%20SMAN%202%20Bayan." target="_blank" title="Chat ${guruObj.nama} via WhatsApp" style="position: fixed; bottom: 25px; right: 20px; background: #25D366; color: white; padding: 12px 18px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 700; box-shadow: 0 6px 20px rgba(37,211,102,0.45); z-index: 95; text-decoration: none;">
+        <a href="https://wa.me/${cleanWa}?text=Assalamu'alaikum%20${encodeURIComponent(guruObj.nama)},%20saya%20ingin%20bertanya%20terkait%20pembelajaran%20di%20SMAN%202%20Bayan." target="_blank" title="Chat ${escapeHtml(guruObj.nama)} via WhatsApp" style="position: fixed; bottom: 25px; right: 20px; background: #25D366; color: white; padding: 12px 18px; border-radius: 50px; display: flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 700; box-shadow: 0 6px 20px rgba(37,211,102,0.45); z-index: 95; text-decoration: none;">
             <i class="fa-brands fa-whatsapp" style="font-size: 1.45rem;"></i> Hubungi Guru
         </a>
     `;
@@ -503,11 +502,11 @@ function renderHome() {
     HERO_SLIDES.forEach((s, idx) => {
         slidesHtml += `
             <div class="carousel-slide ${idx === 0 ? 'active' : ''}">
-                <img src="${s.img}" alt="${s.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='${s.fallback}'">
+                <img src="${s.img}" alt="${escapeHtml(s.title)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='${s.fallback}'">
                 <div style="position:absolute; inset:0; background: linear-gradient(to top, rgba(30,27,75,0.92), rgba(67,24,255,0.28)); display:flex; flex-direction:column; justify-content:flex-end; padding:26px; color:white;">
-                    <span style="background:#05cd99; color:white; padding:4px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; width:fit-content; margin-bottom:8px;">${s.badge}</span>
-                    <h2 style="margin:0; font-size:1.45rem; font-weight:800;">${s.title}</h2>
-                    <p style="margin:4px 0 0 0; font-size:0.82rem; opacity:0.92;"><i class="fa-solid fa-location-dot"></i> ${s.sub}</p>
+                    <span style="background:#05cd99; color:white; padding:4px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; width:fit-content; margin-bottom:8px;">${escapeHtml(s.badge)}</span>
+                    <h2 style="margin:0; font-size:1.45rem; font-weight:800;">${escapeHtml(s.title)}</h2>
+                    <p style="margin:4px 0 0 0; font-size:0.82rem; opacity:0.92;"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(s.sub)}</p>
                 </div>
             </div>
         `;
@@ -621,17 +620,17 @@ function muatPengumumanHome() {
 
             const urlBanner = formatUrlGambar(p.gambarBanner);
             const gambarBannerHtml = urlBanner !== ""
-                ? `<img src="${urlBanner}" referrerpolicy="no-referrer" alt="${p.judul}" style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid #cbd5e1;" onerror="this.style.display='none'">`
+                ? `<img src="${escapeHtml(urlBanner)}" referrerpolicy="no-referrer" alt="${escapeHtml(p.judul)}" style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid #cbd5e1;" onerror="this.style.display='none'">`
                 : '';
 
             html += `
                 <div class="info-item-box" style="flex-direction: column; align-items: flex-start; gap: 6px; border-left: 4px solid ${borderCol};">
                     <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; flex-wrap: wrap; gap: 6px;">
-                        <span style="background: ${badgeBg}; color: white; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 800;">${p.kategori}</span>
-                        <span style="font-size: 0.75rem; color: #64748b;"><i class="fa-regular fa-calendar"></i> ${p.tanggal || ''}</span>
+                        <span style="background: ${badgeBg}; color: white; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 800;">${escapeHtml(p.kategori)}</span>
+                        <span style="font-size: 0.75rem; color: #64748b;"><i class="fa-regular fa-calendar"></i> ${escapeHtml(p.tanggal || '')}</span>
                     </div>
-                    <h4 style="margin: 2px 0 0 0; font-size: 0.98rem; color: #2b3674;">${p.judul}</h4>
-                    ${p.isi ? `<p style="margin: 0; font-size: 0.85rem; color: #475569; line-height: 1.55; white-space: pre-wrap;">${p.isi}</p>` : ''}
+                    <h4 style="margin: 2px 0 0 0; font-size: 0.98rem; color: #2b3674;">${escapeHtml(p.judul)}</h4>
+                    ${p.isi ? `<p style="margin: 0; font-size: 0.85rem; color: #475569; line-height: 1.55; white-space: pre-wrap;">${escapeHtml(p.isi)}</p>` : ''}
                     ${gambarBannerHtml}
                 </div>
             `;
@@ -675,7 +674,7 @@ function muatAktivitasDanAbsensiHome() {
                 const d = doc.data();
                 diskusiTerbaruHtml += `
                     <div style="padding: 8px 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8rem;">
-                        <strong style="color:#4318ff;">${d.pengirim}:</strong> <span style="color:#334155;">"${d.pesan}"</span>
+                        <strong style="color:#4318ff;">${escapeHtml(d.pengirim)}:</strong> <span style="color:#334155;">"${escapeHtml(d.pesan)}"</span>
                     </div>
                 `;
             });
@@ -684,11 +683,11 @@ function muatAktivitasDanAbsensiHome() {
         }
 
         const badgeSiswaHadir = siswaHadirList.length > 0
-            ? siswaHadirList.slice(0, 18).map(s => `<span style="background:#dcfce7; color:#166534; padding:4px 9px; border-radius:20px; font-size:0.75rem; font-weight:700;"><i class="fa-solid fa-check"></i> ${s.nama || s.namaSiswa || 'Siswa'} (${s.kelas || '-'})</span>`).join(' ')
+            ? siswaHadirList.slice(0, 18).map(s => `<span style="background:#dcfce7; color:#166534; padding:4px 9px; border-radius:20px; font-size:0.75rem; font-weight:700;"><i class="fa-solid fa-check"></i> ${escapeHtml(s.nama || s.namaSiswa || 'Siswa')} (${escapeHtml(s.kelas || '-')})</span>`).join(' ')
             : `<span style="font-size:0.8rem; color:#64748b;">Belum ada data scan absensi siswa hari ini.</span>`;
 
         const badgeGuruHadir = guruHadirList.length > 0
-            ? guruHadirList.map(g => `<span style="background:#e0e7ff; color:#3730a3; padding:4px 9px; border-radius:20px; font-size:0.75rem; font-weight:700;"><i class="fa-solid fa-user-check"></i> ${g.nama || 'Guru'}</span>`).join(' ')
+            ? guruHadirList.map(g => `<span style="background:#e0e7ff; color:#3730a3; padding:4px 9px; border-radius:20px; font-size:0.75rem; font-weight:700;"><i class="fa-solid fa-user-check"></i> ${escapeHtml(g.nama || 'Guru')}</span>`).join(' ')
             : `<span style="font-size:0.8rem; color:#64748b;">Belum ada scan kehadiran guru hari ini.</span>`;
 
         wadah.innerHTML = `
@@ -808,10 +807,10 @@ function renderStrukturGuruTendik() {
 
                 html += `
                     <div class="tendik-card" onclick="renderProfilDetailGuru(${idx})">
-                        <img src="${fotoUrl}" referrerpolicy="no-referrer" alt="${person.nama}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:3px solid ${kat.warna}; margin-bottom:10px;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
-                        <h4 style="margin:0 0 4px 0; font-size:0.95rem; color:#2b3674;">${person.nama}</h4>
-                        <div style="font-size:0.78rem; font-weight:700; color:${kat.warna}; margin-bottom:4px;">${person.jabatan || person.mapel || 'Guru'}</div>
-                        ${person.nip && person.nip !== '-' ? `<div style="font-size:0.72rem; color:#64748b;">NIP: ${person.nip}</div>` : ''}
+                        <img src="${escapeHtml(fotoUrl)}" referrerpolicy="no-referrer" alt="${escapeHtml(person.nama)}" style="width:78px; height:78px; border-radius:50%; object-fit:cover; border:3px solid ${kat.warna}; margin-bottom:10px;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
+                        <h4 style="margin:0 0 4px 0; font-size:0.95rem; color:#2b3674;">${escapeHtml(person.nama)}</h4>
+                        <div style="font-size:0.78rem; font-weight:700; color:${kat.warna}; margin-bottom:4px;">${escapeHtml(person.jabatan || person.mapel || 'Guru')}</div>
+                        ${person.nip && person.nip !== '-' ? `<div style="font-size:0.72rem; color:#64748b;">NIP: ${escapeHtml(person.nip)}</div>` : ''}
                         <div style="margin-top:10px; font-size:0.75rem; color:#4318ff; font-weight:700;">Lihat Profil Lengkap <i class="fa-solid fa-arrow-right"></i></div>
                     </div>
                 `;
@@ -839,25 +838,25 @@ function renderProfilDetailGuru(index) {
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderStrukturGuruTendik()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar Guru & Tendik</button>
         <div class="detail-box" style="text-align:center; padding: 30px; background:white; border-radius:20px;">
-            <img src="${fotoUrl}" referrerpolicy="no-referrer" style="width:125px; height:125px; border-radius:50%; object-fit:cover; margin-bottom:15px; border: 4px solid #4318ff;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
-            <h2 style="color:#2b3674; margin-bottom:5px;">${person.nama}</h2>
-            <p style="color:#4318ff; font-weight:700; margin-bottom:4px;">${person.jabatan || ('Guru Mata Pelajaran ' + (person.mapel || ''))}</p>
-            ${person.nip && person.nip !== '-' ? `<p style="font-size:0.82rem; color:#64748b; margin-top:0;">NIP: ${person.nip}</p>` : ''}
+            <img src="${escapeHtml(fotoUrl)}" referrerpolicy="no-referrer" style="width:125px; height:125px; border-radius:50%; object-fit:cover; margin-bottom:15px; border: 4px solid #4318ff;" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(person.nama)}&background=4318ff&color=fff'">
+            <h2 style="color:#2b3674; margin-bottom:5px;">${escapeHtml(person.nama)}</h2>
+            <p style="color:#4318ff; font-weight:700; margin-bottom:4px;">${escapeHtml(person.jabatan || ('Guru Mata Pelajaran ' + (person.mapel || '')))}</p>
+            ${person.nip && person.nip !== '-' ? `<p style="font-size:0.82rem; color:#64748b; margin-top:0;">NIP: ${escapeHtml(person.nip)}</p>` : ''}
             
             <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 16px auto 20px auto; max-width:520px; font-style: italic; color: #475569; border-left: 4px solid #4318ff;">
-                "${person.quote || 'Mengabdi dengan hati untuk mencerdaskan generasi SMAN 2 Bayan.'}"
+                "${escapeHtml(person.quote || 'Mengabdi dengan hati untuk mencerdaskan generasi SMAN 2 Bayan.')}"
             </div>
 
             <div style="text-align:left; max-width:500px; margin: 0 auto 25px auto; line-height: 1.9; font-size: 0.92rem; color: #334155;">
-                ${person.gelar ? `<p><i class="fa-solid fa-graduation-cap" style="color:#4318ff; width:25px;"></i> <strong>Pendidikan:</strong> ${person.gelar} ${person.kampus ? '(' + person.kampus + ')' : ''}</p>` : ''}
-                ${person.mapel ? `<p><i class="fa-solid fa-book" style="color:#4318ff; width:25px;"></i> <strong>Bidang Tugas / Mapel:</strong> ${person.mapel}</p>` : ''}
-                ${person.email ? `<p><i class="fa-solid fa-envelope" style="color:#4318ff; width:25px;"></i> <strong>Email:</strong> ${person.email}</p>` : ''}
-                ${person.maps ? `<p><i class="fa-solid fa-location-dot" style="color:#4318ff; width:25px;"></i> <strong>Alamat / Maps:</strong> <a href="${person.maps}" target="_blank" style="color:#4318ff; text-decoration:underline;">Buka Google Maps</a></p>` : ''}
+                ${person.gelar ? `<p><i class="fa-solid fa-graduation-cap" style="color:#4318ff; width:25px;"></i> <strong>Pendidikan:</strong> ${escapeHtml(person.gelar)} ${person.kampus ? '(' + escapeHtml(person.kampus) + ')' : ''}</p>` : ''}
+                ${person.mapel ? `<p><i class="fa-solid fa-book" style="color:#4318ff; width:25px;"></i> <strong>Bidang Tugas / Mapel:</strong> ${escapeHtml(person.mapel)}</p>` : ''}
+                ${person.email ? `<p><i class="fa-solid fa-envelope" style="color:#4318ff; width:25px;"></i> <strong>Email:</strong> ${escapeHtml(person.email)}</p>` : ''}
+                ${person.maps ? `<p><i class="fa-solid fa-location-dot" style="color:#4318ff; width:25px;"></i> <strong>Alamat / Maps:</strong> <a href="${escapeHtml(person.maps)}" target="_blank" style="color:#4318ff; text-decoration:underline;">Buka Google Maps</a></p>` : ''}
             </div>
 
             <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                 ${person.whatsapp ? `<a href="https://wa.me/${String(person.whatsapp).replace(/[^0-9]/g, '')}" target="_blank" style="background:#25D366; padding:10px 20px; border-radius:10px; text-decoration:none; color:white; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp</a>` : ''}
-                ${person.instagram ? `<a href="${person.instagram}" target="_blank" style="background:#e1306c; padding:10px 20px; border-radius:10px; text-decoration:none; color:white; font-weight:700;"><i class="fa-brands fa-instagram"></i> Instagram</a>` : ''}
+                ${person.instagram ? `<a href="${escapeHtml(person.instagram)}" target="_blank" style="background:#e1306c; padding:10px 20px; border-radius:10px; text-decoration:none; color:white; font-weight:700;"><i class="fa-brands fa-instagram"></i> Instagram</a>` : ''}
             </div>
         </div>
     `;
@@ -873,10 +872,10 @@ function renderKelas() {
         <button class="btn-back" onclick="renderDaftarMapel()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Mata Pelajaran</button>
         
         <div style="background:white; padding:16px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:15px; border:1px solid #e2e8f0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.03);" onclick="daftarGuruTendikCache=[GURU_DATA]; renderProfilDetailGuru(0)">
-            <img src="${fotoGuru}" referrerpolicy="no-referrer" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
+            <img src="${escapeHtml(fotoGuru)}" referrerpolicy="no-referrer" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
             <div>
-                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">${GURU_DATA.nama}</h4>
-                <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Guru Pengampu: <strong>${GURU_DATA.mapel}</strong> • <span style="color:#4318ff; font-weight:600;">Lihat Profil & Kontak Guru</span></p>
+                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">${escapeHtml(GURU_DATA.nama)}</h4>
+                <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Guru Pengampu: <strong>${escapeHtml(GURU_DATA.mapel)}</strong> • <span style="color:#4318ff; font-weight:600;">Lihat Profil & Kontak Guru</span></p>
             </div>
         </div>
 
@@ -930,7 +929,7 @@ function renderMateri(kelas) {
 
             currentMateriList.forEach((data, index) => {
                 html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
-                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${data.bab} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${data.subBab})</span></div>
+                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span></div>
                             <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
                         </div>`;
             });
@@ -968,19 +967,19 @@ function renderDetailMateriDinamis(kelas, index) {
             if (ytId) {
                 mediaHtml += `
                     <div style="width: 100%; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 5px;">
-                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${linkObj.label}" frameborder="0" allowfullscreen></iframe>
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/${ytId}" title="${escapeHtml(linkObj.label)}" frameborder="0" allowfullscreen></iframe>
                         <div style="background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-top: none;">
-                            <p style="color: #2b3674; font-weight: 600; font-size: 0.9rem; margin: 0;"><i class="fa-brands fa-youtube" style="color:red;"></i> ${linkObj.label}</p>
+                            <p style="color: #2b3674; font-weight: 600; font-size: 0.9rem; margin: 0;"><i class="fa-brands fa-youtube" style="color:red;"></i> ${escapeHtml(linkObj.label)}</p>
                         </div>
                     </div>
                 `;
             } else {
                 const uiConf = getIconForUrl(linkObj.url);
                 mediaHtml += `
-                    <a href="${linkObj.url}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none;">
+                    <a href="${escapeHtml(linkObj.url)}" target="_blank" style="display: flex; align-items: center; background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 1px solid #e2e8f0; text-decoration: none;">
                         <i class="${uiConf.icon}" style="color: ${uiConf.color}; font-size: 1.5rem; margin-right: 15px; width: 25px; text-align: center;"></i>
                         <div>
-                            <p style="color: #2b3674; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">${linkObj.label}</p>
+                            <p style="color: #2b3674; font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">${escapeHtml(linkObj.label)}</p>
                             <p style="color: #64748b; font-size: 0.75rem;">Buka Tautan (Tab Baru)</p>
                         </div>
                     </a>
@@ -995,7 +994,7 @@ function renderDetailMateriDinamis(kelas, index) {
         prHtml = `
             <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 12px; border-left: 4px solid #ffc107;">
                 <p style="margin-bottom: 5px; font-weight: bold; color: #856404;"><i class="fa-solid fa-tasks"></i> Tugas / PR:</p>
-                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${babData.pr}</p>
+                <p style="color: #856404; font-size: 0.95rem; margin-top: 5px; white-space: pre-wrap;">${escapeHtml(babData.pr)}</p>
                 <div id="wadah-pengumpulan-tugas" style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #eab308;">
                     <p style="font-size: 0.85rem; color: #713f12;">Memeriksa status pengumpulan tugas Anda...</p>
                 </div>
@@ -1003,16 +1002,16 @@ function renderDetailMateriDinamis(kelas, index) {
         `;
     }
     
-    const namaAktif = currentUserSession ? `${currentUserSession.nama} (${currentUserSession.sub})` : "Belum Login";
+    const namaAktif = currentUserSession ? `${escapeHtml(currentUserSession.nama)} (${escapeHtml(currentUserSession.sub)})` : "Belum Login";
 
     contentDiv.innerHTML = `
         <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="detail-box" style="background:white; padding:25px; border-radius:20px; margin-bottom:20px;">
-            <h2 style="color:#2b3674; margin:0;">${babData.bab}</h2>
-            <h4 style="color:#4318ff; margin-top:6px;">${babData.subBab}</h4>
-            <p style="color:#707eae; font-size:0.85rem; margin-top:5px;">Guru: <span style="color:#4318ff;">${GURU_DATA.nama}</span></p>
+            <h2 style="color:#2b3674; margin:0;">${escapeHtml(babData.bab)}</h2>
+            <h4 style="color:#4318ff; margin-top:6px;">${escapeHtml(babData.subBab)}</h4>
+            <p style="color:#707eae; font-size:0.85rem; margin-top:5px;">Guru: <span style="color:#4318ff;">${escapeHtml(GURU_DATA.nama)}</span></p>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
-            <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; color:#334155;">${babData.deskripsi || ''}</p>
+            <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; color:#334155;">${escapeHtml(babData.deskripsi || '')}</p>
             ${mediaHtml} 
             ${prHtml} 
         </div>
@@ -1069,16 +1068,16 @@ function listenDiskusi(materiId) {
                   let badgeGuru = rep.isGuru ? `<span style="background:#4318ff; color:white; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Guru</span>` : '';
                   repliesHtml += `
                       <div style="background:#f1f5f9; padding:10px 12px; border-radius:8px; margin-top:8px; margin-left:20px; border-left:3px solid #4318ff;">
-                          <strong style="font-size:0.85rem; color:#1e293b;">${rep.pengirim}</strong> ${badgeGuru}
-                          <p style="font-size:0.85rem; margin:3px 0; color:#334155;">${rep.pesan}</p>
+                          <strong style="font-size:0.85rem; color:#1e293b;">${escapeHtml(rep.pengirim)}</strong> ${badgeGuru}
+                          <p style="font-size:0.85rem; margin:3px 0; color:#334155;">${escapeHtml(rep.pesan)}</p>
                       </div>
                   `;
               });
 
               commentsDiv.innerHTML += `
                   <div style="background:white; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:12px;">
-                      <strong style="color:#2b3674; font-size:0.9rem;">${parent.pengirim}</strong>
-                      <p style="font-size:0.9rem; margin:5px 0; color:#1e293b;">${parent.pesan}</p>
+                      <strong style="color:#2b3674; font-size:0.9rem;">${escapeHtml(parent.pengirim)}</strong>
+                      <p style="font-size:0.9rem; margin:5px 0; color:#1e293b;">${escapeHtml(parent.pesan)}</p>
                       ${repliesHtml}
                       <div style="margin-top:8px; text-align:right;">
                           <button onclick="toggleReplyBox('${parent.id}')" style="background:none; border:none; color:#4318ff; font-size:0.8rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-reply"></i> Balas</button>
@@ -1274,11 +1273,11 @@ function cekStatusTugasSiswa(materiId, kelas, judulBab) {
         if (doc.exists) {
             const d = doc.data();
             const statusNilai = d.nilai !== null && d.nilai !== undefined && d.nilai !== ""
-                ? `<span style="background:#05cd99; color:white; padding:4px 10px; border-radius:6px; font-weight:800; font-size:0.85rem;">Nilai: ${d.nilai} / 100</span>`
+                ? `<span style="background:#05cd99; color:white; padding:4px 10px; border-radius:6px; font-weight:800; font-size:0.85rem;">Nilai: ${escapeHtml(d.nilai)} / 100</span>`
                 : `<span style="background:#f59e0b; color:white; padding:4px 10px; border-radius:6px; font-weight:700; font-size:0.8rem;">Menunggu Penilaian Guru</span>`;
 
             const catatanGuruHtml = d.catatanGuru
-                ? `<div style="margin-top:8px; padding:8px 10px; background:#eff6ff; border-radius:6px; border-left:3px solid #4318ff; font-size:0.82rem; color:#1e3a8a;"><strong>Catatan Guru:</strong> ${d.catatanGuru}</div>`
+                ? `<div style="margin-top:8px; padding:8px 10px; background:#eff6ff; border-radius:6px; border-left:3px solid #4318ff; font-size:0.82rem; color:#1e3a8a;"><strong>Catatan Guru:</strong> ${escapeHtml(d.catatanGuru)}</div>`
                 : '';
 
             wadah.innerHTML = `
@@ -1287,8 +1286,8 @@ function cekStatusTugasSiswa(materiId, kelas, judulBab) {
                         <strong style="color:#15803d; font-size:0.88rem;"><i class="fa-solid fa-circle-check"></i> Tugas Sudah Dikumpulkan</strong>
                         ${statusNilai}
                     </div>
-                    <p style="font-size:0.82rem; color:#475569; margin:4px 0;"><strong>Link Jawaban:</strong> <a href="${d.linkTugas}" target="_blank" style="color:#4318ff; text-decoration:underline; word-break:break-all;">${d.linkTugas}</a></p>
-                    ${d.catatanSiswa ? `<p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Catatan Anda:</strong> ${d.catatanSiswa}</p>` : ''}
+                    <p style="font-size:0.82rem; color:#475569; margin:4px 0;"><strong>Link Jawaban:</strong> <a href="${escapeHtml(d.linkTugas)}" target="_blank" style="color:#4318ff; text-decoration:underline; word-break:break-all;">${escapeHtml(d.linkTugas)}</a></p>
+                    ${d.catatanSiswa ? `<p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Catatan Anda:</strong> ${escapeHtml(d.catatanSiswa)}</p>` : ''}
                     ${catatanGuruHtml}
                 </div>
             `;
