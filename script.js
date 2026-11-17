@@ -114,6 +114,7 @@ let daftarGuruTendikCache = [];
 let currentUserSession = null;
 let selectedStaffLoginType = "guru";
 let isRegisterGuruMode = false;
+let isAktivasiSiswaMode = false;
 let currentMateriList = [];
 let carouselInterval = null;
 let currentSlideIndex = 0;
@@ -142,8 +143,65 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. LOGIKA GERBANG LOGIN AWAL (DENGAN AKUN MASTER: admin / admin)
+// 3. KONTROL HAK AKSES MENU & MODAL LOGIN POJOK KANAN
 // ==========================================
+function aturVisibilitasMenuSensitif() {
+    const isLoggedIn = Boolean(currentUserSession && currentUserSession.role !== "Tamu");
+    const isSiswa = isLoggedIn && currentUserSession.role === "Siswa";
+    const isStaff = isLoggedIn && ["Operator", "Guru", "Guru / Staf"].includes(currentUserSession.role);
+
+    // Menu sensitif: disembunyikan jika belum login!
+    const navMapel = document.getElementById('nav-mapel');
+    const navPilketos = document.getElementById('nav-pilketos');
+    const navKartu = document.getElementById('nav-kartu');
+    const navAbsen = document.getElementById('nav-absen');
+    const btnStaff = document.getElementById('btn-dashboard-staff');
+
+    if (navMapel) navMapel.style.display = isLoggedIn ? "inline-flex" : "none";
+    if (navPilketos) navPilketos.style.display = (isSiswa || isStaff) ? "inline-flex" : "none";
+    if (navKartu) navKartu.style.display = (isSiswa || isStaff) ? "inline-flex" : "none";
+    if (navAbsen) navAbsen.style.display = isLoggedIn ? "inline-flex" : "none";
+
+    if (btnStaff) {
+        if (isStaff) {
+            btnStaff.style.display = "inline-flex";
+            btnStaff.innerHTML = currentUserSession.role === "Operator"
+                ? `<i class="fa-solid fa-shield-halved"></i> Panel Operator & Guru`
+                : `<i class="fa-solid fa-chalkboard-user"></i> Ruang Kerja Guru`;
+        } else {
+            btnStaff.style.display = "none";
+        }
+    }
+
+    // Tombol Login vs Profil User di Pojok Kanan Atas
+    const btnLoginTop = document.getElementById('btn-open-login-top');
+    const areaUserTop = document.getElementById('user-logged-area-top');
+    const badge = document.getElementById('user-badge-status');
+
+    if (isLoggedIn) {
+        if (btnLoginTop) btnLoginTop.style.display = "none";
+        if (areaUserTop) areaUserTop.style.display = "inline-flex";
+        if (badge) {
+            const infoSub = currentUserSession.role === "Siswa" ? `Kelas ${currentUserSession.sub || '-'}` : currentUserSession.role;
+            badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${escapeHtml(currentUserSession.nama)} (${escapeHtml(infoSub)})`;
+        }
+    } else {
+        if (btnLoginTop) btnLoginTop.style.display = "inline-flex";
+        if (areaUserTop) areaUserTop.style.display = "none";
+    }
+}
+
+function bukaModalLogin() {
+    kembaliPilihPeran();
+    const gate = document.getElementById('login-gate-screen');
+    if (gate) gate.style.display = 'flex';
+}
+
+function tutupModalLogin() {
+    const gate = document.getElementById('login-gate-screen');
+    if (gate) gate.style.display = 'none';
+}
+
 function togglePasswordVisibility(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
@@ -159,8 +217,14 @@ function togglePasswordVisibility(inputId, iconId) {
     }
 }
 
+// Validasi password kuat: minimal 8 karakter, wajib kombinasi huruf dan angka
 function validasiKekuatanPassword(pass) {
-    if (pass.length < 5) return "Password minimal 5 karakter (contoh: admin).";
+    if (pass.length < 8) {
+        return "Kata sandi minimal 8 karakter.";
+    }
+    if (!/[A-Za-z]/.test(pass) || !/[0-9]/.test(pass)) {
+        return "Kata sandi harus kombinasi huruf dan angka (contoh: Bayan2026).";
+    }
     return null;
 }
 
@@ -175,11 +239,11 @@ function pilihPeranLogin(role) {
         if (role === 'operator') {
             banner.style.background = '#fef2f2';
             banner.style.color = '#991b1b';
-            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Untuk uji coba cepat, ketik User: <code>admin</code> & Password: <code>admin</code>';
+            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Masuk menggunakan Email/ID & Sandi terdaftar (atau uji coba: <code>admin</code> / <code>admin</code>).';
         } else {
             banner.style.background = '#eef2ff';
             banner.style.color = '#3730a3';
-            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Untuk uji coba cepat, ketik User: <code>admin</code> & Password: <code>admin</code>';
+            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Masuk menggunakan Email/ID & Sandi terdaftar (atau uji coba: <code>admin</code> / <code>admin</code>).';
         }
     } else if (role === 'siswa') {
         document.getElementById('form-login-siswa').style.display = 'block';
@@ -188,9 +252,12 @@ function pilihPeranLogin(role) {
 }
 
 function kembaliPilihPeran() {
-    document.getElementById('role-selection-box').style.display = 'grid';
-    document.getElementById('form-login-guru').style.display = 'none';
-    document.getElementById('form-login-siswa').style.display = 'none';
+    const roleBox = document.getElementById('role-selection-box');
+    const formGuru = document.getElementById('form-login-guru');
+    const formSiswa = document.getElementById('form-login-siswa');
+    if (roleBox) roleBox.style.display = 'grid';
+    if (formGuru) formGuru.style.display = 'none';
+    if (formSiswa) formSiswa.style.display = 'none';
 }
 
 function toggleDaftarGuru() {
@@ -204,6 +271,25 @@ function toggleDaftarGuru() {
         : "Belum punya akun? Daftar Akun Baru";
 }
 
+function toggleAktivasiSiswa() {
+    isAktivasiSiswaMode = !isAktivasiSiswaMode;
+    const boxExtra = document.getElementById('aktivasi-siswa-extra');
+    const btnSubmit = document.getElementById('btn-submit-siswa');
+    const btnToggle = document.getElementById('btn-toggle-aktivasi-siswa');
+
+    if (boxExtra) boxExtra.style.display = isAktivasiSiswaMode ? 'block' : 'none';
+    if (btnSubmit) {
+        btnSubmit.innerText = isAktivasiSiswaMode
+            ? "Aktifkan Akun & Simpan Sandi Saya"
+            : "Masuk Sebagai Siswa";
+    }
+    if (btnToggle) {
+        btnToggle.innerText = isAktivasiSiswaMode
+            ? "Sudah pernah buat sandi? Kembali ke Login Siswa"
+            : "Pertama kali login? Aktivasi Email & Buat Sandi Mandiri";
+    }
+}
+
 function formatToAuthEmail(rawId, prefix) {
     if (rawId.includes('@')) return rawId.toLowerCase();
     const cleanId = rawId.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -215,6 +301,7 @@ function formatFirebasePass(rawPass) {
     return `${rawPass}_sman2bayan`;
 }
 
+// LOGIN GURU & OPERATOR
 function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
@@ -222,9 +309,9 @@ function prosesLoginGuru() {
     const jabatan = document.getElementById('reg-guru-jabatan')?.value.trim() || (selectedStaffLoginType === 'operator' ? "Operator Sekolah" : "Guru Mata Pelajaran");
     const btn = document.getElementById('btn-submit-guru');
 
-    if (!rawId || !pass) return alert("Harap isi ID dan Password!");
+    if (!rawId || !pass) return alert("Harap isi Email / ID dan Password!");
 
-    // JALUR CEPAT AKUN MASTER UJI COBA: user = admin, password = admin
+    // Jalur Cepat Akun Master Uji Coba
     if (rawId.toLowerCase() === "admin" && pass.toLowerCase() === "admin") {
         btn.disabled = true;
         btn.innerText = "Membuka Akses Admin...";
@@ -235,7 +322,7 @@ function prosesLoginGuru() {
             nama: "Administrator SMAN 2 Bayan",
             sub: "Admin & Operator Utama",
             email: "admin_master@sman2bayan.sch.id",
-            bio: "Akun Master Uji Coba Semua Fitur"
+            bio: "Akun Master Operator Sekolah"
         };
 
         auth.signInAnonymously().then((cred) => {
@@ -275,7 +362,7 @@ function prosesLoginGuru() {
             selesaikanLogin(userData);
         }).catch(err => {
             if (err.code === 'auth/email-already-in-use') {
-                alert("ID ini sudah terdaftar! Silakan klik 'Sudah punya akun? Kembali ke Login' lalu masuk.");
+                alert("Email / ID ini sudah terdaftar! Silakan kembali ke form Login.");
             } else {
                 alert("Gagal mendaftar akun: " + err.message);
             }
@@ -304,7 +391,7 @@ function prosesLoginGuru() {
                 selesaikanLogin({ uid: cred.user.uid, role: roleLabel, nama: rawId, sub: jabatan, email: authEmail, bio: "" });
             });
         }).catch(() => {
-            alert("Akun belum terdaftar. Untuk uji coba cepat tanpa daftar, ketik user: admin dan password: admin.");
+            alert("Email/ID atau Kata Sandi salah!");
         }).finally(() => {
             btn.disabled = false;
             btn.innerText = "Masuk Sekarang";
@@ -312,124 +399,165 @@ function prosesLoginGuru() {
     }
 }
 
-// Login Siswa (Mendukung akun uji coba cepat: admin / admin, maupun data siswa dari CSV)
-function prosesLoginSiswa() {
-    const idInput = document.getElementById('login-siswa-nama').value.trim();
+// LOGIN & AKTIVASI MANDIRI SISWA MENGGUNAKAN EMAIL & SANDI PRIBADI
+async function prosesLoginSiswa() {
+    const emailInput = document.getElementById('login-siswa-nama').value.trim().toLowerCase();
     const passInput = document.getElementById('login-siswa-nis').value.trim();
+    const nisVerifikasi = document.getElementById('aktivasi-siswa-nis')?.value.trim() || "";
     const btn = document.getElementById('btn-submit-siswa');
 
-    if (!idInput || !passInput) return alert("Harap isi NIS (atau Nama Lengkap) dan Password!");
+    if (!emailInput || !passInput) {
+        return alert("Harap masukkan Email Siswa dan Kata Sandi!");
+    }
 
-    if (idInput.toLowerCase() === "admin" && passInput.toLowerCase() === "admin") {
-        auth.signInAnonymously().catch(() => {});
-        const demoSiswa = {
-            uid: "siswa_demo_admin",
-            role: "Siswa",
-            nama: "Siswa Uji Coba (Admin)",
-            nis: "2026999",
-            jk: "Laki-laki",
-            sub: "X.A",
-            foto: "",
-            email: "",
-            bio: ""
-        };
-        alert("Masuk ke Mode Uji Coba Siswa (Kelas X.A)!");
-        selesaikanLogin(demoSiswa);
-        return;
+    if (!emailInput.includes("@")) {
+        return alert("Harap masukkan alamat Email yang valid (contoh: nama@gmail.com)!");
     }
 
     btn.disabled = true;
-    btn.innerText = "Memeriksa Data Siswa...";
+    btn.innerText = isAktivasiSiswaMode ? "Mengaktivasi Akun..." : "Memverifikasi Login...";
 
-    db.collection("data_siswa").get().then((snapshot) => {
-        let ditemukan = null;
-        snapshot.forEach((doc) => {
-            const s = doc.data();
-            const matchNis = String(s.nis || "").trim().toLowerCase() === idInput.toLowerCase();
-            const matchNama = String(s.nama || "").trim().toLowerCase() === idInput.toLowerCase();
-            if ((matchNis || matchNama) && String(s.password || "").trim() === passInput) {
-                ditemukan = { id: doc.id, ...s };
+    try {
+        // MODE 1: Aktivasi Akun Siswa Pertama Kali (Mencocokkan Email & NIS di Database Sekolah)
+        if (isAktivasiSiswaMode) {
+            const errPass = validasiKekuatanPassword(passInput);
+            if (errPass) throw new Error(errPass);
+            if (!nisVerifikasi) throw new Error("Masukkan NIS Anda untuk memverifikasi identitas siswa!");
+
+            if (!auth.currentUser) await auth.signInAnonymously();
+
+            const snap = await db.collection("data_siswa")
+                .where("email", "==", emailInput)
+                .get();
+
+            let dataSiswaDoc = null;
+            snap.forEach((doc) => {
+                const s = doc.data();
+                if (String(s.nis || "").trim() === nisVerifikasi) {
+                    dataSiswaDoc = { id: doc.id, ...s };
+                }
+            });
+
+            if (!dataSiswaDoc) {
+                throw new Error("Kombinasi Email dan NIS tidak ditemukan di database sekolah. Pastikan email Anda sudah dikumpulkan ke Operator/Wali Kelas.");
             }
-        });
 
-        if (ditemukan) {
-            auth.signInAnonymously().catch(() => {});
+            // Buat akun resmi di Firebase Authentication dengan sandi pilihan siswa sendiri
+            const cred = await auth.createUserWithEmailAndPassword(emailInput, passInput);
+
             const sessionSiswa = {
-                uid: ditemukan.id,
+                uid: cred.user.uid,
+                docSiswaId: dataSiswaDoc.id,
                 role: "Siswa",
-                nama: ditemukan.nama,
-                nis: ditemukan.nis,
-                jk: ditemukan.jk || "-",
-                sub: ditemukan.kelas || "-",
-                foto: formatUrlGambar(ditemukan.foto || ""),
-                email: "",
+                nama: dataSiswaDoc.nama,
+                nis: dataSiswaDoc.nis,
+                jk: dataSiswaDoc.jk || "-",
+                sub: dataSiswaDoc.kelas || "-",
+                foto: formatUrlGambar(dataSiswaDoc.foto || ""),
+                email: emailInput,
                 bio: ""
             };
-            alert(`Selamat datang, ${ditemukan.nama} (${ditemukan.kelas})!`);
-            selesaikanLogin(sessionSiswa);
-        } else {
-            alert("NIS / Nama atau Password tidak cocok! Untuk uji coba cepat ketik: admin & admin.");
-        }
-    }).catch((err) => {
-        alert("Gagal terhubung ke database siswa: " + err.message);
-    }).finally(() => {
-        btn.disabled = false;
-        btn.innerText = "Masuk Sebagai Siswa";
-    });
-}
 
-function masukSebagaiTamu() {
-    auth.signInAnonymously().catch(() => {});
-    const guestData = { uid: "tamu", role: "Tamu", nama: "Tamu Pengunjung", sub: "Pengunjung Umum", email: "", bio: "" };
-    selesaikanLogin(guestData);
+            // Simpan status aktivasi tanpa menyimpan password teks biasa
+            await db.collection("data_siswa").doc(dataSiswaDoc.id).update({
+                uidAuth: cred.user.uid,
+                akunAktif: true,
+                password: firebase.firestore.FieldValue.delete()
+            }).catch(() => {});
+
+            alert(`Aktivasi Berhasil! Selamat datang, ${dataSiswaDoc.nama} (${dataSiswaDoc.kelas}).`);
+            selesaikanLogin(sessionSiswa);
+            return;
+        }
+
+        // MODE 2: Login Siswa Reguler via Firebase Authentication (Email & Password Pribadi)
+        const cred = await auth.signInWithEmailAndPassword(emailInput, passInput);
+
+        const snap = await db.collection("data_siswa")
+            .where("email", "==", emailInput)
+            .limit(1)
+            .get();
+
+        if (snap.empty) {
+            throw new Error("Akun email ini tidak terdaftar sebagai Siswa SMAN 2 Bayan.");
+        }
+
+        const docSiswa = snap.docs[0];
+        const d = docSiswa.data();
+
+        const sessionSiswa = {
+            uid: cred.user.uid,
+            docSiswaId: docSiswa.id,
+            role: "Siswa",
+            nama: d.nama,
+            nis: d.nis,
+            jk: d.jk || "-",
+            sub: d.kelas || "-",
+            foto: formatUrlGambar(d.foto || ""),
+            email: emailInput,
+            bio: ""
+        };
+
+        alert(`Selamat datang kembali, ${d.nama} (${d.kelas})!`);
+        selesaikanLogin(sessionSiswa);
+    } catch (err) {
+        if (err.code === "auth/email-already-in-use") {
+            alert("Email ini sudah diaktivasi sebelumnya! Silakan kembali ke form Login Siswa dan masukkan sandi Anda.");
+        } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+            alert("Email atau Kata Sandi salah! Jika baru pertama kali masuk, klik 'Aktivasi Email & Buat Sandi Mandiri'.");
+        } else {
+            alert(err.message || "Gagal masuk ke sistem.");
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerText = isAktivasiSiswaMode ? "Aktifkan Akun & Simpan Sandi Saya" : "Masuk Sebagai Siswa";
+    }
 }
 
 function selesaikanLogin(userData) {
     currentUserSession = userData;
-    localStorage.setItem("sman2bayan_session", JSON.stringify(userData));
-    document.getElementById('login-gate-screen').style.display = 'none';
-    updateHeaderUserUI();
+    // Hanya menyimpan profil tampilan non-sensitif (tanpa password)
+    const safeSession = {
+        uid: userData.uid,
+        docSiswaId: userData.docSiswaId || "",
+        role: userData.role,
+        nama: userData.nama,
+        nis: userData.nis || "",
+        jk: userData.jk || "",
+        sub: userData.sub || "",
+        foto: userData.foto || "",
+        email: userData.email || "",
+        bio: userData.bio || ""
+    };
+    sessionStorage.setItem("sman2bayan_session", JSON.stringify(safeSession));
+    tutupModalLogin();
+    aturVisibilitasMenuSensitif();
     renderHome();
 }
 
-function updateHeaderUserUI() {
-    const badge = document.getElementById('user-badge-status');
-    const btnStaff = document.getElementById('btn-dashboard-staff');
-    if (!currentUserSession) return;
-
-    if (badge) {
-        badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${escapeHtml(currentUserSession.nama)} (${escapeHtml(currentUserSession.role)})`;
-    }
-
-    if (btnStaff) {
-        if (currentUserSession.role === "Operator" || currentUserSession.role === "Guru" || currentUserSession.role === "Guru / Staf") {
-            btnStaff.style.display = "inline-flex";
-            btnStaff.innerHTML = currentUserSession.role === "Operator"
-                ? `<i class="fa-solid fa-shield-halved"></i> Panel Operator & Guru`
-                : `<i class="fa-solid fa-chalkboard-user"></i> Ruang Kerja Guru`;
-        } else {
-            btnStaff.style.display = "none";
-        }
-    }
-}
-
 function keluarAkun() {
-    if (confirm("Keluar dari sesi saat ini dan kembali ke layar pemilihan akses masuk?")) {
+    if (confirm("Keluar dari akun Anda saat ini?")) {
         auth.signOut().catch(() => {});
+        sessionStorage.removeItem("sman2bayan_session");
         localStorage.removeItem("sman2bayan_session");
         currentUserSession = null;
-        kembaliPilihPeran();
-        document.getElementById('login-gate-screen').style.display = 'flex';
+        aturVisibilitasMenuSensitif();
+        renderHome();
     }
 }
 
+// Saat halaman dibuka: langsung tampilkan Home publik tanpa memblokir layar
 window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem("sman2bayan_session");
+    const saved = sessionStorage.getItem("sman2bayan_session");
     if (saved) {
         currentUserSession = JSON.parse(saved);
-        document.getElementById('login-gate-screen').style.display = 'none';
-        updateHeaderUserUI();
+    } else {
+        currentUserSession = null;
     }
+
+    tutupModalLogin();
+    aturVisibilitasMenuSensitif();
+
     loadProfilGuruData(() => {
         renderHome();
     });
@@ -728,9 +856,15 @@ function muatAktivitasDanAbsensiHome() {
 }
 
 // ==========================================
-// 7. MENU MATA PELAJARAN
+// 7. MENU MATA PELAJARAN (WAJIB LOGIN)
 // ==========================================
 function renderDaftarMapel() {
+    if (!currentUserSession || currentUserSession.role === "Tamu") {
+        alert("Silakan Login terlebih dahulu untuk mengakses Mata Pelajaran!");
+        bukaModalLogin();
+        return;
+    }
+
     setActiveNav('nav-mapel');
     setFloatingWAVisible(false);
 
@@ -752,7 +886,7 @@ function renderDaftarMapel() {
 }
 
 // ==========================================
-// 8. MENU GURU & TENAGA KEPENDIDIKAN
+// 8. MENU GURU & TENAGA KEPENDIDIKAN (PUBLIK)
 // ==========================================
 function renderStrukturGuruTendik() {
     setActiveNav('nav-tendik');
@@ -948,8 +1082,11 @@ function getYouTubeEmbedId(url) {
 }
 
 function getIconForUrl(url) {
-    if(url.includes("instagram.com")) return { icon: "fa-brands fa-instagram", color: "#e1306c" };
-    if(url.includes("drive.google.com")) return { icon: "fa-brands fa-google-drive", color: "#0F9D58" };
+    try {
+        const hostname = new URL(url).hostname;
+        if (hostname.endsWith("instagram.com")) return { icon: "fa-brands fa-instagram", color: "#e1306c" };
+        if (hostname.endsWith("google.com")) return { icon: "fa-brands fa-google-drive", color: "#0F9D58" };
+    } catch (e) {}
     return { icon: "fa-solid fa-link", color: "#4318ff" };
 }
 
@@ -1094,7 +1231,8 @@ function listenDiskusi(materiId) {
 
 function toggleReplyBox(parentId) {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
-        alert("Tamu tidak dapat membalas diskusi. Silakan keluar dan masuk menggunakan akun Siswa atau Guru.");
+        alert("Silakan Login terlebih dahulu untuk membalas diskusi!");
+        bukaModalLogin();
         return;
     }
     const box = document.getElementById(`reply-box-${parentId}`);
@@ -1103,7 +1241,8 @@ function toggleReplyBox(parentId) {
 
 function tambahDiskusiUtama(materiId) {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
-        alert("Akun Tamu hanya dapat membaca materi. Silakan keluar dan masuk menggunakan akun Siswa atau Guru untuk bertanya.");
+        alert("Silakan Login terlebih dahulu untuk mengirim pertanyaan!");
+        bukaModalLogin();
         return;
     }
     const pesan = document.getElementById('input-diskusi').value.trim();
@@ -1142,11 +1281,11 @@ function kirimBalasan(materiId, parentId) {
 }
 
 // ==========================================
-// 11. MODAL PROFIL USER POJOK KANAN ATAS
+// 11. MODAL PROFIL USER & PENGATURAN SANDI MANDIRI (SISWA / GURU / OPERATOR)
 // ==========================================
 function openProfilSayaModal() {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
-        alert("Anda sedang masuk sebagai Tamu. Silakan keluar dan masuk menggunakan akun Siswa, Guru, atau Operator.");
+        bukaModalLogin();
         return;
     }
 
@@ -1169,6 +1308,10 @@ function openProfilSayaModal() {
         document.getElementById('ro-siswa-nis').innerText = currentUserSession.nis || '-';
         document.getElementById('ro-siswa-jk').innerText = currentUserSession.jk || '-';
         document.getElementById('ro-siswa-kelas').innerText = currentUserSession.sub || '-';
+        const roEmail = document.getElementById('ro-siswa-email');
+        if (roEmail) roEmail.innerText = currentUserSession.email || '-';
+        const passSiswaBaru = document.getElementById('edit-siswa-pass-baru');
+        if (passSiswaBaru) passSiswaBaru.value = '';
     } else {
         document.getElementById('view-profil-siswa-readonly').style.display = 'none';
         document.getElementById('edit-profil-staff-form').style.display = 'block';
@@ -1187,6 +1330,40 @@ function closeProfilSayaModal() {
     document.getElementById('user-profile-modal').classList.add('hidden');
 }
 
+// Fungsi Ubah Kata Sandi Mandiri untuk Siswa
+function simpanPasswordBaruSiswa() {
+    if (!currentUserSession || currentUserSession.role !== "Siswa") return;
+
+    const passBaru = document.getElementById('edit-siswa-pass-baru')?.value.trim() || "";
+    const konfirmBaru = document.getElementById('edit-siswa-pass-konfirm')?.value.trim() || "";
+
+    const errPass = validasiKekuatanPassword(passBaru);
+    if (errPass) return alert(errPass);
+
+    if (konfirmBaru && passBaru !== konfirmBaru) {
+        return alert("Konfirmasi kata sandi baru tidak cocok!");
+    }
+
+    if (!auth.currentUser) {
+        return alert("Sesi autentikasi berakhir. Silakan keluar dan masuk kembali lalu coba ubah sandi.");
+    }
+
+    auth.currentUser.updatePassword(passBaru).then(() => {
+        alert("Kata sandi baru Anda berhasil disimpan! Gunakan sandi baru ini pada login berikutnya.");
+        document.getElementById('edit-siswa-pass-baru').value = "";
+        if (document.getElementById('edit-siswa-pass-konfirm')) {
+            document.getElementById('edit-siswa-pass-konfirm').value = "";
+        }
+        closeProfilSayaModal();
+    }).catch((err) => {
+        if (err.code === "auth/requires-recent-login") {
+            alert("Demi keamanan, silakan Logout lalu Login kembali terlebih dahulu sebelum mengganti kata sandi.");
+        } else {
+            alert("Gagal mengubah sandi: " + err.message);
+        }
+    });
+}
+
 function simpanEditProfilUser() {
     if (!currentUserSession || currentUserSession.role === "Tamu" || currentUserSession.role === "Siswa") return;
 
@@ -1201,16 +1378,15 @@ function simpanEditProfilUser() {
     currentUserSession.email = document.getElementById('edit-prof-email').value.trim();
     currentUserSession.bio = document.getElementById('edit-prof-bio').value.trim();
 
-    localStorage.setItem("sman2bayan_session", JSON.stringify(currentUserSession));
-    updateHeaderUserUI();
+    sessionStorage.setItem("sman2bayan_session", JSON.stringify(currentUserSession));
+    aturVisibilitasMenuSensitif();
 
     if (currentUserSession.uid && currentUserSession.uid !== "tamu") {
         db.collection("users_sekolah").doc(currentUserSession.uid).set(currentUserSession, { merge: true }).catch(() => {});
     }
 
     if (passBaru !== "" && auth.currentUser) {
-        const fbPassBaru = formatFirebasePass(passBaru);
-        auth.currentUser.updatePassword(fbPassBaru).then(() => {
+        auth.currentUser.updatePassword(passBaru).then(() => {
             alert("Profil dan Password baru Anda berhasil diperbarui!");
             closeProfilSayaModal();
         }).catch(() => {
