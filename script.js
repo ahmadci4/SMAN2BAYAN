@@ -311,31 +311,7 @@ function prosesLoginGuru() {
 
     if (!rawId || !pass) return alert("Harap isi Email / ID dan Password!");
 
-    // Jalur Cepat Akun Master Uji Coba
-    if (rawId.toLowerCase() === "admin" && pass.toLowerCase() === "admin") {
-        btn.disabled = true;
-        btn.innerText = "Membuka Akses Admin...";
 
-        const masterUser = {
-            uid: "master_admin",
-            role: "Operator",
-            nama: "Administrator SMAN 2 Bayan",
-            sub: "Admin & Operator Utama",
-            email: "admin_master@sman2bayan.sch.id",
-            bio: "Akun Master Operator Sekolah"
-        };
-
-        auth.signInAnonymously().then((cred) => {
-            if (cred && cred.user) masterUser.uid = cred.user.uid;
-            selesaikanLogin(masterUser);
-        }).catch(() => {
-            selesaikanLogin(masterUser);
-        }).finally(() => {
-            btn.disabled = false;
-            btn.innerText = "Masuk Sekarang";
-        });
-        return;
-    }
 
     const roleLabel = selectedStaffLoginType === 'operator' ? "Operator" : "Guru";
     const authEmail = formatToAuthEmail(rawId, selectedStaffLoginType);
