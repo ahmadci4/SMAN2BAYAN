@@ -301,78 +301,50 @@ function formatFirebasePass(rawPass) {
     return `${rawPass}_sman2bayan`;
 }
 
-// LOGIN GURU & OPERATOR
+// LOGIN KHUSUS GURU & OPERATOR (HANYA AKUN TERDAFTAR DI FIREBASE)
 function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
-    const namaLengkap = document.getElementById('reg-guru-nama-lengkap')?.value.trim() || rawId;
-    const jabatan = document.getElementById('reg-guru-jabatan')?.value.trim() || (selectedStaffLoginType === 'operator' ? "Operator Sekolah" : "Guru Mata Pelajaran");
     const btn = document.getElementById('btn-submit-guru');
 
-    if (!rawId || !pass) return alert("Harap isi Email / ID dan Password!");
-
-
+    if (!rawId || !pass) return alert("Harap isi Email dan Kata Sandi!");
 
     const roleLabel = selectedStaffLoginType === 'operator' ? "Operator" : "Guru";
     const authEmail = formatToAuthEmail(rawId, selectedStaffLoginType);
     const fbPass = formatFirebasePass(pass);
 
-    if (isRegisterGuruMode) {
-        const pesanErrorPass = validasiKekuatanPassword(pass);
-        if (pesanErrorPass) return alert(pesanErrorPass);
+    btn.disabled = true;
+    btn.innerText = "Memverifikasi Akun...";
 
-        btn.disabled = true;
-        btn.innerText = "Mendaftarkan Akun...";
-
-        auth.createUserWithEmailAndPassword(authEmail, fbPass).then((cred) => {
-            const userData = { 
-                uid: cred.user.uid, 
-                role: roleLabel, 
-                nama: namaLengkap, 
-                sub: jabatan, 
-                email: authEmail, 
-                bio: "" 
+    auth.signInWithEmailAndPassword(authEmail, fbPass).then((cred) => {
+        db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
+            const dataLama = doc.exists ? doc.data() : {};
+            const userData = {
+                ...dataLama,
+                uid: cred.user.uid,
+                role: dataLama.role || roleLabel,
+                nama: dataLama.nama || authEmail.split('@')[0],
+                sub: dataLama.sub || (roleLabel === "Operator" ? "Operator Sekolah" : "Guru Mata Pelajaran"),
+                email: authEmail
             };
-            db.collection("users_sekolah").doc(cred.user.uid).set(userData).catch(() => {});
-            alert(`Pendaftaran ${roleLabel} Berhasil! Selamat datang, ${namaLengkap}.`);
+            db.collection("users_sekolah").doc(cred.user.uid).set(userData, { merge: true }).catch(() => {});
             selesaikanLogin(userData);
-        }).catch(err => {
-            if (err.code === 'auth/email-already-in-use') {
-                alert("Email / ID ini sudah terdaftar! Silakan kembali ke form Login.");
-            } else {
-                alert("Gagal mendaftar akun: " + err.message);
-            }
-        }).finally(() => {
-            btn.disabled = false;
-            btn.innerText = isRegisterGuruMode ? "Daftar & Buat Akun Baru" : "Masuk Sekarang";
-        });
-    } else {
-        btn.disabled = true;
-        btn.innerText = "Memproses Masuk...";
-
-        auth.signInWithEmailAndPassword(authEmail, fbPass).then((cred) => {
-            db.collection("users_sekolah").doc(cred.user.uid).get().then(doc => {
-                const dataLama = doc.exists ? doc.data() : {};
-                const userData = {
-                    ...dataLama,
-                    uid: cred.user.uid,
-                    role: roleLabel,
-                    nama: dataLama.nama || rawId,
-                    sub: dataLama.sub || jabatan,
-                    email: authEmail
-                };
-                db.collection("users_sekolah").doc(cred.user.uid).set(userData, { merge: true }).catch(() => {});
-                selesaikanLogin(userData);
-            }).catch(() => {
-                selesaikanLogin({ uid: cred.user.uid, role: roleLabel, nama: rawId, sub: jabatan, email: authEmail, bio: "" });
-            });
         }).catch(() => {
-            alert("Email/ID atau Kata Sandi salah!");
-        }).finally(() => {
-            btn.disabled = false;
-            btn.innerText = "Masuk Sekarang";
+            selesaikanLogin({
+                uid: cred.user.uid,
+                role: roleLabel,
+                nama: authEmail.split('@')[0],
+                sub: roleLabel,
+                email: authEmail,
+                bio: ""
+            });
         });
-    }
+    }).catch(() => {
+        alert("Akses ditolak! Email belum didaftarkan oleh Operator Sekolah atau Kata Sandi salah.");
+    }).finally(() => {
+        btn.disabled = false;
+        btn.innerText = "Masuk Sekarang";
+    });
 }
 
 // LOGIN & AKTIVASI MANDIRI SISWA MENGGUNAKAN EMAIL & SANDI PRIBADI
