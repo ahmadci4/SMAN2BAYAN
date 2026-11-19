@@ -246,12 +246,15 @@
     <script>
         function formatUrlGambar(rawUrl) {
             if (!rawUrl) return "";
-            let url = String(rawUrl).trim();
+            const url = String(rawUrl).trim();
             const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
             if (gdriveMatch && gdriveMatch[1]) {
                 return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
             }
-            return url;
+            if (/^https?:\/\//i.test(url)) {
+                return url;
+            }
+            return "";
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -269,25 +272,33 @@
                 return;
             }
 
-            const nama = user.nama || "Siswa SMAN 2 Bayan";
-            const kelas = user.sub || "Kelas Umum";
-            const nis = user.nis || "000000";
+            const nama = String(user.nama || "Siswa SMAN 2 Bayan");
+            const kelas = String(user.sub || "Kelas Umum");
+            const nis = String(user.nis || "000000");
             const fotoUrl = formatUrlGambar(user.foto);
 
-            document.getElementById('kartu-nama').innerText = nama;
-            document.getElementById('kartu-kelas').innerText = `Kelas ${kelas}`;
-            document.getElementById('kartu-nis').innerText = `NIS: ${nis}`;
+            document.getElementById('kartu-nama').textContent = nama;
+            document.getElementById('kartu-kelas').textContent = `Kelas ${kelas}`;
+            document.getElementById('kartu-nis').textContent = `NIS: ${nis}`;
 
             const avatarEl = document.getElementById('kartu-inisial');
+            avatarEl.textContent = nama.charAt(0).toUpperCase();
+
             if (fotoUrl) {
-                avatarEl.innerHTML = `<img src="${fotoUrl}" referrerpolicy="no-referrer" alt="${nama}" onerror="this.parentElement.innerText='${nama.charAt(0).toUpperCase()}'">`;
-            } else {
-                avatarEl.innerText = nama.charAt(0).toUpperCase();
+                const imgEl = document.createElement('img');
+                imgEl.src = fotoUrl;
+                imgEl.referrerPolicy = "no-referrer";
+                imgEl.alt = nama;
+                imgEl.onerror = () => {
+                    avatarEl.textContent = nama.charAt(0).toUpperCase();
+                };
+                avatarEl.textContent = "";
+                avatarEl.appendChild(imgEl);
             }
 
             // Generate QR Code sesuai NIS siswa
             new QRCode(document.getElementById("qrcode-container"), {
-                text: String(nis),
+                text: nis,
                 width: 155,
                 height: 155,
                 colorDark: "#1e1b4b",
@@ -296,20 +307,15 @@
             });
         });
 
-        const avatarEl = document.getElementById('kartu-inisial');
-        avatarEl.textContent = nama.charAt(0).toUpperCase();
-        
-        if (fotoUrl) {
-            const imgEl = document.createElement('img');
-            imgEl.src = fotoUrl;
-            imgEl.referrerPolicy = "no-referrer";
-            imgEl.alt = nama;
-            imgEl.onerror = () => {
-                avatarEl.textContent = nama.charAt(0).toUpperCase();
-            };
-            avatarEl.textContent = "";
-            avatarEl.appendChild(imgEl);
-        }
+        function unduhKartuPNG() {
+            const cardElement = document.getElementById('kartu-pelajar-area');
+            html2canvas(cardElement, { scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                const namaFile = document.getElementById('kartu-nama').textContent.replace(/\s+/g, '_');
+                link.download = `Kartu_Pelajar_${namaFile}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
         }
 
         function modeScanTerang() {
