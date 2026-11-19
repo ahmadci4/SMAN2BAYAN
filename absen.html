@@ -188,9 +188,7 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         MODE SISWA: ABSENSI MANDIRI & KARTU QR
-         ========================================== -->
+    <!-- MODE SISWA: ABSENSI MANDIRI & KARTU QR -->
     <div id="student-absen-view" class="card-box" style="display: none; text-align: center;">
         <div style="width: 64px; height: 64px; border-radius: 50%; background: #eef2ff; color: #4318ff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 12px auto;">
             <i class="fa-solid fa-user-check"></i>
@@ -212,9 +210,7 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         MODE GURU / OPERATOR: SCANNER & REKAP
-         ========================================== -->
+    <!-- MODE GURU / OPERATOR: SCANNER & REKAP -->
     <div id="staff-absen-view" style="display: none;">
         <!-- Absen Kehadiran Guru Hari Ini -->
         <div class="card-box" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: linear-gradient(135deg, #eef2ff, #f8fafc); border: 1px solid #c7d2fe;">
@@ -271,7 +267,7 @@
                         <p id="res-detail" style="font-size: 0.82rem; color: #047857;">NIS: - | Kelas: - | Jam: -</p>
                     </div>
                 </div>
-                <a id="btn-kirim-wa-ortu" href="#" target="_blank" class="btn-wa" style="width: 100%; display: none;">
+                <a id="btn-kirim-wa-ortu" href="#" target="_blank" rel="noopener noreferrer" class="btn-wa" style="width: 100%; display: none;">
                     <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Kirim Laporan Hadir ke WA Orang Tua
                 </a>
             </div>
@@ -328,7 +324,7 @@
         <!-- TAB 3: KELOLA DATA SISWA & CETAK QR CODE NIS -->
         <div id="section-siswa" class="card-box" style="display: none;">
             <h2 style="font-size: 1.1rem; color: #2b3674; margin-bottom: 5px;">Tambah Siswa & Generate QR Code NIS</h2>
-            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Terhubung langsung dengan database siswa sekolah (`data_siswa`).</p>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Terhubung langsung dengan database siswa sekolah (<code>data_siswa</code>).</p>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
                 <div>
@@ -390,6 +386,15 @@
     let lastScannedNIS = "";
     let lastScanTime = 0;
 
+    function escapeHTML(str) {
+        return String(str ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
     function getTodayString() {
         const now = new Date();
         const yyyy = now.getFullYear();
@@ -417,18 +422,33 @@
         }
 
         const isStaff = ["Operator", "Guru", "Guru / Staf"].includes(sesiPengguna.role);
+        const statusLbl = document.getElementById('guru-status-lbl');
+        statusLbl.textContent = "";
+
+        const checkIcon = document.createElement('i');
+        checkIcon.className = "fa-solid fa-circle-check";
+        checkIcon.style.color = "#05cd99";
+        statusLbl.appendChild(checkIcon);
 
         if (isStaff) {
-            document.getElementById('guru-status-lbl').innerHTML = `<i class="fa-solid fa-circle-check" style="color:#05cd99;"></i> Login ${sesiPengguna.role}: <strong>${sesiPengguna.nama}</strong>`;
+            statusLbl.append(` Login ${sesiPengguna.role}: `);
+            const strongEl = document.createElement('strong');
+            strongEl.textContent = sesiPengguna.nama;
+            statusLbl.appendChild(strongEl);
+
             document.getElementById('btn-back-guru').style.display = 'inline-flex';
             document.getElementById('staff-absen-view').style.display = 'block';
             cekAbsenGuruHariIni();
             muatSemuaDataSiswa();
             muatRekapAbsen();
         } else {
-            document.getElementById('guru-status-lbl').innerHTML = `<i class="fa-solid fa-circle-check" style="color:#05cd99;"></i> Login Siswa: <strong>${sesiPengguna.nama} (${sesiPengguna.sub})</strong>`;
+            statusLbl.append(" Login Siswa: ");
+            const strongEl = document.createElement('strong');
+            strongEl.textContent = `${sesiPengguna.nama} (${sesiPengguna.sub || '-'})`;
+            statusLbl.appendChild(strongEl);
+
             document.getElementById('student-absen-view').style.display = 'block';
-            document.getElementById('siswa-absen-identitas').innerText = `${sesiPengguna.nama} • NIS: ${sesiPengguna.nis || '-'} • Kelas ${sesiPengguna.sub || '-'}`;
+            document.getElementById('siswa-absen-identitas').textContent = `${sesiPengguna.nama} • NIS: ${sesiPengguna.nis || '-'} • Kelas ${sesiPengguna.sub || '-'}`;
             cekAbsenSiswaHariIni();
         }
     });
@@ -448,10 +468,10 @@
                 const d = doc.data();
                 box.style.background = "#ecfdf5";
                 box.style.borderColor = "#05cd99";
-                box.innerHTML = `<strong style="color:#065f46;"><i class="fa-solid fa-circle-check"></i> Anda Sudah Absen Hadir Hari Ini</strong><p style="font-size:0.8rem; color:#047857; margin-top:4px;">Tercatat pada tanggal ${tgl} pukul ${d.jam || '-'} WITA</p>`;
+                box.innerHTML = `<strong style="color:#065f46;"><i class="fa-solid fa-circle-check"></i> Anda Sudah Absen Hadir Hari Ini</strong><p style="font-size:0.8rem; color:#047857; margin-top:4px;">Tercatat pada tanggal ${escapeHTML(tgl)} pukul ${escapeHTML(d.jam || '-')} WITA</p>`;
                 btn.style.display = "none";
             } else {
-                box.innerHTML = `<strong style="color:#b45309;"><i class="fa-solid fa-clock"></i> Anda Belum Tercatat Hadir Hari Ini (${tgl})</strong><p style="font-size:0.8rem; color:#64748b; margin-top:4px;">Klik tombol di bawah untuk mencatat kehadiran Anda, atau tunjukkan Kartu QR ke Guru.</p>`;
+                box.innerHTML = `<strong style="color:#b45309;"><i class="fa-solid fa-clock"></i> Anda Belum Tercatat Hadir Hari Ini (${escapeHTML(tgl)})</strong><p style="font-size:0.8rem; color:#64748b; margin-top:4px;">Klik tombol di bawah untuk mencatat kehadiran Anda, atau tunjukkan Kartu QR ke Guru.</p>`;
                 btn.style.display = "inline-flex";
             }
         });
@@ -485,7 +505,8 @@
         const docId = `${tgl}_guru_${idGuru}`;
         db.collection("absensi").doc(docId).get().then(doc => {
             if (doc.exists) {
-                document.getElementById('status-absen-guru-hari-ini').innerHTML = `<strong style="color:#059669;"><i class="fa-solid fa-circle-check"></i> Sudah tercatat hadir hari ini pukul ${doc.data().jam || '-'} WITA.</strong>`;
+                const jamHadir = escapeHTML(doc.data().jam || '-');
+                document.getElementById('status-absen-guru-hari-ini').innerHTML = `<strong style="color:#059669;"><i class="fa-solid fa-circle-check"></i> Sudah tercatat hadir hari ini pukul ${jamHadir} WITA.</strong>`;
                 document.getElementById('btn-absen-guru-self').style.display = 'none';
             }
         });
@@ -592,26 +613,32 @@
                 return;
             }
 
-            daftarSiswa.forEach((s) => {
-                const cardId = `qr-box-${s.nis}`;
-                const waText = s.waOrtu ? `<i class="fa-brands fa-whatsapp"></i> Ortu: +${s.waOrtu}` : `<i class="fa-solid fa-user"></i> NIS Terdaftar`;
+            daftarSiswa.forEach((s, idx) => {
+                const safeNis = escapeHTML(s.nis);
+                const safeNama = escapeHTML(s.nama);
+                const safeKelas = escapeHTML(s.kelas || '-');
+                const cardId = `qr-box-${idx}`;
+                const waText = s.waOrtu
+                    ? `<i class="fa-brands fa-whatsapp"></i> Ortu: +${escapeHTML(s.waOrtu)}`
+                    : `<i class="fa-solid fa-user"></i> NIS Terdaftar`;
+
                 container.innerHTML += `
                     <div class="qr-card">
-                        <span style="background:#eef2ff; color:#4318ff; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:800;">Kelas ${s.kelas || '-'}</span>
-                        <h4 style="margin:6px 0 2px 0; font-size:0.95rem; color:#2b3674;">${s.nama}</h4>
-                        <p style="font-size:0.78rem; color:#64748b;">NIS: <strong>${s.nis}</strong></p>
+                        <span style="background:#eef2ff; color:#4318ff; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:800;">Kelas ${safeKelas}</span>
+                        <h4 style="margin:6px 0 2px 0; font-size:0.95rem; color:#2b3674;">${safeNama}</h4>
+                        <p style="font-size:0.78rem; color:#64748b;">NIS: <strong>${safeNis}</strong></p>
                         <div class="qr-canvas-box" id="${cardId}"></div>
                         <p style="font-size:0.72rem; color:#059669; margin-bottom:8px;">${waText}</p>
                         <div style="display:flex; gap:6px;">
-                            <button onclick="downloadQRImage('${s.nis}', '${s.nama.replace(/'/g, "\\'")}', '${s.kelas || '-'}')" style="flex:1; background:#4318ff; color:white; border:none; padding:7px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-download"></i> Unduh QR</button>
-                            <button onclick="hapusSiswaQR('${s.nis}')" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; font-size:0.75rem; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                            <button type="button" class="btn-unduh-qr" data-idx="${idx}" data-nis="${safeNis}" data-nama="${safeNama}" data-kelas="${safeKelas}" style="flex:1; background:#4318ff; color:white; border:none; padding:7px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-download"></i> Unduh QR</button>
+                            <button type="button" class="btn-hapus-qr" data-nis="${safeNis}" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; font-size:0.75rem; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `;
             });
 
-            daftarSiswa.forEach((s) => {
-                const el = document.getElementById(`qr-box-${s.nis}`);
+            daftarSiswa.forEach((s, idx) => {
+                const el = document.getElementById(`qr-box-${idx}`);
                 if (el) {
                     new QRCode(el, {
                         text: String(s.nis),
@@ -623,12 +650,24 @@
                     });
                 }
             });
+
+            container.querySelectorAll('.btn-unduh-qr').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    downloadQRImage(btn.dataset.idx, btn.dataset.nis, btn.dataset.nama, btn.dataset.kelas);
+                });
+            });
+
+            container.querySelectorAll('.btn-hapus-qr').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    hapusSiswaQR(btn.dataset.nis);
+                });
+            });
         });
     }
 
-    function downloadQRImage(nis, nama, kelas) {
-        const qrContainer = document.getElementById(`qr-box-${nis}`);
-        const canvas = qrContainer.querySelector('canvas');
+    function downloadQRImage(idx, nis, nama, kelas) {
+        const qrContainer = document.getElementById(`qr-box-${idx}`);
+        const canvas = qrContainer ? qrContainer.querySelector('canvas') : null;
         if (!canvas) return alert("QR Code belum siap.");
 
         const exportCanvas = document.createElement('canvas');
@@ -750,19 +789,20 @@
             } catch (e) {}
 
             document.getElementById('scan-result-card').style.display = 'block';
-            document.getElementById('res-nama').innerText = siswa.nama;
-            document.getElementById('res-detail').innerText = `NIS: ${siswa.nis} | Kelas: ${siswa.kelas || '-'} | Jam: ${jamStr} WITA`;
+            document.getElementById('res-nama').textContent = siswa.nama;
+            document.getElementById('res-detail').textContent = `NIS: ${siswa.nis} | Kelas: ${siswa.kelas || '-'} | Jam: ${jamStr} WITA`;
             document.getElementById('manual-nis-input').value = '';
 
             const btnWa = document.getElementById('btn-kirim-wa-ortu');
-            if (siswa.waOrtu) {
+            const cleanWa = formatNomorWA(siswa.waOrtu);
+            if (cleanWa) {
                 const pesanWA = `Assalamu'alaikum Wr. Wb.\nYth. Bapak/Ibu Orang Tua/Wali dari:\n\n*Nama:* ${siswa.nama}\n*NIS:* ${siswa.nis}\n*Kelas:* ${siswa.kelas || '-'}\n\nKami informasikan bahwa ananda telah *HADIR* di *SMA NEGERI 2 BAYAN* pada:\n*Tanggal:* ${tanggalHariIni}\n*Pukul:* ${jamStr} WITA\n\nTerima kasih.\n_Sistem Absensi Digital SMAN 2 Bayan_`;
-                const linkWA = `https://wa.me/${siswa.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
+                const linkWA = `https://wa.me/${cleanWa}?text=${encodeURIComponent(pesanWA)}`;
                 btnWa.href = linkWA;
                 btnWa.style.display = 'inline-flex';
 
                 if (document.getElementById('auto-wa-check').checked) {
-                    window.open(linkWA, '_blank');
+                    window.open(linkWA, '_blank', 'noopener,noreferrer');
                 }
             } else {
                 btnWa.style.display = 'none';
@@ -793,30 +833,57 @@
             dataRekapSaatIni.sort((a, b) => String(a.kelas || "").localeCompare(String(b.kelas || "")) || String(a.nama || "").localeCompare(String(b.nama || "")));
 
             if (dataRekapSaatIni.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">Belum ada data absensi siswa pada tanggal ${tgl}.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">Belum ada data absensi siswa pada tanggal ${escapeHTML(tgl)}.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = "";
             dataRekapSaatIni.forEach((row, idx) => {
-                let kolomWa = `<span style="color:#94a3b8; font-size:0.78rem;">-</span>`;
-                if (row.waOrtu) {
+                const tr = document.createElement('tr');
+
+                const tdNo = document.createElement('td');
+                tdNo.textContent = String(idx + 1);
+
+                const tdNis = document.createElement('td');
+                const strongNis = document.createElement('strong');
+                strongNis.textContent = row.nis || '-';
+                tdNis.appendChild(strongNis);
+
+                const tdNama = document.createElement('td');
+                tdNama.textContent = row.nama || '-';
+
+                const tdKelas = document.createElement('td');
+                tdKelas.textContent = row.kelas || '-';
+
+                const tdJam = document.createElement('td');
+                tdJam.textContent = row.jam || '-';
+
+                const tdStatus = document.createElement('td');
+                const badgeStatus = document.createElement('span');
+                badgeStatus.style.cssText = "background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700; font-size:0.78rem;";
+                badgeStatus.textContent = row.status || 'Hadir';
+                tdStatus.appendChild(badgeStatus);
+
+                const tdWa = document.createElement('td');
+                const cleanWa = formatNomorWA(row.waOrtu);
+                if (cleanWa) {
                     const pesanWA = `Assalamu'alaikum Wr. Wb. Laporan kehadiran ananda *${row.nama}* (Kelas ${row.kelas}) di SMAN 2 Bayan tanggal ${row.tanggal}: *${row.status}* pukul ${row.jam} WITA.`;
-                    const linkWA = `https://wa.me/${row.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
-                    kolomWa = `<a href="${linkWA}" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> Kirim</a>`;
+                    const aWa = document.createElement('a');
+                    aWa.href = `https://wa.me/${cleanWa}?text=${encodeURIComponent(pesanWA)}`;
+                    aWa.target = "_blank";
+                    aWa.rel = "noopener noreferrer";
+                    aWa.style.cssText = "color:#25D366; font-weight:700; text-decoration:none;";
+                    aWa.innerHTML = `<i class="fa-brands fa-whatsapp"></i> Kirim`;
+                    tdWa.appendChild(aWa);
+                } else {
+                    const spanEmpty = document.createElement('span');
+                    spanEmpty.style.cssText = "color:#94a3b8; font-size:0.78rem;";
+                    spanEmpty.textContent = "-";
+                    tdWa.appendChild(spanEmpty);
                 }
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td><strong>${row.nis || '-'}</strong></td>
-                        <td>${row.nama}</td>
-                        <td>${row.kelas || '-'}</td>
-                        <td>${row.jam || '-'}</td>
-                        <td><span style="background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700; font-size:0.78rem;">${row.status || 'Hadir'}</span></td>
-                        <td>${kolomWa}</td>
-                    </tr>
-                `;
+                tr.append(tdNo, tdNis, tdNama, tdKelas, tdJam, tdStatus, tdWa);
+                tbody.appendChild(tr);
             });
         });
     }
