@@ -116,30 +116,32 @@ let selectedStaffLoginType = "guru";
 let isRegisterGuruMode = false;
 let isAktivasiSiswaMode = false;
 let currentMateriList = [];
+let selectedMapelAktif = "Fisika";
 let carouselInterval = null;
 let currentSlideIndex = 0;
 
 const contentDiv = document.getElementById('app-content');
 
+// SELURUH 18 MATA PELAJARAN SMAN 2 BAYAN AKTIF
 const subjectsList = [
-    { name: "Pend. Agama", icon: "fa-book-quran", grad: "linear-gradient(135deg, #05cd99, #02946d)", active: false },
-    { name: "Pend. Pancasila", icon: "fa-landmark", grad: "linear-gradient(135deg, #ff5b5c, #d93839)", active: false },
-    { name: "Bahasa Indonesia", icon: "fa-book-open", grad: "linear-gradient(135deg, #4318ff, #290bb4)", active: false },
-    { name: "Matematika", icon: "fa-calculator", grad: "linear-gradient(135deg, #ff416c, #ff4b2b)", active: false },
-    { name: "Bahasa Inggris", icon: "fa-language", grad: "linear-gradient(135deg, #00c6ff, #0072ff)", active: false },
-    { name: "Sejarah", icon: "fa-hourglass-half", grad: "linear-gradient(135deg, #cb2d3e, #ef473a)", active: false },
-    { name: "PJOK", icon: "fa-volleyball", grad: "linear-gradient(135deg, #f7971e, #ffd200)", active: false },
-    { name: "Seni & Prakarya", icon: "fa-palette", grad: "linear-gradient(135deg, #8e2de2, #4a00e0)", active: false },
-    { name: "Informatika", icon: "fa-laptop-code", grad: "linear-gradient(135deg, #11998e, #38ef7d)", active: false },
-    { name: "Biologi", icon: "fa-leaf", grad: "linear-gradient(135deg, #56ab2f, #a8e063)", active: false },
-    { name: "Kimia", icon: "fa-flask", grad: "linear-gradient(135deg, #f2994a, #f2c94c)", active: false },
-    { name: "Fisika", icon: "fa-atom", grad: "linear-gradient(135deg, #ff9f43, #ff6b6b)", active: true }, 
-    { name: "MTK Lanjut", icon: "fa-square-root-variable", grad: "linear-gradient(135deg, #ec008c, #fc6767)", active: false },
-    { name: "Sosiologi", icon: "fa-users", grad: "linear-gradient(135deg, #3a1c71, #d76d77)", active: false },
-    { name: "Ekonomi", icon: "fa-chart-line", grad: "linear-gradient(135deg, #159957, #155799)", active: false },
-    { name: "Geografi", icon: "fa-earth-asia", grad: "linear-gradient(135deg, #2193b0, #6dd5ed)", active: false },
-    { name: "Antropologi", icon: "fa-masks-theater", grad: "linear-gradient(135deg, #cc2b5e, #753a88)", active: false },
-    { name: "PKWU", icon: "fa-lightbulb", grad: "linear-gradient(135deg, #e65c00, #f9d423)", active: false }
+    { name: "Pend. Agama", icon: "fa-book-quran", grad: "linear-gradient(135deg, #05cd99, #02946d)", active: true },
+    { name: "Pend. Pancasila", icon: "fa-landmark", grad: "linear-gradient(135deg, #ff5b5c, #d93839)", active: true },
+    { name: "Bahasa Indonesia", icon: "fa-book-open", grad: "linear-gradient(135deg, #4318ff, #290bb4)", active: true },
+    { name: "Matematika", icon: "fa-calculator", grad: "linear-gradient(135deg, #ff416c, #ff4b2b)", active: true },
+    { name: "Bahasa Inggris", icon: "fa-language", grad: "linear-gradient(135deg, #00c6ff, #0072ff)", active: true },
+    { name: "Sejarah", icon: "fa-hourglass-half", grad: "linear-gradient(135deg, #cb2d3e, #ef473a)", active: true },
+    { name: "PJOK", icon: "fa-volleyball", grad: "linear-gradient(135deg, #f7971e, #ffd200)", active: true },
+    { name: "Seni & Prakarya", icon: "fa-palette", grad: "linear-gradient(135deg, #8e2de2, #4a00e0)", active: true },
+    { name: "Informatika", icon: "fa-laptop-code", grad: "linear-gradient(135deg, #11998e, #38ef7d)", active: true },
+    { name: "Biologi", icon: "fa-leaf", grad: "linear-gradient(135deg, #56ab2f, #a8e063)", active: true },
+    { name: "Kimia", icon: "fa-flask", grad: "linear-gradient(135deg, #f2994a, #f2c94c)", active: true },
+    { name: "Fisika", icon: "fa-atom", grad: "linear-gradient(135deg, #ff9f43, #ff6b6b)", active: true },
+    { name: "MTK Lanjut", icon: "fa-square-root-variable", grad: "linear-gradient(135deg, #ec008c, #fc6767)", active: true },
+    { name: "Sosiologi", icon: "fa-users", grad: "linear-gradient(135deg, #3a1c71, #d76d77)", active: true },
+    { name: "Ekonomi", icon: "fa-chart-line", grad: "linear-gradient(135deg, #159957, #155799)", active: true },
+    { name: "Geografi", icon: "fa-earth-asia", grad: "linear-gradient(135deg, #2193b0, #6dd5ed)", active: true },
+    { name: "Antropologi", icon: "fa-masks-theater", grad: "linear-gradient(135deg, #cc2b5e, #753a88)", active: true },
+    { name: "PKWU", icon: "fa-lightbulb", grad: "linear-gradient(135deg, #e65c00, #f9d423)", active: true }
 ];
 
 // ==========================================
@@ -235,15 +237,22 @@ function pilihPeranLogin(role) {
         document.getElementById('form-login-guru').style.display = 'block';
         document.getElementById('form-login-siswa').style.display = 'none';
 
+        // Sembunyikan tombol pendaftaran bebas agar hanya akun terdaftar di Firebase yang bisa login
+        const btnToggleReg = document.getElementById('btn-toggle-reg-guru');
+        const boxRegExtra = document.getElementById('register-guru-extra');
+        if (btnToggleReg) btnToggleReg.style.display = 'none';
+        if (boxRegExtra) boxRegExtra.style.display = 'none';
+        isRegisterGuruMode = false;
+
         const banner = document.getElementById('login-staff-banner');
         if (role === 'operator') {
             banner.style.background = '#fef2f2';
             banner.style.color = '#991b1b';
-            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Masuk menggunakan Email/ID & Sandi terdaftar (atau uji coba: <code>admin</code> / <code>admin</code>).';
+            banner.innerHTML = '<strong>Login Admin / Operator Sekolah:</strong> Masuk menggunakan Email & Kata Sandi resmi yang telah didaftarkan oleh Administrator.';
         } else {
             banner.style.background = '#eef2ff';
             banner.style.color = '#3730a3';
-            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Masuk menggunakan Email/ID & Sandi terdaftar (atau uji coba: <code>admin</code> / <code>admin</code>).';
+            banner.innerHTML = '<strong>Login Guru Mata Pelajaran:</strong> Masuk menggunakan Email & Kata Sandi resmi yang telah didaftarkan oleh Operator Sekolah.';
         }
     } else if (role === 'siswa') {
         document.getElementById('form-login-siswa').style.display = 'block';
@@ -261,14 +270,7 @@ function kembaliPilihPeran() {
 }
 
 function toggleDaftarGuru() {
-    isRegisterGuruMode = !isRegisterGuruMode;
-    document.getElementById('register-guru-extra').style.display = isRegisterGuruMode ? 'block' : 'none';
-    document.getElementById('btn-submit-guru').innerText = isRegisterGuruMode 
-        ? "Daftar & Buat Akun Baru" 
-        : "Masuk Sekarang";
-    document.getElementById('btn-toggle-reg-guru').innerText = isRegisterGuruMode 
-        ? "Sudah punya akun? Kembali ke Login" 
-        : "Belum punya akun? Daftar Akun Baru";
+    alert("Pendaftaran mandiri dinonaktifkan demi keamanan. Silakan hubungi Operator Sekolah untuk pembuatan akun resmi.");
 }
 
 function toggleAktivasiSiswa() {
@@ -464,7 +466,6 @@ async function prosesLoginSiswa() {
 
 function selesaikanLogin(userData) {
     currentUserSession = userData;
-    // Hanya menyimpan profil tampilan non-sensitif (tanpa password)
     const safeSession = {
         uid: userData.uid,
         docSiswaId: userData.docSiswaId || "",
@@ -804,7 +805,7 @@ function muatAktivitasDanAbsensiHome() {
 }
 
 // ==========================================
-// 7. MENU MATA PELAJARAN (WAJIB LOGIN)
+// 7. MENU MATA PELAJARAN (18 MAPEL AKTIF - WAJIB LOGIN)
 // ==========================================
 function renderDaftarMapel() {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
@@ -822,10 +823,10 @@ function renderDaftarMapel() {
         <div class="grid-container">
     `;
     subjectsList.forEach(sub => {
-        const onClickAction = sub.active ? `onclick="renderKelas()"` : `onclick="alert('Materi mata pelajaran ${sub.name} belum ditambahkan oleh guru pengampu.')"`;
+        const safeMapelName = sub.name.replace(/'/g, "\\'");
         html += `
-            <div class="subject-card" style="background: ${sub.grad}; opacity: ${sub.active ? '1' : '0.82'}" ${onClickAction}>
-                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${sub.name}</h3><p class="status">${sub.active ? "Tersedia" : "Segera Hadir"}</p>
+            <div class="subject-card" style="background: ${sub.grad}; opacity: 1;" onclick="renderKelas('${safeMapelName}')">
+                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${escapeHtml(sub.name)}</h3><p class="status">Tersedia</p>
             </div>
         `;
     });
@@ -945,9 +946,13 @@ function renderProfilDetailGuru(index) {
 }
 
 // ==========================================
-// 9. PILIH KELAS & MATERI PELAJARAN
+// 9. PILIH KELAS & MATERI PELAJARAN (DINAMIS UNTUK SEMUA 18 MAPEL)
 // ==========================================
-function renderKelas() {
+function renderKelas(namaMapel) {
+    if (namaMapel) selectedMapelAktif = namaMapel;
+    const mapelSekarang = selectedMapelAktif || "Fisika";
+    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+
     setFloatingWAVisible(false);
     const fotoGuru = formatUrlGambar(GURU_DATA.foto);
     let html = `
@@ -956,12 +961,12 @@ function renderKelas() {
         <div style="background:white; padding:16px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:15px; border:1px solid #e2e8f0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.03);" onclick="daftarGuruTendikCache=[GURU_DATA]; renderProfilDetailGuru(0)">
             <img src="${escapeHtml(fotoGuru)}" referrerpolicy="no-referrer" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
             <div>
-                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">${escapeHtml(GURU_DATA.nama)}</h4>
-                <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Guru Pengampu: <strong>${escapeHtml(GURU_DATA.mapel)}</strong> • <span style="color:#4318ff; font-weight:600;">Lihat Profil & Kontak Guru</span></p>
+                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">Mata Pelajaran: ${escapeHtml(mapelSekarang)}</h4>
+                <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Portal Pembelajaran SMAN 2 Bayan • <span style="color:#4318ff; font-weight:600;">Lihat Direktori Guru</span></p>
             </div>
         </div>
 
-        <h3 style="margin-bottom: 15px; color:#2b3674;">Pilih Kelas (Fisika)</h3>
+        <h3 style="margin-bottom: 15px; color:#2b3674;">Pilih Kelas (${escapeHtml(mapelSekarang)})</h3>
     `;
     const tingkatan = [
         { tingkat: 'X', warna: 'linear-gradient(135deg, #11998e, #38ef7d)' },
@@ -976,7 +981,7 @@ function renderKelas() {
         subKelas.forEach(sub => {
             const namaKelas = `${t.tingkat}.${sub}`;
             html += `
-                <div class="subject-card" style="background: ${t.warna}; min-height: 75px; padding: 15px;" onclick="renderMateri('${namaKelas}')">
+                <div class="subject-card" style="background: ${t.warna}; min-height: 75px; padding: 15px;" onclick="renderMateri('${namaKelas}', '${safeMapelParam}')">
                     <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin: 8px 0;">${namaKelas}</h3>
                 </div>
             `;
@@ -986,32 +991,37 @@ function renderKelas() {
     contentDiv.innerHTML = html;
 }
 
-function renderMateri(kelas) {
+function renderMateri(kelas, namaMapel) {
+    if (namaMapel) selectedMapelAktif = namaMapel;
+    const mapelSekarang = selectedMapelAktif || "Fisika";
+    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+
     setFloatingWAVisible(false);
     contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <button class="btn-back" onclick="renderKelas('${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="skeleton-box" style="height: 82px;"></div>
         <div class="skeleton-box"></div>
         <div class="skeleton-box"></div>
     `;
     
-    db.collection("materi_pelajaran").where("mapel", "==", "Fisika").where("kelas", "==", kelas).get().then((querySnapshot) => {
+    db.collection("materi_pelajaran").where("mapel", "==", mapelSekarang).where("kelas", "==", kelas).get().then((querySnapshot) => {
         let html = `
-            <button class="btn-back" onclick="renderKelas()"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-            <h3 style="margin-bottom:15px; color:#2b3674;">Materi Fisika - ${kelas}</h3>
+            <button class="btn-back" onclick="renderKelas('${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+            <h3 style="margin-bottom:15px; color:#2b3674;">Materi ${escapeHtml(mapelSekarang)} - ${escapeHtml(kelas)}</h3>
             <div class="material-list">
         `;
         
         if (querySnapshot.empty) {
-            html += `<p style="color:#707eae; text-align:center; padding: 25px; background:white; border-radius:14px;">Belum ada materi yang diunggah guru untuk kelas ini.</p>`;
+            html += `<p style="color:#707eae; text-align:center; padding: 25px; background:white; border-radius:14px;">Belum ada materi yang diunggah guru untuk mata pelajaran <strong>${escapeHtml(mapelSekarang)}</strong> kelas ${escapeHtml(kelas)}.</p>`;
         } else {
             currentMateriList = []; 
             querySnapshot.forEach((doc) => { currentMateriList.push({ id: doc.id, ...doc.data() }); });
             currentMateriList.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
 
             currentMateriList.forEach((data, index) => {
-                html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index})">
-                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span></div>
+                const pengampuInfo = data.guruNama ? ` <span style="font-size:0.75rem; color:#4318ff; font-weight:600;">• ${escapeHtml(data.guruNama)}</span>` : '';
+                html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index}, '${safeMapelParam}')">
+                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span>${pengampuInfo}</div>
                             <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
                         </div>`;
             });
@@ -1038,9 +1048,14 @@ function getIconForUrl(url) {
     return { icon: "fa-solid fa-link", color: "#4318ff" };
 }
 
-function renderDetailMateriDinamis(kelas, index) {
+function renderDetailMateriDinamis(kelas, index, namaMapel) {
+    if (namaMapel) selectedMapelAktif = namaMapel;
+    const mapelSekarang = selectedMapelAktif || "Fisika";
+    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+
     setFloatingWAVisible(false);
     const babData = currentMateriList[index];
+    const namaPengampu = babData.guruNama || GURU_DATA.nama;
     let mediaHtml = '';
     if (babData.links && babData.links.length > 0) {
         mediaHtml += `<div style="margin-top: 20px; margin-bottom: 20px;">
@@ -1090,11 +1105,12 @@ function renderDetailMateriDinamis(kelas, index) {
     const namaAktif = currentUserSession ? `${escapeHtml(currentUserSession.nama)} (${escapeHtml(currentUserSession.sub)})` : "Belum Login";
 
     contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderMateri('${kelas}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <button class="btn-back" onclick="renderMateri('${kelas}', '${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="detail-box" style="background:white; padding:25px; border-radius:20px; margin-bottom:20px;">
-            <h2 style="color:#2b3674; margin:0;">${escapeHtml(babData.bab)}</h2>
+            <span style="background:#eef2ff; color:#4318ff; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800;">${escapeHtml(mapelSekarang)} • Kelas ${escapeHtml(kelas)}</span>
+            <h2 style="color:#2b3674; margin:8px 0 0 0;">${escapeHtml(babData.bab)}</h2>
             <h4 style="color:#4318ff; margin-top:6px;">${escapeHtml(babData.subBab)}</h4>
-            <p style="color:#707eae; font-size:0.85rem; margin-top:5px;">Guru: <span style="color:#4318ff;">${escapeHtml(GURU_DATA.nama)}</span></p>
+            <p style="color:#707eae; font-size:0.85rem; margin-top:5px;">Guru Pengampu: <span style="color:#4318ff; font-weight:600;">${escapeHtml(namaPengampu)}</span></p>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
             <p style="margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap; color:#334155;">${escapeHtml(babData.deskripsi || '')}</p>
             ${mediaHtml} 
