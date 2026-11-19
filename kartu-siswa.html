@@ -296,14 +296,20 @@
             });
         });
 
-        function unduhKartuPNG() {
-            const cardElement = document.getElementById('kartu-pelajar-area');
-            html2canvas(cardElement, { scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Kartu_Pelajar_${document.getElementById('kartu-nama').innerText.replace(/\s+/g, '_')}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
+        const avatarEl = document.getElementById('kartu-inisial');
+        avatarEl.textContent = nama.charAt(0).toUpperCase();
+        
+        if (fotoUrl) {
+            const imgEl = document.createElement('img');
+            imgEl.src = fotoUrl;
+            imgEl.referrerPolicy = "no-referrer";
+            imgEl.alt = nama;
+            imgEl.onerror = () => {
+                avatarEl.textContent = nama.charAt(0).toUpperCase();
+            };
+            avatarEl.textContent = "";
+            avatarEl.appendChild(imgEl);
+        }
         }
 
         function modeScanTerang() {
