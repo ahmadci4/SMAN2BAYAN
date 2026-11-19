@@ -244,17 +244,21 @@
     </div>
 
     <script>
-        function formatUrlGambar(rawUrl) {
-            if (!rawUrl) return "";
-            const url = String(rawUrl).trim();
-            const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
-            if (gdriveMatch && gdriveMatch[1]) {
-                return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
+        function sanitizeImageUrl(rawUrl) {
+            if (!rawUrl) return null;
+            try {
+                const parsed = new URL(String(rawUrl).trim());
+                if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+                    return null;
+                }
+                const gdriveMatch = parsed.href.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+                if (gdriveMatch && gdriveMatch[1]) {
+                    return `https://lh3.googleusercontent.com/d/${encodeURIComponent(gdriveMatch[1])}`;
+                }
+                return parsed.href;
+            } catch (e) {
+                return null;
             }
-            if (/^https?:\/\//i.test(url)) {
-                return url;
-            }
-            return "";
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -275,7 +279,7 @@
             const nama = String(user.nama || "Siswa SMAN 2 Bayan");
             const kelas = String(user.sub || "Kelas Umum");
             const nis = String(user.nis || "000000");
-            const fotoUrl = formatUrlGambar(user.foto);
+            const safeFotoUrl = sanitizeImageUrl(user.foto);
 
             document.getElementById('kartu-nama').textContent = nama;
             document.getElementById('kartu-kelas').textContent = `Kelas ${kelas}`;
@@ -284,14 +288,14 @@
             const avatarEl = document.getElementById('kartu-inisial');
             avatarEl.textContent = nama.charAt(0).toUpperCase();
 
-            if (fotoUrl) {
+            if (safeFotoUrl) {
                 const imgEl = document.createElement('img');
-                imgEl.src = fotoUrl;
                 imgEl.referrerPolicy = "no-referrer";
                 imgEl.alt = nama;
                 imgEl.onerror = () => {
                     avatarEl.textContent = nama.charAt(0).toUpperCase();
                 };
+                imgEl.setAttribute('src', safeFotoUrl);
                 avatarEl.textContent = "";
                 avatarEl.appendChild(imgEl);
             }
