@@ -106,8 +106,8 @@
             margin-bottom: 18px;
         }
         .avatar-circle {
-            width: 78px;
-            height: 78px;
+            width: 82px;
+            height: 82px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.18);
             border: 3px solid #05cd99;
@@ -118,6 +118,12 @@
             font-size: 2rem;
             color: white;
             font-weight: 800;
+            overflow: hidden;
+        }
+        .avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .student-name {
             font-size: 1.2rem;
@@ -238,8 +244,18 @@
     </div>
 
     <script>
+        function formatUrlGambar(rawUrl) {
+            if (!rawUrl) return "";
+            let url = String(rawUrl).trim();
+            const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+            if (gdriveMatch && gdriveMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
+            }
+            return url;
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
-            const savedSession = localStorage.getItem("sman2bayan_session");
+            const savedSession = sessionStorage.getItem("sman2bayan_session") || localStorage.getItem("sman2bayan_session");
             if (!savedSession) {
                 alert("Silakan login menggunakan akun Siswa terlebih dahulu di halaman Beranda!");
                 window.location.href = "index.html";
@@ -256,15 +272,22 @@
             const nama = user.nama || "Siswa SMAN 2 Bayan";
             const kelas = user.sub || "Kelas Umum";
             const nis = user.nis || "000000";
+            const fotoUrl = formatUrlGambar(user.foto);
 
             document.getElementById('kartu-nama').innerText = nama;
-            document.getElementById('kartu-kelas').innerText = kelas;
+            document.getElementById('kartu-kelas').innerText = `Kelas ${kelas}`;
             document.getElementById('kartu-nis').innerText = `NIS: ${nis}`;
-            document.getElementById('kartu-inisial').innerText = nama.charAt(0).toUpperCase();
+
+            const avatarEl = document.getElementById('kartu-inisial');
+            if (fotoUrl) {
+                avatarEl.innerHTML = `<img src="${fotoUrl}" referrerpolicy="no-referrer" alt="${nama}" onerror="this.parentElement.innerText='${nama.charAt(0).toUpperCase()}'">`;
+            } else {
+                avatarEl.innerText = nama.charAt(0).toUpperCase();
+            }
 
             // Generate QR Code sesuai NIS siswa
             new QRCode(document.getElementById("qrcode-container"), {
-                text: nis,
+                text: String(nis),
                 width: 155,
                 height: 155,
                 colorDark: "#1e1b4b",
@@ -275,7 +298,7 @@
 
         function unduhKartuPNG() {
             const cardElement = document.getElementById('kartu-pelajar-area');
-            html2canvas(cardElement, { scale: 2, backgroundColor: null }).then(canvas => {
+            html2canvas(cardElement, { scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `Kartu_Pelajar_${document.getElementById('kartu-nama').innerText.replace(/\s+/g, '_')}.png`;
                 link.href = canvas.toDataURL("image/png");
