@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi QR Code - SMAN 2 BAYAN</title>
+    <title>Absensi QR Code & Kehadiran - SMAN 2 BAYAN</title>
     <!-- Font Awesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -179,150 +179,187 @@
     <!-- Header -->
     <div class="header-bar">
         <div>
-            <h1 style="font-size: 1.15rem; font-weight: 800; color: #2b3674;"><i class="fa-solid fa-qrcode" style="color: #4318ff;"></i> Absensi QR Code Siswa</h1>
-            <p id="guru-status-lbl" style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Memeriksa akun guru...</p>
+            <h1 style="font-size: 1.15rem; font-weight: 800; color: #2b3674;"><i class="fa-solid fa-qrcode" style="color: #4318ff;"></i> Sistem Absensi Digital SMAN 2 Bayan</h1>
+            <p id="guru-status-lbl" style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Memeriksa akun aktif...</p>
         </div>
-        <a href="guru.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Kembali ke Panel Guru</a>
-    </div>
-
-    <!-- Menu Tab -->
-    <div class="tab-menu">
-        <button class="tab-btn active" id="btn-tab-scan" onclick="bukaTab('scan')"><i class="fa-solid fa-camera"></i> 1. Scan Absen (Kamera)</button>
-        <button class="tab-btn" id="btn-tab-rekap" onclick="bukaTab('rekap')"><i class="fa-solid fa-file-pdf"></i> 2. Rekap & Export PDF</button>
-        <button class="tab-btn" id="btn-tab-siswa" onclick="bukaTab('siswa')"><i class="fa-solid fa-id-card"></i> 3. Data Siswa & QR NIS</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="index.html" class="btn-back"><i class="fa-solid fa-house"></i> Beranda</a>
+            <a id="btn-back-guru" href="guru.html" class="btn-back" style="display: none;"><i class="fa-solid fa-shield-halved"></i> Panel Guru</a>
+        </div>
     </div>
 
     <!-- ==========================================
-         TAB 1: SCANNER KAMERA HP GURU
+         MODE SISWA: ABSENSI MANDIRI & KARTU QR
          ========================================== -->
-    <div id="section-scan" class="card-box">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-            <div>
-                <h2 style="font-size: 1.1rem; color: #2b3674;">Scan Kartu QR Code Siswa</h2>
-                <p style="font-size: 0.8rem; color: #64748b;">Arahkan kamera HP ke QR Code NIS siswa untuk mencatat kehadiran hari ini.</p>
-            </div>
-            <label style="font-size: 0.8rem; font-weight: 700; background: #ecfdf5; color: #065f46; padding: 8px 12px; border-radius: 10px; cursor: pointer;">
-                <input type="checkbox" id="auto-wa-check"> Otomatis Buka WA Ortu setelah Scan
-            </label>
+    <div id="student-absen-view" class="card-box" style="display: none; text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: #eef2ff; color: #4318ff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 12px auto;">
+            <i class="fa-solid fa-user-check"></i>
+        </div>
+        <h2 style="font-size: 1.2rem; color: #2b3674; margin-bottom: 4px;">Absensi Kehadiran Siswa Hari Ini</h2>
+        <p id="siswa-absen-identitas" style="font-size: 0.85rem; color: #64748b; margin-bottom: 18px;">Memuat data siswa...</p>
+
+        <div id="siswa-absen-status-box" style="max-width: 440px; margin: 0 auto 18px auto; padding: 16px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0;">
+            <p style="font-size: 0.85rem; color: #64748b;">Memeriksa catatan kehadiran Anda hari ini...</p>
         </div>
 
-        <div style="text-align: center; margin-bottom: 15px;">
-            <button id="btn-start-scan" onclick="mulaiKamera()" class="btn-primary"><i class="fa-solid fa-video"></i> Aktifkan Kamera Scanner</button>
-            <button id="btn-stop-scan" onclick="hentikanKamera()" style="display:none; background:#dc2626; color:white; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-stop"></i> Matikan Kamera</button>
-        </div>
-
-        <div id="reader"></div>
-
-        <!-- Input Manual NIS Jika Kamera Terkendala -->
-        <div style="max-width: 420px; margin: 18px auto 0 auto; display: flex; gap: 8px;">
-            <input type="text" id="manual-nis-input" placeholder="Atau ketik NIS siswa manual..." style="flex:1; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.85rem;">
-            <button onclick="prosesAbsenByNIS(document.getElementById('manual-nis-input').value.trim())" class="btn-success">Absen</button>
-        </div>
-
-        <!-- Hasil Scan & Tombol Kirim WA Orang Tua -->
-        <div id="scan-result-card" style="display:none; max-width: 480px; margin: 20px auto 0 auto; background: #ecfdf5; border: 2px solid #05cd99; padding: 18px; border-radius: 16px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <div style="background: #05cd99; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-                <div>
-                    <span style="font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase;">Absensi Berhasil Tercatat</span>
-                    <h3 id="res-nama" style="font-size: 1.1rem; color: #064e3b;">Nama Siswa</h3>
-                    <p id="res-detail" style="font-size: 0.82rem; color: #047857;">NIS: - | Kelas: - | Jam: -</p>
-                </div>
-            </div>
-            <a id="btn-kirim-wa-ortu" href="#" target="_blank" class="btn-wa" style="width: 100%;">
-                <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Kirim Laporan Hadir ke WA Orang Tua
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="btn-absen-mandiri-siswa" class="btn-success" onclick="kirimAbsenMandiriSiswa()" style="display: none;">
+                <i class="fa-solid fa-check-circle"></i> Konfirmasi Hadir Hari Ini
+            </button>
+            <a href="kartu-siswa.html" class="btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-id-card"></i> Buka Kartu QR (Scan Guru)
             </a>
         </div>
     </div>
 
     <!-- ==========================================
-         TAB 2: REKAP ABSENSI & EXPORT PDF
+         MODE GURU / OPERATOR: SCANNER & REKAP
          ========================================== -->
-    <div id="section-rekap" class="card-box" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+    <div id="staff-absen-view" style="display: none;">
+        <!-- Absen Kehadiran Guru Hari Ini -->
+        <div class="card-box" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: linear-gradient(135deg, #eef2ff, #f8fafc); border: 1px solid #c7d2fe;">
             <div>
-                <h2 style="font-size: 1.1rem; color: #2b3674;">Rekap Kehadiran Siswa</h2>
-                <p style="font-size: 0.8rem; color: #64748b;">Filter berdasarkan tanggal & kelas lalu unduh sebagai PDF.</p>
+                <h3 style="font-size: 0.98rem; color: #2b3674;"><i class="fa-solid fa-chalkboard-user" style="color: #4318ff;"></i> Kehadiran Guru / Staf Hari Ini</h3>
+                <p id="status-absen-guru-hari-ini" style="font-size: 0.8rem; color: #475569; margin-top: 2px;">Catat kehadiran Anda agar tampil di papan aktivitas Beranda.</p>
             </div>
-            <button onclick="downloadRekapPDF()" style="background: #dc2626; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">
-                <i class="fa-solid fa-file-pdf"></i> Download PDF Rekap
+            <button id="btn-absen-guru-self" class="btn-success" onclick="catatAbsenGuruSendiri()">
+                <i class="fa-solid fa-user-check"></i> Absen Hadir Guru
             </button>
         </div>
 
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Tanggal:</label>
-                <input type="date" id="filter-tanggal" class="form-control" style="margin-bottom: 0;" onchange="muatRekapAbsen()">
+        <!-- Menu Tab -->
+        <div class="tab-menu">
+            <button class="tab-btn active" id="btn-tab-scan" onclick="bukaTab('scan')"><i class="fa-solid fa-camera"></i> 1. Scan Absen (Kamera)</button>
+            <button class="tab-btn" id="btn-tab-rekap" onclick="bukaTab('rekap')"><i class="fa-solid fa-file-pdf"></i> 2. Rekap & Export PDF</button>
+            <button class="tab-btn" id="btn-tab-siswa" onclick="bukaTab('siswa')"><i class="fa-solid fa-id-card"></i> 3. Data Siswa & QR NIS</button>
+        </div>
+
+        <!-- TAB 1: SCANNER KAMERA HP GURU -->
+        <div id="section-scan" class="card-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <h2 style="font-size: 1.1rem; color: #2b3674;">Scan Kartu QR Code Siswa</h2>
+                    <p style="font-size: 0.8rem; color: #64748b;">Arahkan kamera HP ke QR Code NIS siswa untuk mencatat kehadiran hari ini.</p>
+                </div>
+                <label style="font-size: 0.8rem; font-weight: 700; background: #ecfdf5; color: #065f46; padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+                    <input type="checkbox" id="auto-wa-check"> Otomatis Buka WA Ortu setelah Scan
+                </label>
             </div>
-            <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Filter Kelas:</label>
-                <select id="filter-kelas" class="form-control" style="margin-bottom: 0;" onchange="muatRekapAbsen()">
-                    <option value="SEMUA">Semua Kelas</option>
-                    <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
-                    <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
-                    <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
-                </select>
+
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button id="btn-start-scan" onclick="mulaiKamera()" class="btn-primary"><i class="fa-solid fa-video"></i> Aktifkan Kamera Scanner</button>
+                <button id="btn-stop-scan" onclick="hentikanKamera()" style="display:none; background:#dc2626; color:white; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-stop"></i> Matikan Kamera</button>
+            </div>
+
+            <div id="reader"></div>
+
+            <!-- Input Manual NIS Jika Kamera Terkendala -->
+            <div style="max-width: 420px; margin: 18px auto 0 auto; display: flex; gap: 8px;">
+                <input type="text" id="manual-nis-input" placeholder="Atau ketik NIS siswa manual..." style="flex:1; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.85rem;">
+                <button onclick="prosesAbsenByNIS(document.getElementById('manual-nis-input').value.trim())" class="btn-success">Absen</button>
+            </div>
+
+            <!-- Hasil Scan & Tombol Kirim WA Orang Tua -->
+            <div id="scan-result-card" style="display:none; max-width: 480px; margin: 20px auto 0 auto; background: #ecfdf5; border: 2px solid #05cd99; padding: 18px; border-radius: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="background: #05cd99; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase;">Absensi Berhasil Tercatat</span>
+                        <h3 id="res-nama" style="font-size: 1.1rem; color: #064e3b;">Nama Siswa</h3>
+                        <p id="res-detail" style="font-size: 0.82rem; color: #047857;">NIS: - | Kelas: - | Jam: -</p>
+                    </div>
+                </div>
+                <a id="btn-kirim-wa-ortu" href="#" target="_blank" class="btn-wa" style="width: 100%; display: none;">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Kirim Laporan Hadir ke WA Orang Tua
+                </a>
             </div>
         </div>
 
-        <div class="table-wrap">
-            <table id="tabel-rekap-absen">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>NIS</th>
-                        <th>Nama Siswa</th>
-                        <th>Kelas</th>
-                        <th>Jam Scan</th>
-                        <th>Status</th>
-                        <th>WA Ortu</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-rekap">
-                    <tr><td colspan="7" style="text-align:center; color:#64748b;">Memuat data kehadiran...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <!-- TAB 2: REKAP ABSENSI & EXPORT PDF -->
+        <div id="section-rekap" class="card-box" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <h2 style="font-size: 1.1rem; color: #2b3674;">Rekap Kehadiran Siswa</h2>
+                    <p style="font-size: 0.8rem; color: #64748b;">Filter berdasarkan tanggal & kelas lalu unduh sebagai PDF.</p>
+                </div>
+                <button onclick="downloadRekapPDF()" style="background: #dc2626; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF Rekap
+                </button>
+            </div>
 
-    <!-- ==========================================
-         TAB 3: KELOLA DATA SISWA & CETAK QR CODE NIS
-         ========================================== -->
-    <div id="section-siswa" class="card-box" style="display: none;">
-        <h2 style="font-size: 1.1rem; color: #2b3674; margin-bottom: 5px;">Tambah Siswa & Generate QR Code NIS</h2>
-        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">QR Code akan otomatis dibuat sesuai Nomor Induk Siswa (NIS) dan terhubung ke nomor WhatsApp Orang Tua.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Tanggal:</label>
+                    <input type="date" id="filter-tanggal" class="form-control" style="margin-bottom: 0;" onchange="muatRekapAbsen()">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Filter Kelas:</label>
+                    <select id="filter-kelas" class="form-control" style="margin-bottom: 0;" onchange="muatRekapAbsen()">
+                        <option value="SEMUA">Semua Kelas</option>
+                        <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                        <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                        <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                    </select>
+                </div>
+            </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-            <div>
-                <label style="font-size: 0.78rem; font-weight: 700;">NIS (Nomor Induk Siswa):</label>
-                <input type="text" id="inp-nis" class="form-control" style="margin-bottom:0;" placeholder="Contoh: 2026001">
-            </div>
-            <div>
-                <label style="font-size: 0.78rem; font-weight: 700;">Nama Lengkap Siswa:</label>
-                <input type="text" id="inp-nama-siswa" class="form-control" style="margin-bottom:0;" placeholder="Nama Lengkap">
-            </div>
-            <div>
-                <label style="font-size: 0.78rem; font-weight: 700;">Kelas:</label>
-                <select id="inp-kelas-siswa" class="form-control" style="margin-bottom:0;">
-                    <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
-                    <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
-                    <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
-                </select>
-            </div>
-            <div>
-                <label style="font-size: 0.78rem; font-weight: 700;">No. WA Orang Tua/Wali:</label>
-                <input type="text" id="inp-wa-ortu" class="form-control" style="margin-bottom:0;" placeholder="Contoh: 628123456789">
-            </div>
-            <div style="display: flex; align-items: flex-end;">
-                <button onclick="simpanDataSiswa()" class="btn-primary" style="width: 100%;"><i class="fa-solid fa-plus"></i> Simpan & Buat QR</button>
+            <div class="table-wrap">
+                <table id="tabel-rekap-absen">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NIS</th>
+                            <th>Nama Siswa</th>
+                            <th>Kelas</th>
+                            <th>Jam Scan</th>
+                            <th>Status</th>
+                            <th>WA Ortu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-rekap">
+                        <tr><td colspan="7" style="text-align:center; color:#64748b;">Memuat data kehadiran...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <h3 style="font-size: 1rem; color: #2b3674;">Daftar Kartu QR Code Siswa</h3>
-        <div class="qr-grid" id="list-qr-siswa">
-            <p style="color:#64748b; font-size:0.85rem;">Memuat data siswa...</p>
+        <!-- TAB 3: KELOLA DATA SISWA & CETAK QR CODE NIS -->
+        <div id="section-siswa" class="card-box" style="display: none;">
+            <h2 style="font-size: 1.1rem; color: #2b3674; margin-bottom: 5px;">Tambah Siswa & Generate QR Code NIS</h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Terhubung langsung dengan database siswa sekolah (`data_siswa`).</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700;">NIS (Nomor Induk Siswa):</label>
+                    <input type="text" id="inp-nis" class="form-control" style="margin-bottom:0;" placeholder="Contoh: 2026001">
+                </div>
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700;">Nama Lengkap Siswa:</label>
+                    <input type="text" id="inp-nama-siswa" class="form-control" style="margin-bottom:0;" placeholder="Nama Lengkap">
+                </div>
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700;">Kelas:</label>
+                    <select id="inp-kelas-siswa" class="form-control" style="margin-bottom:0;">
+                        <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                        <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                        <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.78rem; font-weight: 700;">No. WA Orang Tua/Wali:</label>
+                    <input type="text" id="inp-wa-ortu" class="form-control" style="margin-bottom:0;" placeholder="Contoh: 628123456789">
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button onclick="simpanDataSiswa()" class="btn-primary" style="width: 100%;"><i class="fa-solid fa-plus"></i> Simpan & Buat QR</button>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1rem; color: #2b3674;">Daftar Kartu QR Code Siswa</h3>
+            <div class="qr-grid" id="list-qr-siswa">
+                <p style="color:#64748b; font-size:0.85rem;">Memuat data siswa...</p>
+            </div>
         </div>
     </div>
 </div>
@@ -345,7 +382,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    let guruAktif = null;
+    let sesiPengguna = null;
     let mapSiswaByNIS = {};
     let dataRekapSaatIni = [];
     let html5QrCode = null;
@@ -353,7 +390,6 @@
     let lastScannedNIS = "";
     let lastScanTime = 0;
 
-    // Set tanggal hari ini (YYYY-MM-DD)
     function getTodayString() {
         const now = new Date();
         const yyyy = now.getFullYear();
@@ -365,22 +401,118 @@
     document.getElementById('filter-tanggal').value = getTodayString();
 
     // ==========================================
-    // 2. CEK STATUS LOGIN GURU
+    // 2. CEK SESI LOGIN (SISWA MAUPUN GURU/OPERATOR)
     // ==========================================
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            guruAktif = user;
-            document.getElementById('guru-status-lbl').innerHTML = `<i class="fa-solid fa-circle-check" style="color:#05cd99;"></i> Login Guru: <strong>${user.email}</strong>`;
+    window.addEventListener('DOMContentLoaded', async () => {
+        const rawSession = sessionStorage.getItem("sman2bayan_session") || localStorage.getItem("sman2bayan_session");
+        if (!rawSession) {
+            alert("Silakan Login terlebih dahulu di halaman Beranda!");
+            window.location.href = "index.html";
+            return;
+        }
+
+        sesiPengguna = JSON.parse(rawSession);
+        if (!auth.currentUser) {
+            await auth.signInAnonymously().catch(() => {});
+        }
+
+        const isStaff = ["Operator", "Guru", "Guru / Staf"].includes(sesiPengguna.role);
+
+        if (isStaff) {
+            document.getElementById('guru-status-lbl').innerHTML = `<i class="fa-solid fa-circle-check" style="color:#05cd99;"></i> Login ${sesiPengguna.role}: <strong>${sesiPengguna.nama}</strong>`;
+            document.getElementById('btn-back-guru').style.display = 'inline-flex';
+            document.getElementById('staff-absen-view').style.display = 'block';
+            cekAbsenGuruHariIni();
             muatSemuaDataSiswa();
             muatRekapAbsen();
         } else {
-            alert("Akses Ditolak! Anda harus login di Panel Guru terlebih dahulu untuk melakukan absensi.");
-            window.location.href = "guru.html";
+            document.getElementById('guru-status-lbl').innerHTML = `<i class="fa-solid fa-circle-check" style="color:#05cd99;"></i> Login Siswa: <strong>${sesiPengguna.nama} (${sesiPengguna.sub})</strong>`;
+            document.getElementById('student-absen-view').style.display = 'block';
+            document.getElementById('siswa-absen-identitas').innerText = `${sesiPengguna.nama} • NIS: ${sesiPengguna.nis || '-'} • Kelas ${sesiPengguna.sub || '-'}`;
+            cekAbsenSiswaHariIni();
         }
     });
 
     // ==========================================
-    // 3. NAVIGASI TAB
+    // MODE ABSEN MANDIRI SISWA & GURU (SINKRON BERANDA)
+    // ==========================================
+    function cekAbsenSiswaHariIni() {
+        const tgl = getTodayString();
+        const nis = String(sesiPengguna.nis || sesiPengguna.uid);
+        const docId = `${tgl}_siswa_${nis}`;
+        const box = document.getElementById('siswa-absen-status-box');
+        const btn = document.getElementById('btn-absen-mandiri-siswa');
+
+        db.collection("absensi").doc(docId).get().then((doc) => {
+            if (doc.exists) {
+                const d = doc.data();
+                box.style.background = "#ecfdf5";
+                box.style.borderColor = "#05cd99";
+                box.innerHTML = `<strong style="color:#065f46;"><i class="fa-solid fa-circle-check"></i> Anda Sudah Absen Hadir Hari Ini</strong><p style="font-size:0.8rem; color:#047857; margin-top:4px;">Tercatat pada tanggal ${tgl} pukul ${d.jam || '-'} WITA</p>`;
+                btn.style.display = "none";
+            } else {
+                box.innerHTML = `<strong style="color:#b45309;"><i class="fa-solid fa-clock"></i> Anda Belum Tercatat Hadir Hari Ini (${tgl})</strong><p style="font-size:0.8rem; color:#64748b; margin-top:4px;">Klik tombol di bawah untuk mencatat kehadiran Anda, atau tunjukkan Kartu QR ke Guru.</p>`;
+                btn.style.display = "inline-flex";
+            }
+        });
+    }
+
+    function kirimAbsenMandiriSiswa() {
+        const tgl = getTodayString();
+        const nis = String(sesiPengguna.nis || sesiPengguna.uid);
+        const jamStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const docId = `${tgl}_siswa_${nis}`;
+
+        db.collection("absensi").doc(docId).set({
+            role: "Siswa",
+            nis: nis,
+            nama: sesiPengguna.nama,
+            kelas: sesiPengguna.sub || "-",
+            tanggal: tgl,
+            jam: jamStr,
+            status: "Hadir",
+            metode: "Mandiri Portal",
+            waktu: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).then(() => {
+            alert("Kehadiran Anda hari ini berhasil dicatat!");
+            cekAbsenSiswaHariIni();
+        }).catch(err => alert("Gagal mencatat kehadiran: " + err.message));
+    }
+
+    function cekAbsenGuruHariIni() {
+        const tgl = getTodayString();
+        const idGuru = String(sesiPengguna.uid || sesiPengguna.email || sesiPengguna.nama).replace(/[^a-zA-Z0-9]/g, '_');
+        const docId = `${tgl}_guru_${idGuru}`;
+        db.collection("absensi").doc(docId).get().then(doc => {
+            if (doc.exists) {
+                document.getElementById('status-absen-guru-hari-ini').innerHTML = `<strong style="color:#059669;"><i class="fa-solid fa-circle-check"></i> Sudah tercatat hadir hari ini pukul ${doc.data().jam || '-'} WITA.</strong>`;
+                document.getElementById('btn-absen-guru-self').style.display = 'none';
+            }
+        });
+    }
+
+    function catatAbsenGuruSendiri() {
+        const tgl = getTodayString();
+        const idGuru = String(sesiPengguna.uid || sesiPengguna.email || sesiPengguna.nama).replace(/[^a-zA-Z0-9]/g, '_');
+        const jamStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const docId = `${tgl}_guru_${idGuru}`;
+
+        db.collection("absensi").doc(docId).set({
+            role: "Guru",
+            nama: sesiPengguna.nama,
+            jabatan: sesiPengguna.sub || sesiPengguna.role,
+            tanggal: tgl,
+            jam: jamStr,
+            status: "Hadir",
+            waktu: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).then(() => {
+            alert("Kehadiran Guru hari ini berhasil dicatat dan tampil di Beranda!");
+            cekAbsenGuruHariIni();
+        });
+    }
+
+    // ==========================================
+    // 3. NAVIGASI TAB GURU
     // ==========================================
     function bukaTab(namaTab) {
         document.getElementById('section-scan').style.display = namaTab === 'scan' ? 'block' : 'none';
@@ -398,10 +530,11 @@
     }
 
     // ==========================================
-    // 4. DATA SISWA & GENERATOR QR CODE (NIS)
+    // 4. DATA SISWA & GENERATOR QR CODE (SINKRON DATA_SISWA)
     // ==========================================
     function formatNomorWA(nomor) {
-        let clean = nomor.replace(/[^0-9]/g, '');
+        if (!nomor) return "";
+        let clean = String(nomor).replace(/[^0-9]/g, '');
         if (clean.startsWith('0')) clean = '62' + clean.substring(1);
         return clean;
     }
@@ -412,17 +545,17 @@
         const kelas = document.getElementById('inp-kelas-siswa').value;
         const waOrtu = formatNomorWA(document.getElementById('inp-wa-ortu').value.trim());
 
-        if (!nis || !nama || !waOrtu) {
-            return alert("Harap lengkapi NIS, Nama Siswa, dan Nomor WhatsApp Orang Tua!");
+        if (!nis || !nama) {
+            return alert("Harap lengkapi NIS dan Nama Siswa!");
         }
 
-        db.collection("data_siswa_qr").doc(nis).set({
+        db.collection("data_siswa").doc(nis).set({
             nis: nis,
             nama: nama,
             kelas: kelas,
             waOrtu: waOrtu,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
+        }, { merge: true }).then(() => {
             alert(`Data siswa ${nama} (NIS: ${nis}) berhasil disimpan & QR Code dibuat!`);
             document.getElementById('inp-nis').value = '';
             document.getElementById('inp-nama-siswa').value = '';
@@ -433,41 +566,55 @@
 
     function muatSemuaDataSiswa() {
         const container = document.getElementById('list-qr-siswa');
-        db.collection("data_siswa_qr").orderBy("kelas").get().then((snapshot) => {
+        Promise.all([
+            db.collection("data_siswa").get(),
+            db.collection("data_siswa_qr").get()
+        ]).then(([snapUtama, snapLama]) => {
             mapSiswaByNIS = {};
             container.innerHTML = "";
 
-            if (snapshot.empty) {
-                container.innerHTML = `<p style="grid-column:1/-1; color:#64748b; text-align:center; padding:20px;">Belum ada data siswa. Silakan tambahkan data siswa di atas untuk membuat QR Code NIS.</p>`;
+            snapLama.forEach(doc => {
+                const s = doc.data();
+                if (s.nis) mapSiswaByNIS[String(s.nis)] = { docId: doc.id, col: "data_siswa_qr", ...s };
+            });
+
+            snapUtama.forEach(doc => {
+                const s = doc.data();
+                if (s.nis) mapSiswaByNIS[String(s.nis)] = { docId: doc.id, col: "data_siswa", ...s };
+            });
+
+            const daftarSiswa = Object.values(mapSiswaByNIS).sort((a, b) =>
+                String(a.kelas || "").localeCompare(String(b.kelas || "")) || String(a.nama || "").localeCompare(String(b.nama || ""))
+            );
+
+            if (daftarSiswa.length === 0) {
+                container.innerHTML = `<p style="grid-column:1/-1; color:#64748b; text-align:center; padding:20px;">Belum ada data siswa. Silakan tambahkan data siswa di atas atau di Panel Guru.</p>`;
                 return;
             }
 
-            snapshot.forEach((doc) => {
-                const s = doc.data();
-                mapSiswaByNIS[s.nis] = s;
-
+            daftarSiswa.forEach((s) => {
                 const cardId = `qr-box-${s.nis}`;
+                const waText = s.waOrtu ? `<i class="fa-brands fa-whatsapp"></i> Ortu: +${s.waOrtu}` : `<i class="fa-solid fa-user"></i> NIS Terdaftar`;
                 container.innerHTML += `
                     <div class="qr-card">
-                        <span style="background:#eef2ff; color:#4318ff; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:800;">Kelas ${s.kelas}</span>
+                        <span style="background:#eef2ff; color:#4318ff; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:800;">Kelas ${s.kelas || '-'}</span>
                         <h4 style="margin:6px 0 2px 0; font-size:0.95rem; color:#2b3674;">${s.nama}</h4>
                         <p style="font-size:0.78rem; color:#64748b;">NIS: <strong>${s.nis}</strong></p>
                         <div class="qr-canvas-box" id="${cardId}"></div>
-                        <p style="font-size:0.72rem; color:#059669; margin-bottom:8px;"><i class="fa-brands fa-whatsapp"></i> Ortu: +${s.waOrtu}</p>
+                        <p style="font-size:0.72rem; color:#059669; margin-bottom:8px;">${waText}</p>
                         <div style="display:flex; gap:6px;">
-                            <button onclick="downloadQRImage('${s.nis}', '${s.nama}', '${s.kelas}')" style="flex:1; background:#4318ff; color:white; border:none; padding:7px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-download"></i> Unduh QR</button>
+                            <button onclick="downloadQRImage('${s.nis}', '${s.nama.replace(/'/g, "\\'")}', '${s.kelas || '-'}')" style="flex:1; background:#4318ff; color:white; border:none; padding:7px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-download"></i> Unduh QR</button>
                             <button onclick="hapusSiswaQR('${s.nis}')" style="background:#fee2e2; color:#dc2626; border:none; padding:7px 10px; border-radius:8px; font-size:0.75rem; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `;
             });
 
-            // Render gambar QR Code sesuai NIS masing-masing
-            Object.values(mapSiswaByNIS).forEach((s) => {
+            daftarSiswa.forEach((s) => {
                 const el = document.getElementById(`qr-box-${s.nis}`);
                 if (el) {
                     new QRCode(el, {
-                        text: s.nis,
+                        text: String(s.nis),
                         width: 130,
                         height: 130,
                         colorDark: "#1e1b4b",
@@ -484,7 +631,6 @@
         const canvas = qrContainer.querySelector('canvas');
         if (!canvas) return alert("QR Code belum siap.");
 
-        // Buat kartu label lengkap dengan nama & NIS agar siap cetak
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = 300;
         exportCanvas.height = 370;
@@ -518,13 +664,15 @@
     }
 
     function hapusSiswaQR(nis) {
+        const s = mapSiswaByNIS[nis];
+        if (!s) return;
         if (confirm(`Hapus data siswa dengan NIS ${nis}?`)) {
-            db.collection("data_siswa_qr").doc(nis).delete().then(() => muatSemuaDataSiswa());
+            db.collection(s.col || "data_siswa").doc(s.docId || nis).delete().then(() => muatSemuaDataSiswa());
         }
     }
 
     // ==========================================
-    // 5. KAMERA SCANNER & PROSES ABSENSI + WA ORTU
+    // 5. KAMERA SCANNER & PROSES ABSENSI (SINKRON BERANDA)
     // ==========================================
     function mulaiKamera() {
         if (isScanning) return;
@@ -533,11 +681,10 @@
         document.getElementById('btn-stop-scan').style.display = 'inline-block';
 
         html5QrCode.start(
-            { facingMode: "environment" }, // Kamera belakang HP
+            { facingMode: "environment" },
             { fps: 10, qrbox: { width: 240, height: 240 } },
             (decodedText) => {
                 const now = Date.now();
-                // Jeda 4 detik agar tidak memicu scan berulang dalam 1 detik
                 if (decodedText === lastScannedNIS && (now - lastScanTime) < 4000) return;
                 lastScannedNIS = decodedText;
                 lastScanTime = now;
@@ -569,29 +716,29 @@
         const siswa = mapSiswaByNIS[nis];
 
         if (!siswa) {
-            alert(`NIS "${nis}" tidak terdaftar di database siswa! Silakan daftarkan siswa tersebut di Tab 3 (Data Siswa & QR NIS).`);
+            alert(`NIS "${nis}" tidak terdaftar di database siswa! Silakan daftarkan siswa tersebut di Tab 3 atau Panel Guru.`);
             return;
         }
 
         const tanggalHariIni = getTodayString();
         const now = new Date();
         const jamStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const docId = `${tanggalHariIni}_${nis}`; // Unik 1 siswa per hari
+        const docId = `${tanggalHariIni}_siswa_${nis}`;
 
         const dataAbsen = {
+            role: "Siswa",
             nis: siswa.nis,
             nama: siswa.nama,
-            kelas: siswa.kelas,
-            waOrtu: siswa.waOrtu,
+            kelas: siswa.kelas || "-",
+            waOrtu: siswa.waOrtu || "",
             tanggal: tanggalHariIni,
             jam: jamStr,
             status: "Hadir",
-            dicatatOleh: guruAktif ? guruAktif.email : "Guru",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            dicatatOleh: sesiPengguna ? sesiPengguna.nama : "Guru",
+            waktu: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        db.collection("absensi_harian").doc(docId).set(dataAbsen, { merge: true }).then(() => {
-            // Bunyi bip notifikasi berhasil
+        db.collection("absensi").doc(docId).set(dataAbsen, { merge: true }).then(() => {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
@@ -602,20 +749,23 @@
                 osc.stop(audioCtx.currentTime + 0.15);
             } catch (e) {}
 
-            // Siapkan pesan WhatsApp otomatis ke Orang Tua/Wali
-            const pesanWA = `Assalamu'alaikum Wr. Wb.\nYth. Bapak/Ibu Orang Tua/Wali dari:\n\n*Nama:* ${siswa.nama}\n*NIS:* ${siswa.nis}\n*Kelas:* ${siswa.kelas}\n\nKami informasikan bahwa ananda telah *HADIR* di *SMA NEGERI 2 BAYAN* pada:\n*Tanggal:* ${tanggalHariIni}\n*Pukul:* ${jamStr} WITA\n\nTerima kasih.\n_Sistem Absensi Digital SMAN 2 Bayan_`;
-            const linkWA = `https://wa.me/${siswa.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
-
-            // Tampilkan kartu konfirmasi
             document.getElementById('scan-result-card').style.display = 'block';
             document.getElementById('res-nama').innerText = siswa.nama;
-            document.getElementById('res-detail').innerText = `NIS: ${siswa.nis} | Kelas: ${siswa.kelas} | Jam: ${jamStr} WITA`;
-            document.getElementById('btn-kirim-wa-ortu').href = linkWA;
+            document.getElementById('res-detail').innerText = `NIS: ${siswa.nis} | Kelas: ${siswa.kelas || '-'} | Jam: ${jamStr} WITA`;
             document.getElementById('manual-nis-input').value = '';
 
-            // Jika opsi otomatis buka WA dicentang
-            if (document.getElementById('auto-wa-check').checked) {
-                window.open(linkWA, '_blank');
+            const btnWa = document.getElementById('btn-kirim-wa-ortu');
+            if (siswa.waOrtu) {
+                const pesanWA = `Assalamu'alaikum Wr. Wb.\nYth. Bapak/Ibu Orang Tua/Wali dari:\n\n*Nama:* ${siswa.nama}\n*NIS:* ${siswa.nis}\n*Kelas:* ${siswa.kelas || '-'}\n\nKami informasikan bahwa ananda telah *HADIR* di *SMA NEGERI 2 BAYAN* pada:\n*Tanggal:* ${tanggalHariIni}\n*Pukul:* ${jamStr} WITA\n\nTerima kasih.\n_Sistem Absensi Digital SMAN 2 Bayan_`;
+                const linkWA = `https://wa.me/${siswa.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
+                btnWa.href = linkWA;
+                btnWa.style.display = 'inline-flex';
+
+                if (document.getElementById('auto-wa-check').checked) {
+                    window.open(linkWA, '_blank');
+                }
+            } else {
+                btnWa.style.display = 'none';
             }
         }).catch(err => alert("Gagal mencatat absen: " + err.message));
     }
@@ -629,37 +779,42 @@
         const tbody = document.getElementById('tbody-rekap');
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Memuat data absensi...</td></tr>`;
 
-        db.collection("absensi_harian").where("tanggal", "==", tgl).get().then((snapshot) => {
+        db.collection("absensi").where("tanggal", "==", tgl).get().then((snapshot) => {
             dataRekapSaatIni = [];
             snapshot.forEach((doc) => {
                 const d = doc.data();
-                if (kelasFilter === "SEMUA" || d.kelas === kelasFilter) {
-                    dataRekapSaatIni.push(d);
+                if ((d.role || "Siswa") === "Siswa") {
+                    if (kelasFilter === "SEMUA" || d.kelas === kelasFilter) {
+                        dataRekapSaatIni.push(d);
+                    }
                 }
             });
 
-            // Urutkan berdasarkan kelas lalu nama
-            dataRekapSaatIni.sort((a, b) => a.kelas.localeCompare(b.kelas) || a.nama.localeCompare(b.nama));
+            dataRekapSaatIni.sort((a, b) => String(a.kelas || "").localeCompare(String(b.kelas || "")) || String(a.nama || "").localeCompare(String(b.nama || "")));
 
             if (dataRekapSaatIni.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">Belum ada data absensi pada tanggal ${tgl}.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b; padding:20px;">Belum ada data absensi siswa pada tanggal ${tgl}.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = "";
             dataRekapSaatIni.forEach((row, idx) => {
-                const pesanWA = `Assalamu'alaikum Wr. Wb. Laporan kehadiran ananda *${row.nama}* (Kelas ${row.kelas}) di SMAN 2 Bayan tanggal ${row.tanggal}: *${row.status}* pukul ${row.jam} WITA.`;
-                const linkWA = `https://wa.me/${row.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
+                let kolomWa = `<span style="color:#94a3b8; font-size:0.78rem;">-</span>`;
+                if (row.waOrtu) {
+                    const pesanWA = `Assalamu'alaikum Wr. Wb. Laporan kehadiran ananda *${row.nama}* (Kelas ${row.kelas}) di SMAN 2 Bayan tanggal ${row.tanggal}: *${row.status}* pukul ${row.jam} WITA.`;
+                    const linkWA = `https://wa.me/${row.waOrtu}?text=${encodeURIComponent(pesanWA)}`;
+                    kolomWa = `<a href="${linkWA}" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> Kirim</a>`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
                         <td>${idx + 1}</td>
-                        <td><strong>${row.nis}</strong></td>
+                        <td><strong>${row.nis || '-'}</strong></td>
                         <td>${row.nama}</td>
-                        <td>${row.kelas}</td>
-                        <td>${row.jam}</td>
-                        <td><span style="background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700; font-size:0.78rem;">${row.status}</span></td>
-                        <td><a href="${linkWA}" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> Kirim</a></td>
+                        <td>${row.kelas || '-'}</td>
+                        <td>${row.jam || '-'}</td>
+                        <td><span style="background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:6px; font-weight:700; font-size:0.78rem;">${row.status || 'Hadir'}</span></td>
+                        <td>${kolomWa}</td>
                     </tr>
                 `;
             });
@@ -676,7 +831,6 @@
         const tgl = document.getElementById('filter-tanggal').value;
         const kelasFilter = document.getElementById('filter-kelas').value;
 
-        // Kop Laporan PDF
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("PEMERINTAH PROVINSI NUSA TENGGARA BARAT", 105, 15, { align: "center" });
@@ -689,7 +843,7 @@
 
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
-        doc.text("LAPORAN REKAPITULASI KEHADIRAN SISWA (QR CODE)", 105, 41, { align: "center" });
+        doc.text("LAPORAN REKAPITULASI KEHADIRAN SISWA", 105, 41, { align: "center" });
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
@@ -699,11 +853,11 @@
 
         const rows = dataRekapSaatIni.map((item, idx) => [
             idx + 1,
-            item.nis,
+            item.nis || "-",
             item.nama,
-            item.kelas,
-            item.jam + " WITA",
-            item.status
+            item.kelas || "-",
+            (item.jam || "-") + " WITA",
+            item.status || "Hadir"
         ]);
 
         doc.autoTable({
@@ -718,7 +872,7 @@
         const finalY = doc.lastAutoTable.finalY + 15;
         doc.text(`Bayan, ${tgl}`, 140, finalY);
         doc.text("Guru Pengampu / Piket,", 140, finalY + 6);
-        doc.text(`(${guruAktif ? guruAktif.email : '_____________________'})`, 140, finalY + 26);
+        doc.text(`(${sesiPengguna ? sesiPengguna.nama : '_____________________'})`, 140, finalY + 26);
 
         doc.save(`Rekap_Absen_SMAN2Bayan_${kelasFilter}_${tgl}.pdf`);
     }
