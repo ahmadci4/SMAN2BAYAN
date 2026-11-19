@@ -282,7 +282,7 @@
         </section>
 
         <!-- ======================================================= -->
-        <!-- TAB 2: MATERI PELAJARAN & TUGAS                         -->
+        <!-- TAB 2: MATERI PELAJARAN & TUGAS (18 MAPEL LENGKAP)      -->
         <!-- ======================================================= -->
         <section id="tab-materi" class="tab-section">
             <div class="card">
@@ -290,7 +290,26 @@
                 <div class="grid-2">
                     <div>
                         <label>Mata Pelajaran</label>
-                        <input type="text" id="mat-mapel" class="form-control" value="Fisika" readonly>
+                        <select id="mat-mapel" class="form-control">
+                            <option value="Pend. Agama">Pend. Agama</option>
+                            <option value="Pend. Pancasila">Pend. Pancasila</option>
+                            <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                            <option value="Matematika">Matematika</option>
+                            <option value="Bahasa Inggris">Bahasa Inggris</option>
+                            <option value="Sejarah">Sejarah</option>
+                            <option value="PJOK">PJOK</option>
+                            <option value="Seni & Prakarya">Seni & Prakarya</option>
+                            <option value="Informatika">Informatika</option>
+                            <option value="Biologi">Biologi</option>
+                            <option value="Kimia">Kimia</option>
+                            <option value="Fisika" selected>Fisika</option>
+                            <option value="MTK Lanjut">MTK Lanjut</option>
+                            <option value="Sosiologi">Sosiologi</option>
+                            <option value="Ekonomi">Ekonomi</option>
+                            <option value="Geografi">Geografi</option>
+                            <option value="Antropologi">Antropologi</option>
+                            <option value="PKWU">PKWU</option>
+                        </select>
                     </div>
                     <div>
                         <label>Kelas Tujuan</label>
@@ -342,7 +361,30 @@
             </div>
 
             <div class="card">
-                <h3 style="margin-top: 0;">Daftar Materi Terpublikasi</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                    <h3 style="margin: 0;">Daftar Materi Terpublikasi</h3>
+                    <select id="filter-mapel-materi" class="form-control" style="max-width: 230px; margin: 0;" onchange="muatMateriAdmin()">
+                        <option value="SEMUA">Semua Mata Pelajaran</option>
+                        <option value="Pend. Agama">Pend. Agama</option>
+                        <option value="Pend. Pancasila">Pend. Pancasila</option>
+                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                        <option value="Matematika">Matematika</option>
+                        <option value="Bahasa Inggris">Bahasa Inggris</option>
+                        <option value="Sejarah">Sejarah</option>
+                        <option value="PJOK">PJOK</option>
+                        <option value="Seni & Prakarya">Seni & Prakarya</option>
+                        <option value="Informatika">Informatika</option>
+                        <option value="Biologi">Biologi</option>
+                        <option value="Kimia">Kimia</option>
+                        <option value="Fisika">Fisika</option>
+                        <option value="MTK Lanjut">MTK Lanjut</option>
+                        <option value="Sosiologi">Sosiologi</option>
+                        <option value="Ekonomi">Ekonomi</option>
+                        <option value="Geografi">Geografi</option>
+                        <option value="Antropologi">Antropologi</option>
+                        <option value="PKWU">PKWU</option>
+                    </select>
+                </div>
                 <div id="list-materi-admin"><p style="color: grey; font-size: 0.85rem;">Memuat materi...</p></div>
             </div>
         </section>
@@ -623,6 +665,7 @@
         const auth = firebase.auth();
 
         let semuaSiswaCache = [];
+        let currentStaffSession = null;
 
         function escapeHtml(str) {
             return String(str || "")
@@ -667,6 +710,7 @@
                 return;
             }
 
+            currentStaffSession = user;
             document.getElementById('staff-session-info').innerText = `Masuk sebagai: ${user.nama} (${user.role})`;
 
             if (!auth.currentUser) {
@@ -761,7 +805,7 @@
         }
 
         // ==========================================
-        // 2. MATERI & TUGAS
+        // 2. MATERI & TUGAS (SEMUA 18 MAPEL)
         // ==========================================
         async function simpanMateri() {
             const mapel = document.getElementById('mat-mapel').value.trim();
@@ -781,11 +825,22 @@
                 links.push({ label: linkLabel || "Tautan Materi", url: linkUrl });
             }
 
+            const guruNama = currentStaffSession ? currentStaffSession.nama : "Guru SMAN 2 Bayan";
+            const guruUid = currentStaffSession ? (currentStaffSession.uid || "") : "";
+
             btn.disabled = true;
             try {
                 if (!auth.currentUser) await auth.signInAnonymously();
                 await db.collection("materi_pelajaran").add({
-                    mapel, kelas, bab, subBab, deskripsi, links, pr,
+                    mapel,
+                    kelas,
+                    bab,
+                    subBab,
+                    deskripsi,
+                    links,
+                    pr,
+                    guruNama,
+                    guruUid,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -795,7 +850,7 @@
                 document.getElementById('mat-link-label').value = "";
                 document.getElementById('mat-link-url').value = "";
                 document.getElementById('mat-pr').value = "";
-                alert("Materi pelajaran berhasil dipublikasikan!");
+                alert(`Materi ${mapel} (${kelas}) berhasil dipublikasikan!`);
                 muatMateriAdmin();
             } catch (err) {
                 alert("Gagal menyimpan materi: " + err.message);
@@ -806,22 +861,45 @@
 
         function muatMateriAdmin() {
             const wadah = document.getElementById('list-materi-admin');
+            const filterMapelEl = document.getElementById('filter-mapel-materi');
+            const filterMapel = filterMapelEl ? filterMapelEl.value : "SEMUA";
+
             db.collection("materi_pelajaran").get().then(snap => {
                 if (snap.empty) {
                     wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada materi.</p>`;
                     return;
                 }
+
+                let daftarMateri = [];
+                snap.forEach(doc => daftarMateri.push({ id: doc.id, ...doc.data() }));
+
+                if (filterMapel !== "SEMUA") {
+                    daftarMateri = daftarMateri.filter(m => (m.mapel || "Fisika") === filterMapel);
+                }
+
+                daftarMateri.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+
+                if (daftarMateri.length === 0) {
+                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Tidak ada materi untuk mata pelajaran ${escapeHtml(filterMapel)}.</p>`;
+                    return;
+                }
+
                 let html = '';
-                snap.forEach(doc => {
-                    const m = doc.data();
+                daftarMateri.forEach(m => {
+                    const namaMapel = m.mapel || "Fisika";
+                    const pengampu = m.guruNama ? ` • Pengampu: ${escapeHtml(m.guruNama)}` : "";
                     html += `
                         <div class="item-row">
                             <div>
-                                <span class="badge" style="background: #05cd99;">${escapeHtml(m.kelas)}</span>
+                                <span class="badge" style="background: #4318ff;">${escapeHtml(namaMapel)}</span>
+                                <span class="badge" style="background: #05cd99; margin-left: 4px;">${escapeHtml(m.kelas)}</span>
                                 <strong style="margin-left: 6px;">${escapeHtml(m.bab)} — ${escapeHtml(m.subBab)}</strong>
-                                ${m.pr ? `<div style="font-size: 0.76rem; color: #b45309; margin-top: 3px;"><i class="fa-solid fa-tasks"></i> Ada Tugas/PR</div>` : ''}
+                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 3px;">
+                                    ${m.pr ? `<span style="color: #b45309; font-weight: 700;"><i class="fa-solid fa-tasks"></i> Ada Tugas/PR</span>` : 'Materi Bacaan / Media'}
+                                    ${pengampu}
+                                </div>
                             </div>
-                            <button class="btn btn-danger" onclick="hapusDokumen('materi_pelajaran', '${doc.id}', muatMateriAdmin)">
+                            <button class="btn btn-danger" onclick="hapusDokumen('materi_pelajaran', '${m.id}', muatMateriAdmin)">
                                 <i class="fa-solid fa-trash"></i> Hapus
                             </button>
                         </div>
