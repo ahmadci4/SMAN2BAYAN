@@ -19,7 +19,7 @@ const auth = firebase.auth();
 // UTILITAS KEAMANAN & KONVERTER LINK GAMBAR UNIVERSAL
 // ==========================================
 function escapeHtml(str) {
-    return String(str || "")
+    return String(str ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -152,7 +152,6 @@ function aturVisibilitasMenuSensitif() {
     const isSiswa = isLoggedIn && currentUserSession.role === "Siswa";
     const isStaff = isLoggedIn && ["Operator", "Guru", "Guru / Staf"].includes(currentUserSession.role);
 
-    // Menu sensitif: disembunyikan jika belum login!
     const navMapel = document.getElementById('nav-mapel');
     const navPilketos = document.getElementById('nav-pilketos');
     const navKartu = document.getElementById('nav-kartu');
@@ -175,7 +174,6 @@ function aturVisibilitasMenuSensitif() {
         }
     }
 
-    // Tombol Login vs Profil User di Pojok Kanan Atas
     const btnLoginTop = document.getElementById('btn-open-login-top');
     const areaUserTop = document.getElementById('user-logged-area-top');
     const badge = document.getElementById('user-badge-status');
@@ -219,7 +217,6 @@ function togglePasswordVisibility(inputId, iconId) {
     }
 }
 
-// Validasi password kuat: minimal 8 karakter, wajib kombinasi huruf dan angka
 function validasiKekuatanPassword(pass) {
     if (pass.length < 8) {
         return "Kata sandi minimal 8 karakter.";
@@ -237,7 +234,6 @@ function pilihPeranLogin(role) {
         document.getElementById('form-login-guru').style.display = 'block';
         document.getElementById('form-login-siswa').style.display = 'none';
 
-        // Sembunyikan tombol pendaftaran bebas agar hanya akun terdaftar di Firebase yang bisa login
         const btnToggleReg = document.getElementById('btn-toggle-reg-guru');
         const boxRegExtra = document.getElementById('register-guru-extra');
         if (btnToggleReg) btnToggleReg.style.display = 'none';
@@ -303,7 +299,7 @@ function formatFirebasePass(rawPass) {
     return `${rawPass}_sman2bayan`;
 }
 
-// LOGIN KHUSUS GURU & OPERATOR (HANYA AKUN TERDAFTAR DI FIREBASE)
+// LOGIN KHUSUS GURU & OPERATOR
 function prosesLoginGuru() {
     const rawId = document.getElementById('login-guru-id').value.trim();
     const pass = document.getElementById('login-guru-pass').value.trim();
@@ -349,7 +345,7 @@ function prosesLoginGuru() {
     });
 }
 
-// LOGIN & AKTIVASI MANDIRI SISWA MENGGUNAKAN EMAIL & SANDI PRIBADI
+// LOGIN & AKTIVASI MANDIRI SISWA
 async function prosesLoginSiswa() {
     const emailInput = document.getElementById('login-siswa-nama').value.trim().toLowerCase();
     const passInput = document.getElementById('login-siswa-nis').value.trim();
@@ -368,7 +364,6 @@ async function prosesLoginSiswa() {
     btn.innerText = isAktivasiSiswaMode ? "Mengaktivasi Akun..." : "Memverifikasi Login...";
 
     try {
-        // MODE 1: Aktivasi Akun Siswa Pertama Kali (Mencocokkan Email & NIS di Database Sekolah)
         if (isAktivasiSiswaMode) {
             const errPass = validasiKekuatanPassword(passInput);
             if (errPass) throw new Error(errPass);
@@ -392,7 +387,6 @@ async function prosesLoginSiswa() {
                 throw new Error("Kombinasi Email dan NIS tidak ditemukan di database sekolah. Pastikan email Anda sudah dikumpulkan ke Operator/Wali Kelas.");
             }
 
-            // Buat akun resmi di Firebase Authentication dengan sandi pilihan siswa sendiri
             const cred = await auth.createUserWithEmailAndPassword(emailInput, passInput);
 
             const sessionSiswa = {
@@ -408,7 +402,6 @@ async function prosesLoginSiswa() {
                 bio: ""
             };
 
-            // Simpan status aktivasi tanpa menyimpan password teks biasa
             await db.collection("data_siswa").doc(dataSiswaDoc.id).update({
                 uidAuth: cred.user.uid,
                 akunAktif: true,
@@ -420,7 +413,6 @@ async function prosesLoginSiswa() {
             return;
         }
 
-        // MODE 2: Login Siswa Reguler via Firebase Authentication (Email & Password Pribadi)
         const cred = await auth.signInWithEmailAndPassword(emailInput, passInput);
 
         const snap = await db.collection("data_siswa")
@@ -495,7 +487,6 @@ function keluarAkun() {
     }
 }
 
-// Saat halaman dibuka: langsung tampilkan Home publik tanpa memblokir layar
 window.addEventListener('DOMContentLoaded', () => {
     const saved = sessionStorage.getItem("sman2bayan_session");
     if (saved) {
@@ -823,15 +814,19 @@ function renderDaftarMapel() {
         <div class="grid-container">
     `;
     subjectsList.forEach(sub => {
-        const safeMapelName = sub.name.replace(/'/g, "\\'");
+        const safeMapel = escapeHtml(sub.name);
         html += `
-            <div class="subject-card" style="background: ${sub.grad}; opacity: 1;" onclick="renderKelas('${safeMapelName}')">
-                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${escapeHtml(sub.name)}</h3><p class="status">Tersedia</p>
+            <div class="subject-card mapel-card-item" data-mapel="${safeMapel}" style="background: ${sub.grad}; opacity: 1;">
+                <i class="fa-solid ${sub.icon} bg-icon"></i><h3>${safeMapel}</h3><p class="status">Tersedia</p>
             </div>
         `;
     });
     html += `</div>`;
     contentDiv.innerHTML = html;
+
+    contentDiv.querySelectorAll('.mapel-card-item').forEach(card => {
+        card.addEventListener('click', () => renderKelas(card.dataset.mapel));
+    });
 }
 
 // ==========================================
@@ -951,7 +946,7 @@ function renderProfilDetailGuru(index) {
 function renderKelas(namaMapel) {
     if (namaMapel) selectedMapelAktif = namaMapel;
     const mapelSekarang = selectedMapelAktif || "Fisika";
-    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+    const safeMapel = escapeHtml(mapelSekarang);
 
     setFloatingWAVisible(false);
     const fotoGuru = formatUrlGambar(GURU_DATA.foto);
@@ -961,12 +956,12 @@ function renderKelas(namaMapel) {
         <div style="background:white; padding:16px; border-radius:16px; margin-bottom:20px; display:flex; align-items:center; gap:15px; border:1px solid #e2e8f0; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.03);" onclick="daftarGuruTendikCache=[GURU_DATA]; renderProfilDetailGuru(0)">
             <img src="${escapeHtml(fotoGuru)}" referrerpolicy="no-referrer" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #4318ff;">
             <div>
-                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">Mata Pelajaran: ${escapeHtml(mapelSekarang)}</h4>
+                <h4 style="margin:0; color:#2b3674; font-size:1.05rem;">Mata Pelajaran: ${safeMapel}</h4>
                 <p style="margin:3px 0 0 0; font-size:0.82rem; color:#475569;">Portal Pembelajaran SMAN 2 Bayan • <span style="color:#4318ff; font-weight:600;">Lihat Direktori Guru</span></p>
             </div>
         </div>
 
-        <h3 style="margin-bottom: 15px; color:#2b3674;">Pilih Kelas (${escapeHtml(mapelSekarang)})</h3>
+        <h3 style="margin-bottom: 15px; color:#2b3674;">Pilih Kelas (${safeMapel})</h3>
     `;
     const tingkatan = [
         { tingkat: 'X', warna: 'linear-gradient(135deg, #11998e, #38ef7d)' },
@@ -981,7 +976,7 @@ function renderKelas(namaMapel) {
         subKelas.forEach(sub => {
             const namaKelas = `${t.tingkat}.${sub}`;
             html += `
-                <div class="subject-card" style="background: ${t.warna}; min-height: 75px; padding: 15px;" onclick="renderMateri('${namaKelas}', '${safeMapelParam}')">
+                <div class="subject-card kelas-card-item" data-kelas="${namaKelas}" data-mapel="${safeMapel}" style="background: ${t.warna}; min-height: 75px; padding: 15px;">
                     <h3 style="font-size: 1.1rem; text-align: center; width: 100%; margin: 8px 0;">${namaKelas}</h3>
                 </div>
             `;
@@ -989,30 +984,38 @@ function renderKelas(namaMapel) {
         html += `</div>`;
     });
     contentDiv.innerHTML = html;
+
+    contentDiv.querySelectorAll('.kelas-card-item').forEach(card => {
+        card.addEventListener('click', () => renderMateri(card.dataset.kelas, card.dataset.mapel));
+    });
 }
 
 function renderMateri(kelas, namaMapel) {
     if (namaMapel) selectedMapelAktif = namaMapel;
     const mapelSekarang = selectedMapelAktif || "Fisika";
-    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+    const safeMapel = escapeHtml(mapelSekarang);
+    const safeKelas = escapeHtml(kelas);
 
     setFloatingWAVisible(false);
     contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderKelas('${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <button class="btn-back btn-kembali-kelas" data-mapel="${safeMapel}"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="skeleton-box" style="height: 82px;"></div>
         <div class="skeleton-box"></div>
         <div class="skeleton-box"></div>
     `;
+    contentDiv.querySelectorAll('.btn-kembali-kelas').forEach(btn => {
+        btn.addEventListener('click', () => renderKelas(btn.dataset.mapel));
+    });
     
     db.collection("materi_pelajaran").where("mapel", "==", mapelSekarang).where("kelas", "==", kelas).get().then((querySnapshot) => {
         let html = `
-            <button class="btn-back" onclick="renderKelas('${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
-            <h3 style="margin-bottom:15px; color:#2b3674;">Materi ${escapeHtml(mapelSekarang)} - ${escapeHtml(kelas)}</h3>
+            <button class="btn-back btn-kembali-kelas" data-mapel="${safeMapel}"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+            <h3 style="margin-bottom:15px; color:#2b3674;">Materi ${safeMapel} - ${safeKelas}</h3>
             <div class="material-list">
         `;
         
         if (querySnapshot.empty) {
-            html += `<p style="color:#707eae; text-align:center; padding: 25px; background:white; border-radius:14px;">Belum ada materi yang diunggah guru untuk mata pelajaran <strong>${escapeHtml(mapelSekarang)}</strong> kelas ${escapeHtml(kelas)}.</p>`;
+            html += `<p style="color:#707eae; text-align:center; padding: 25px; background:white; border-radius:14px;">Belum ada materi yang diunggah guru untuk mata pelajaran <strong>${safeMapel}</strong> kelas ${safeKelas}.</p>`;
         } else {
             currentMateriList = []; 
             querySnapshot.forEach((doc) => { currentMateriList.push({ id: doc.id, ...doc.data() }); });
@@ -1020,7 +1023,7 @@ function renderMateri(kelas, namaMapel) {
 
             currentMateriList.forEach((data, index) => {
                 const pengampuInfo = data.guruNama ? ` <span style="font-size:0.75rem; color:#4318ff; font-weight:600;">• ${escapeHtml(data.guruNama)}</span>` : '';
-                html += `<div class="material-item" onclick="renderDetailMateriDinamis('${kelas}', ${index}, '${safeMapelParam}')">
+                html += `<div class="material-item materi-row-item" data-kelas="${safeKelas}" data-index="${index}" data-mapel="${safeMapel}">
                             <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span>${pengampuInfo}</div>
                             <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
                         </div>`;
@@ -1028,6 +1031,15 @@ function renderMateri(kelas, namaMapel) {
         }
         html += `</div>`;
         contentDiv.innerHTML = html;
+
+        contentDiv.querySelectorAll('.btn-kembali-kelas').forEach(btn => {
+            btn.addEventListener('click', () => renderKelas(btn.dataset.mapel));
+        });
+        contentDiv.querySelectorAll('.materi-row-item').forEach(row => {
+            row.addEventListener('click', () => {
+                renderDetailMateriDinamis(row.dataset.kelas, Number(row.dataset.index), row.dataset.mapel);
+            });
+        });
     }).catch(() => {
         contentDiv.innerHTML += `<p style="color:red; text-align:center;">Gagal memuat materi. Cek koneksi internet Anda.</p>`;
     });
@@ -1051,7 +1063,8 @@ function getIconForUrl(url) {
 function renderDetailMateriDinamis(kelas, index, namaMapel) {
     if (namaMapel) selectedMapelAktif = namaMapel;
     const mapelSekarang = selectedMapelAktif || "Fisika";
-    const safeMapelParam = mapelSekarang.replace(/'/g, "\\'");
+    const safeMapel = escapeHtml(mapelSekarang);
+    const safeKelas = escapeHtml(kelas);
 
     setFloatingWAVisible(false);
     const babData = currentMateriList[index];
@@ -1105,9 +1118,9 @@ function renderDetailMateriDinamis(kelas, index, namaMapel) {
     const namaAktif = currentUserSession ? `${escapeHtml(currentUserSession.nama)} (${escapeHtml(currentUserSession.sub)})` : "Belum Login";
 
     contentDiv.innerHTML = `
-        <button class="btn-back" onclick="renderMateri('${kelas}', '${safeMapelParam}')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        <button class="btn-back btn-kembali-materi" data-kelas="${safeKelas}" data-mapel="${safeMapel}"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
         <div class="detail-box" style="background:white; padding:25px; border-radius:20px; margin-bottom:20px;">
-            <span style="background:#eef2ff; color:#4318ff; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800;">${escapeHtml(mapelSekarang)} • Kelas ${escapeHtml(kelas)}</span>
+            <span style="background:#eef2ff; color:#4318ff; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800;">${safeMapel} • Kelas ${safeKelas}</span>
             <h2 style="color:#2b3674; margin:8px 0 0 0;">${escapeHtml(babData.bab)}</h2>
             <h4 style="color:#4318ff; margin-top:6px;">${escapeHtml(babData.subBab)}</h4>
             <p style="color:#707eae; font-size:0.85rem; margin-top:5px;">Guru Pengampu: <span style="color:#4318ff; font-weight:600;">${escapeHtml(namaPengampu)}</span></p>
@@ -1127,10 +1140,14 @@ function renderDetailMateriDinamis(kelas, index, namaMapel) {
                 <h4 style="font-size:0.9rem; margin:0 0 8px 0; color:#2b3674;">Buat Pertanyaan Baru</h4>
                 <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;">Akun Anda: <strong>${namaAktif}</strong></p>
                 <textarea id="input-diskusi" rows="2" class="form-input" style="background:white;" placeholder="Tulis pertanyaanmu di sini..."></textarea>
-                <button class="btn-primary" style="width: 100%; padding:10px; border-radius:10px; font-weight:700;" onclick="tambahDiskusiUtama('${babData.id}')">Kirim Pertanyaan</button>
+                <button class="btn-primary" style="width: 100%; padding:10px; border-radius:10px; font-weight:700;" onclick="tambahDiskusiUtama('${escapeHtml(babData.id)}')">Kirim Pertanyaan</button>
             </div>
         </div>
     `;
+
+    contentDiv.querySelectorAll('.btn-kembali-materi').forEach(btn => {
+        btn.addEventListener('click', () => renderMateri(btn.dataset.kelas, btn.dataset.mapel));
+    });
     
     listenDiskusi(babData.id);
     if (babData.pr && babData.pr.trim() !== "") {
@@ -1181,11 +1198,11 @@ function listenDiskusi(materiId) {
                       <p style="font-size:0.9rem; margin:5px 0; color:#1e293b;">${escapeHtml(parent.pesan)}</p>
                       ${repliesHtml}
                       <div style="margin-top:8px; text-align:right;">
-                          <button onclick="toggleReplyBox('${parent.id}')" style="background:none; border:none; color:#4318ff; font-size:0.8rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-reply"></i> Balas</button>
+                          <button onclick="toggleReplyBox('${escapeHtml(parent.id)}')" style="background:none; border:none; color:#4318ff; font-size:0.8rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-reply"></i> Balas</button>
                       </div>
-                      <div id="reply-box-${parent.id}" style="display:none; margin-top:8px; background:#f8fafc; padding:10px; border-radius:8px;">
-                          <textarea id="reply-msg-${parent.id}" rows="2" placeholder="Tulis balasan..." class="form-input" style="background:white; font-size:0.85rem; margin-bottom:6px;"></textarea>
-                          <button onclick="kirimBalasan('${materiId}', '${parent.id}')" class="btn-primary" style="padding:8px 12px; font-size:0.8rem; width:100%; border-radius:8px;">Kirim Balasan</button>
+                      <div id="reply-box-${escapeHtml(parent.id)}" style="display:none; margin-top:8px; background:#f8fafc; padding:10px; border-radius:8px;">
+                          <textarea id="reply-msg-${escapeHtml(parent.id)}" rows="2" placeholder="Tulis balasan..." class="form-input" style="background:white; font-size:0.85rem; margin-bottom:6px;"></textarea>
+                          <button onclick="kirimBalasan('${escapeHtml(materiId)}', '${escapeHtml(parent.id)}')" class="btn-primary" style="padding:8px 12px; font-size:0.8rem; width:100%; border-radius:8px;">Kirim Balasan</button>
                       </div>
                   </div>
               `;
@@ -1294,7 +1311,6 @@ function closeProfilSayaModal() {
     document.getElementById('user-profile-modal').classList.add('hidden');
 }
 
-// Fungsi Ubah Kata Sandi Mandiri untuk Siswa
 function simpanPasswordBaruSiswa() {
     if (!currentUserSession || currentUserSession.role !== "Siswa") return;
 
@@ -1437,9 +1453,16 @@ function cekStatusTugasSiswa(materiId, kelas, judulBab) {
                     <strong style="display:block; font-size:0.88rem; color:#2b3674; margin-bottom:8px;"><i class="fa-solid fa-paper-plane" style="color:#4318ff;"></i> Kumpulkan Jawaban Tugas Anda</strong>
                     <input type="url" id="input-link-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Paste Link Google Drive / Foto Jawaban (https://...)">
                     <input type="text" id="input-catatan-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Catatan tambahan untuk guru (opsional)...">
-                    <button onclick="kirimTugasSiswa('${materiId}', '${kelas}', '${judulBab.replace(/'/g, "\\'")}')" class="btn-primary" style="width:100%; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:700;">Kirim Jawaban Tugas</button>
+                    <button type="button" id="btn-kirim-tugas-siswa" data-materi-id="${escapeHtml(materiId)}" data-kelas="${escapeHtml(kelas)}" data-judul-bab="${escapeHtml(judulBab)}" class="btn-primary" style="width:100%; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:700;">Kirim Jawaban Tugas</button>
                 </div>
             `;
+
+            const btnKirim = document.getElementById('btn-kirim-tugas-siswa');
+            if (btnKirim) {
+                btnKirim.addEventListener('click', () => {
+                    kirimTugasSiswa(btnKirim.dataset.materiId, btnKirim.dataset.kelas, btnKirim.dataset.judulBab);
+                });
+            }
         }
     }).catch(() => {
         wadah.innerHTML = `<p style="color:red; font-size:0.8rem;">Gagal memuat status tugas.</p>`;
