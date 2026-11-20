@@ -16,7 +16,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // ==========================================
-// UTILITAS KEAMANAN & KONVERTER LINK GAMBAR UNIVERSAL
+// UTILITAS KEAMANAN, KONVERTER GAMBAR & KOMPRESI KAMERA
 // ==========================================
 function escapeHtml(str) {
     return String(str ?? "")
@@ -32,6 +32,11 @@ function formatUrlGambar(rawUrl) {
     let url = String(rawUrl).trim();
     if (!url) return "";
 
+    // Mendukung hasil jepretan kamera langsung (Base64 Data URL)
+    if (url.startsWith("data:image/")) {
+        return url;
+    }
+
     if (!/^https?:\/\//i.test(url) && !url.startsWith("images/") && !url.startsWith("./")) {
         url = "https://" + url;
     }
@@ -42,6 +47,52 @@ function formatUrlGambar(rawUrl) {
     }
 
     return url;
+}
+
+// Kompresi foto langsung dari kamera HP/Webcam agar ringan di Firestore (< 200KB)
+function kompresFotoKamera(file, maxWidth = 800, quality = 0.72) {
+    return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error("Tidak ada file gambar dipilih."));
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = () => reject(new Error("Gagal memproses gambar dari kamera."));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("Gagal membaca file kamera."));
+        reader.readAsDataURL(file);
+    });
+}
+
+// Helper input kamera siap pakai untuk form mana pun
+function handleInputKamera(inputEl, targetUrlInputId, previewImgId) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+    kompresFotoKamera(file).then((base64Data) => {
+        const targetInput = document.getElementById(targetUrlInputId);
+        if (targetInput) targetInput.value = base64Data;
+        const previewImg = document.getElementById(previewImgId);
+        if (previewImg) {
+            previewImg.src = base64Data;
+            previewImg.style.display = "block";
+        }
+    }).catch((err) => {
+        alert(err.message);
+    });
 }
 
 // ==========================================
@@ -110,6 +161,14 @@ let GURU_DATA = {
     foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80"
 };
 
+// Pengaturan Sakelar Fitur Musiman (Dapat diubah Operator sewaktu-waktu)
+let PENGATURAN_PANEL = {
+    pilketosAktif: true,
+    alasanPilketosNonaktif: "Pemilihan Ketua & Wakil Ketua OSIS belum dibuka karena masih dalam tahap verifikasi kandidat.",
+    guruFavoritAktif: true,
+    alasanGuruFavoritNonaktif: "Pemilihan Guru Terbaik belum dibuka. Jadwal pemungutan suara akan diumumkan oleh Operator Sekolah."
+};
+
 let daftarGuruTendikCache = [];
 let currentUserSession = null;
 let selectedStaffLoginType = "guru";
@@ -145,8 +204,134 @@ const subjectsList = [
 ];
 
 // ==========================================
-// 3. KONTROL HAK AKSES MENU & MODAL LOGIN POJOK KANAN
+// 3. SISTEM NOTIFIKASI REAL-TIME (TUGAS, PERTANYAAN SISWA & PEMBARUAN)
 // ==========================================
+let notifikasiListCache = [];
+
+function inisialisasiNotifikasiRealtime() {
+    // Pasang tombol lonceng notifikasi di pojok atas jika belum ada
+    const areaTop = document.getElementById('user-logged-area-top') || document.body;
+    if (!document.getElementById('btn-notifikasi-bell')) {
+        const bellBtn = document.createElement('button');
+        bellBtn.id = 'btn-notifikasi-bell';
+        bellBtn.type = 'button';
+        bellBtn.onclick = bukaModalNotifikasi;
+        bellBtn.title = 'Notifikasi Tugas, Diskusi & Pembaruan';
+        bellBtn.style.cssText = 'position:fixed; bottom:25px; left:20px; width:50px; height:50px; border-radius:50%; background:#4318ff; color:white; border:none; box-shadow:0 6px 20px rgba(67,24,255,0.4); cursor:pointer; z-index:96; display:flex; align-items:center; justify-content:center; font-size:1.2rem;';
+        bellBtn.innerHTML = `
+            <i class="fa-solid fa-bell"></i>
+            <span id="notif-badge-count" style="display:none; position:absolute; top:-4px; right:-4px; background:#dc2626; color:white; font-size:0.7rem; font-weight:800; min-width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; padding:0 4px; border:2px solid white;">0</span>
+        `;
+        document.body.appendChild(bellBtn);
+    }
+
+    // Dengarkan notifikasi real-time dari Firestore
+    db.collection("notifikasi_sistem")
+        .orderBy("timestamp", "desc")
+        .limit(25)
+        .onSnapshot((snapshot) => {
+            notifikasiListCache = [];
+            const lastRead = Number(localStorage.getItem("sman2bayan_notif_last_read") || "0");
+            let unreadCount = 0;
+
+            snapshot.forEach((doc) => {
+                const d = { id: doc.id, ...doc.data() };
+                // Filter relevan berdasarkan peran
+                const target = d.targetRole || "SEMUA";
+                const userRole = currentUserSession ? currentUserSession.role : "Tamu";
+                const cocokRole =
+                    target === "SEMUA" ||
+                    (target === "STAFF" && ["Operator", "Guru", "Guru / Staf"].includes(userRole)) ||
+                    (target === "SISWA" && userRole === "Siswa");
+
+                if (cocokRole) {
+                    notifikasiListCache.push(d);
+                    const ts = d.timestamp && d.timestamp.toMillis ? d.timestamp.toMillis() : 0;
+                    if (ts > lastRead) unreadCount++;
+                }
+            });
+
+            const badge = document.getElementById('notif-badge-count');
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.style.display = "flex";
+                    badge.innerText = unreadCount > 9 ? "9+" : String(unreadCount);
+                } else {
+                    badge.style.display = "none";
+                }
+            }
+        }, () => {});
+}
+
+function kirimNotifikasiSistem({ tipe, judul, pesan, targetRole = "SEMUA", pengirim = "Sistem" }) {
+    db.collection("notifikasi_sistem").add({
+        tipe: tipe || "INFO", // TUGAS | DISKUSI | PENGUMUMAN | PEMBARUAN
+        judul: judul || "Pembaruan Sekolah",
+        pesan: pesan || "",
+        targetRole: targetRole,
+        pengirim: pengirim,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+}
+
+function bukaModalNotifikasi() {
+    localStorage.setItem("sman2bayan_notif_last_read", String(Date.now()));
+    const badge = document.getElementById('notif-badge-count');
+    if (badge) badge.style.display = "none";
+
+    let listHtml = "";
+    if (notifikasiListCache.length === 0) {
+        listHtml = `<p style="text-align:center; color:#64748b; font-size:0.88rem; padding:20px 0;">Belum ada notifikasi tugas, pertanyaan, atau pembaruan baru.</p>`;
+    } else {
+        notifikasiListCache.forEach((n) => {
+            let icon = "fa-circle-info";
+            let color = "#4318ff";
+            if (n.tipe === "TUGAS") { icon = "fa-file-signature"; color = "#05cd99"; }
+            if (n.tipe === "DISKUSI") { icon = "fa-comments"; color = "#f59e0b"; }
+            if (n.tipe === "PENGUMUMAN") { icon = "fa-bullhorn"; color = "#dc2626"; }
+
+            const waktuStr = n.timestamp && n.timestamp.toDate
+                ? n.timestamp.toDate().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : "Baru saja";
+
+            listHtml += `
+                <div style="text-align:left; background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid ${color}; padding:11px 13px; border-radius:10px; margin-bottom:9px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                        <strong style="font-size:0.85rem; color:#2b3674;"><i class="fa-solid ${icon}" style="color:${color};"></i> ${escapeHtml(n.judul)}</strong>
+                        <span style="font-size:0.7rem; color:#64748b;">${waktuStr}</span>
+                    </div>
+                    <p style="margin:4px 0 0 0; font-size:0.82rem; color:#475569; line-height:1.45;">${escapeHtml(n.pesan)}</p>
+                </div>
+            `;
+        });
+    }
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: '<span style="font-size:1.15rem; color:#2b3674;"><i class="fa-solid fa-bell" style="color:#4318ff;"></i> Pusat Notifikasi Sekolah</span>',
+            html: `<div style="max-height:360px; overflow-y:auto; padding-right:4px;">${listHtml}</div>`,
+            confirmButtonColor: '#4318ff',
+            confirmButtonText: 'Tutup'
+        });
+    } else {
+        alert(notifikasiListCache.map(n => `${n.judul}: ${n.pesan}`).join("\n") || "Tidak ada notifikasi.");
+    }
+}
+
+// ==========================================
+// 4. KONTROL HAK AKSES MENU, SAKELAR PANEL & MODAL LOGIN
+// ==========================================
+function muatPengaturanPanel(callback) {
+    db.collection("pengaturan_sistem").doc("panel_musiman").get().then((doc) => {
+        if (doc.exists) {
+            PENGATURAN_PANEL = { ...PENGATURAN_PANEL, ...doc.data() };
+        }
+        if (callback) callback();
+    }).catch(() => {
+        if (callback) callback();
+    });
+}
+
 function aturVisibilitasMenuSensitif() {
     const isLoggedIn = Boolean(currentUserSession && currentUserSession.role !== "Tamu");
     const isSiswa = isLoggedIn && currentUserSession.role === "Siswa";
@@ -154,18 +339,21 @@ function aturVisibilitasMenuSensitif() {
 
     const navMapel = document.getElementById('nav-mapel');
     const navPilketos = document.getElementById('nav-pilketos');
+    const navGuruFavorit = document.getElementById('nav-guru-favorit');
     const navKartu = document.getElementById('nav-kartu');
     const navTendik = document.getElementById('nav-tendik');
     const navEkskul = document.getElementById('nav-ekskul');
     const btnStaff = document.getElementById('btn-dashboard-staff');
 
-    // Jika Siswa sedang login, fokuskan navigasi hanya ke mata pelajaran, tugas, kartu QR, & Pilketos
     if (navTendik) navTendik.style.display = isSiswa ? "none" : "inline-flex";
-    if (navEkskul) navEkskul.style.display = isSiswa ? "none" : "inline-flex";
+    if (navEkskul) navEkskul.style.display = "inline-flex";
 
     if (navMapel) navMapel.style.display = isLoggedIn ? "inline-flex" : "none";
     if (navKartu) navKartu.style.display = isSiswa ? "inline-flex" : "none";
-    if (navPilketos) navPilketos.style.display = (isSiswa || isStaff) ? "inline-flex" : "none";
+
+    // Menu Pilketos & Guru Terbaik TETAP MUNCUL meskipun di-OFF-kan operator
+    if (navPilketos) navPilketos.style.display = "inline-flex";
+    if (navGuruFavorit) navGuruFavorit.style.display = "inline-flex";
 
     if (btnStaff) {
         if (isStaff) {
@@ -477,6 +665,7 @@ function selesaikanLogin(userData) {
     sessionStorage.setItem("sman2bayan_session", JSON.stringify(safeSession));
     tutupModalLogin();
     aturVisibilitasMenuSensitif();
+    inisialisasiNotifikasiRealtime();
     renderHome();
 }
 
@@ -500,7 +689,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     tutupModalLogin();
-    aturVisibilitasMenuSensitif();
+    muatPengaturanPanel(() => {
+        aturVisibilitasMenuSensitif();
+    });
+    inisialisasiNotifikasiRealtime();
 
     loadProfilGuruData(() => {
         renderHome();
@@ -508,7 +700,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 4. PROFIL GURU & TOMBOL WA KONTEKSTUAL
+// 5. PROFIL GURU & TOMBOL WA KONTEKSTUAL
 // ==========================================
 function loadProfilGuruData(callback) {
     db.collection("profil_guru").doc("utama").get().then((doc) => {
@@ -545,7 +737,7 @@ function setActiveNav(id) {
 }
 
 // ==========================================
-// 5. CAROUSEL HERO BANNER
+// 6. CAROUSEL HERO BANNER
 // ==========================================
 function startHeroCarousel() {
     if (carouselInterval) clearInterval(carouselInterval);
@@ -564,11 +756,13 @@ function geserCarousel(step) {
 }
 
 // ==========================================
-// 6. RENDER BERANDA
+// 7. RENDER BERANDA (TERMASUK PANEL SAKELAR OPERATOR)
 // ==========================================
 function renderHome() {
     setActiveNav('nav-home');
     setFloatingWAVisible(false);
+
+    const isOperator = currentUserSession && currentUserSession.role === "Operator";
 
     let slidesHtml = '';
     HERO_SLIDES.forEach((s, idx) => {
@@ -584,12 +778,47 @@ function renderHome() {
         `;
     });
 
+    // Panel Kontrol Sakelar Khusus Operator di Beranda
+    const panelKontrolOperatorHtml = isOperator ? `
+        <div class="school-about-card" style="margin-top:20px; border:2px solid #4318ff; background:#f8faff;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                <h3 style="margin:0; font-size:1.05rem; color:#2b3674;"><i class="fa-solid fa-sliders" style="color:#4318ff;"></i> Kontrol Panel Musiman (Khusus Operator)</h3>
+                <span style="background:#4318ff; color:white; font-size:0.72rem; padding:3px 9px; border-radius:6px; font-weight:700;">ON / OFF Fitur</span>
+            </div>
+            <p style="font-size:0.82rem; color:#64748b; margin:0 0 12px 0;">Nonaktifkan menu musiman di luar jadwal. Menu tetap tampil di navigasi, tetapi saat diklik akan menampilkan alasan penutupan Anda.</p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+                <div style="background:white; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+                    <label style="display:flex; align-items:center; justify-content:space-between; font-weight:700; color:#2b3674; font-size:0.88rem; margin-bottom:8px;">
+                        <span><i class="fa-solid fa-check-to-slot" style="color:#4318ff;"></i> Pemilihan OSIS (Pilketos)</span>
+                        <input type="checkbox" id="toggle-panel-pilketos" ${PENGATURAN_PANEL.pilketosAktif ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;">
+                    </label>
+                    <input type="text" id="alasan-panel-pilketos" class="form-input" style="font-size:0.8rem;" value="${escapeHtml(PENGATURAN_PANEL.alasanPilketosNonaktif)}" placeholder="Alasan jika Pilketos di-OFF-kan...">
+                </div>
+
+                <div style="background:white; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+                    <label style="display:flex; align-items:center; justify-content:space-between; font-weight:700; color:#2b3674; font-size:0.88rem; margin-bottom:8px;">
+                        <span><i class="fa-solid fa-award" style="color:#f59e0b;"></i> Pemilihan Guru Terbaik</span>
+                        <input type="checkbox" id="toggle-panel-gurufav" ${PENGATURAN_PANEL.guruFavoritAktif ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;">
+                    </label>
+                    <input type="text" id="alasan-panel-gurufav" class="form-input" style="font-size:0.8rem;" value="${escapeHtml(PENGATURAN_PANEL.alasanGuruFavoritNonaktif)}" placeholder="Alasan jika Guru Terbaik di-OFF-kan...">
+                </div>
+            </div>
+
+            <button type="button" onclick="simpanPengaturanPanelOperator()" class="btn-primary" style="margin-top:12px; width:100%; padding:10px; border-radius:10px; font-weight:700;">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Status ON/OFF Panel
+            </button>
+        </div>
+    ` : '';
+
     let html = `
         <div class="hero-carousel">
             ${slidesHtml}
             <button class="carousel-btn" style="left: 12px;" onclick="geserCarousel(-1)"><i class="fa-solid fa-chevron-left"></i></button>
             <button class="carousel-btn" style="right: 12px;" onclick="geserCarousel(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
+
+        ${panelKontrolOperatorHtml}
 
         <div class="school-about-card">
             <h3 style="margin:0 0 8px 0; font-size:1.12rem; color:#2b3674;"><i class="fa-solid fa-school" style="color:#4318ff;"></i> Tentang Profil ${DATA_SEKOLAH.nama}</h3>
@@ -662,15 +891,70 @@ function renderHome() {
     muatAktivitasDanAbsensiHome();
 }
 
+function simpanPengaturanPanelOperator() {
+    if (!currentUserSession || currentUserSession.role !== "Operator") return;
+
+    const pilketosAktif = Boolean(document.getElementById('toggle-panel-pilketos')?.checked);
+    const alasanPilketosNonaktif = document.getElementById('alasan-panel-pilketos')?.value.trim() || "Menu pemilihan OSIS belum dibuka oleh Operator Sekolah.";
+    const guruFavoritAktif = Boolean(document.getElementById('toggle-panel-gurufav')?.checked);
+    const alasanGuruFavoritNonaktif = document.getElementById('alasan-panel-gurufav')?.value.trim() || "Menu pemilihan Guru Terbaik belum dibuka oleh Operator Sekolah.";
+
+    PENGATURAN_PANEL = {
+        pilketosAktif,
+        alasanPilketosNonaktif,
+        guruFavoritAktif,
+        alasanGuruFavoritNonaktif
+    };
+
+    db.collection("pengaturan_sistem").doc("panel_musiman").set(PENGATURAN_PANEL, { merge: true }).then(() => {
+        kirimNotifikasiSistem({
+            tipe: "PEMBARUAN",
+            judul: "Pembaruan Status Menu Pemilihan",
+            pesan: `Pilketos: ${pilketosAktif ? 'DIBUKA' : 'DITUTUP'} • Guru Terbaik: ${guruFavoritAktif ? 'DIBUKA' : 'DITUTUP'}`,
+            targetRole: "SEMUA",
+            pengirim: currentUserSession.nama
+        });
+        alert("Pengaturan ON/OFF panel musiman berhasil disimpan!");
+    }).catch(err => alert("Gagal menyimpan pengaturan: " + err.message));
+}
+
 function muatPengumumanHome() {
     const wadah = document.getElementById('papan-pengumuman-home');
     if (!wadah) return;
 
+    const isOperator = currentUserSession && currentUserSession.role === "Operator";
+
     db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").limit(6).get().then((snapshot) => {
+        // Form cepat unggah pengumuman + kamera langsung untuk Operator
+        const formKameraPengumumanHtml = isOperator ? `
+            <div style="background:#f8fafc; border:1px dashed #4318ff; padding:12px; border-radius:12px; margin-bottom:14px;">
+                <strong style="display:block; font-size:0.86rem; color:#2b3674; margin-bottom:8px;"><i class="fa-solid fa-camera" style="color:#4318ff;"></i> Posting Pengumuman & Foto Dokumentasi Langsung</strong>
+                <div style="display:grid; grid-template-columns: 1fr 140px; gap:8px; margin-bottom:8px;">
+                    <input type="text" id="quick-pengumuman-judul" class="form-input" style="font-size:0.82rem;" placeholder="Judul pengumuman / kegiatan...">
+                    <select id="quick-pengumuman-kat" class="form-input" style="font-size:0.82rem;">
+                        <option value="INFO">INFO</option>
+                        <option value="KEGIATAN">KEGIATAN</option>
+                        <option value="PENTING">PENTING</option>
+                    </select>
+                </div>
+                <textarea id="quick-pengumuman-isi" rows="2" class="form-input" style="font-size:0.82rem; margin-bottom:8px;" placeholder="Isi pengumuman..."></textarea>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                    <label style="background:#05cd99; color:white; padding:8px 12px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-camera"></i> Ambil Foto dari Kamera
+                        <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleInputKamera(this, 'quick-pengumuman-foto', 'preview-foto-pengumuman')">
+                    </label>
+                    <input type="text" id="quick-pengumuman-foto" class="form-input" style="flex:1; min-width:180px; font-size:0.8rem;" placeholder="Atau tempel link gambar (opsional)...">
+                </div>
+                <img id="preview-foto-pengumuman" src="" alt="Preview" style="display:none; width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-bottom:8px; border:1px solid #cbd5e1;">
+                <button type="button" onclick="simpanPengumumanKamera()" class="btn-primary" style="width:100%; padding:9px; border-radius:8px; font-size:0.84rem; font-weight:700;">Terbitkan Pengumuman & Kirim Notifikasi</button>
+            </div>
+        ` : '';
+
         if (snapshot.empty) {
             wadah.innerHTML = `
                 <div class="school-about-card" style="margin-top: 0;">
                     <h3 style="margin:0 0 8px 0; font-size:1.08rem; color:#2b3674;"><i class="fa-solid fa-bullhorn" style="color:#f59e0b;"></i> Papan Pengumuman Sekolah</h3>
+                    ${formKameraPengumumanHtml}
                     <p style="font-size:0.84rem; color:#64748b; margin:0;">Belum ada pengumuman terbaru dari Admin / Operator Sekolah.</p>
                 </div>
             `;
@@ -680,6 +964,7 @@ function muatPengumumanHome() {
         let html = `
             <div class="school-about-card" style="margin-top: 0;">
                 <h3 style="margin:0 0 14px 0; font-size:1.08rem; color:#2b3674;"><i class="fa-solid fa-bullhorn" style="color:#f59e0b;"></i> Papan Pengumuman Sekolah</h3>
+                ${formKameraPengumumanHtml}
                 <div style="display: flex; flex-direction: column; gap: 14px;">
         `;
 
@@ -711,6 +996,36 @@ function muatPengumumanHome() {
         html += `</div></div>`;
         wadah.innerHTML = html;
     }).catch(() => {});
+}
+
+function simpanPengumumanKamera() {
+    if (!currentUserSession || currentUserSession.role !== "Operator") return;
+    const judul = document.getElementById('quick-pengumuman-judul')?.value.trim();
+    const kategori = document.getElementById('quick-pengumuman-kat')?.value || "INFO";
+    const isi = document.getElementById('quick-pengumuman-isi')?.value.trim();
+    const gambarBanner = document.getElementById('quick-pengumuman-foto')?.value.trim() || "";
+
+    if (!judul) return alert("Harap isi judul pengumuman!");
+
+    const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    db.collection("pengumuman_sekolah").add({
+        judul,
+        kategori,
+        isi,
+        gambarBanner,
+        tanggal,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        kirimNotifikasiSistem({
+            tipe: "PENGUMUMAN",
+            judul: `Pengumuman Baru: ${judul}`,
+            pesan: isi || "Silakan cek papan pengumuman di halaman Beranda.",
+            targetRole: "SEMUA",
+            pengirim: currentUserSession.nama
+        });
+        alert("Pengumuman beserta foto berhasil diterbitkan!");
+        muatPengumumanHome();
+    }).catch(err => alert("Gagal menerbitkan pengumuman: " + err.message));
 }
 
 function muatAktivitasDanAbsensiHome() {
@@ -800,7 +1115,7 @@ function muatAktivitasDanAbsensiHome() {
 }
 
 // ==========================================
-// 7. MENU MATA PELAJARAN (18 MAPEL AKTIF - WAJIB LOGIN)
+// 8. MENU MATA PELAJARAN (18 MAPEL AKTIF - WAJIB LOGIN)
 // ==========================================
 function renderDaftarMapel() {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
@@ -834,7 +1149,7 @@ function renderDaftarMapel() {
 }
 
 // ==========================================
-// 8. MENU GURU & TENAGA KEPENDIDIKAN (PUBLIK)
+// 9. MENU GURU & TENAGA KEPENDIDIKAN (PUBLIK)
 // ==========================================
 function renderStrukturGuruTendik() {
     setActiveNav('nav-tendik');
@@ -945,7 +1260,339 @@ function renderProfilDetailGuru(index) {
 }
 
 // ==========================================
-// 9. PILIH KELAS & MATERI PELAJARAN (DINAMIS UNTUK SEMUA 18 MAPEL)
+// 10. EKSKUL & PENGURUS OSIS (DAPAT DIUBAH OPERATOR SEWAKTU-WAKTU)
+// ==========================================
+function renderEkskulDanOsis() {
+    setActiveNav('nav-ekskul');
+    setFloatingWAVisible(false);
+
+    const isOperator = currentUserSession && currentUserSession.role === "Operator";
+
+    contentDiv.innerHTML = `
+        <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda</button>
+        <div class="school-about-card" style="margin-top:0;">
+            <h2 style="margin:0 0 6px 0; font-size:1.22rem; color:#2b3674;"><i class="fa-solid fa-trophy" style="color:#f59e0b;"></i> Pengurus OSIS & Ekstrakurikuler Sekolah</h2>
+            <p style="font-size:0.84rem; color:#64748b; margin:0 0 15px 0;">Informasi kepengurusan OSIS, jadwal kumpul ekstrakurikuler, pembina, dan kontak WhatsApp aktif.</p>
+            <div id="wadah-ekskul-osis"><p style="color:grey; font-size:0.85rem;">Memuat data OSIS & ekstrakurikuler...</p></div>
+        </div>
+    `;
+
+    db.collection("ekskul_organisasi").orderBy("urutan", "asc").get().then((snapshot) => {
+        let items = [];
+        snapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
+
+        let formOperatorHtml = "";
+        if (isOperator) {
+            formOperatorHtml = `
+                <div style="background:#f8faff; border:2px dashed #4318ff; padding:15px; border-radius:14px; margin-bottom:18px;">
+                    <h4 style="margin:0 0 10px 0; font-size:0.95rem; color:#2b3674;"><i class="fa-solid fa-pen-to-square" style="color:#4318ff;"></i> Kelola / Edit Pengurus OSIS & Ekstrakurikuler (Operator)</h4>
+                    <input type="hidden" id="edit-ekskul-id" value="">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px; margin-bottom:8px;">
+                        <select id="ekskul-kategori" class="form-input" style="font-size:0.83rem;">
+                            <option value="OSIS">Pengurus OSIS</option>
+                            <option value="EKSKUL">Ekstrakurikuler</option>
+                        </select>
+                        <input type="text" id="ekskul-nama" class="form-input" style="font-size:0.83rem;" placeholder="Nama Organisasi / Ekskul (mis: Pramuka)">
+                        <input type="text" id="ekskul-ketua" class="form-input" style="font-size:0.83rem;" placeholder="Nama Ketua / Pengurus Inti">
+                        <input type="text" id="ekskul-pembina" class="form-input" style="font-size:0.83rem;" placeholder="Nama Guru Pembina">
+                        <input type="text" id="ekskul-jadwal" class="form-input" style="font-size:0.83rem;" placeholder="Hari & Jam Kumpul (mis: Sabtu, 15.00 WITA)">
+                        <input type="text" id="ekskul-wa" class="form-input" style="font-size:0.83rem;" placeholder="Nomor WhatsApp (mis: 628123456789)">
+                    </div>
+                    <textarea id="ekskul-deskripsi" rows="2" class="form-input" style="font-size:0.83rem; margin-bottom:8px;" placeholder="Susunan pengurus / keterangan kegiatan..."></textarea>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                        <label style="background:#05cd99; color:white; padding:8px 12px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-camera"></i> Jepret Foto dari Kamera
+                            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleInputKamera(this, 'ekskul-foto', 'preview-foto-ekskul')">
+                        </label>
+                        <input type="text" id="ekskul-foto" class="form-input" style="flex:1; min-width:180px; font-size:0.8rem;" placeholder="Atau tempel link foto pengurus/kegiatan...">
+                    </div>
+                    <img id="preview-foto-ekskul" src="" alt="Preview" style="display:none; width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" onclick="simpanDataEkskulOsis()" class="btn-primary" style="flex:1; padding:10px; border-radius:9px; font-weight:700; font-size:0.85rem;">Simpan Data Organisasi / Ekskul</button>
+                        <button type="button" onclick="resetFormEkskulOsis()" style="padding:10px 14px; border-radius:9px; border:1px solid #cbd5e1; background:white; font-weight:600; cursor:pointer;">Reset</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        let listHtml = "";
+        if (items.length === 0) {
+            listHtml = `<p style="color:#64748b; font-size:0.85rem;">Belum ada data OSIS atau ekstrakurikuler yang ditambahkan oleh Operator.</p>`;
+        } else {
+            listHtml = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap:14px;">`;
+            items.forEach((item) => {
+                const fotoUrl = formatUrlGambar(item.foto);
+                const cleanWa = String(item.whatsapp || "").replace(/[^0-9]/g, '');
+                const badgeWarna = item.kategori === "OSIS" ? "#4318ff" : "#05cd99";
+
+                listHtml += `
+                    <div style="background:white; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
+                        ${fotoUrl ? `<img src="${escapeHtml(fotoUrl)}" referrerpolicy="no-referrer" style="width:100%; height:160px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                        <div style="padding:14px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <span style="background:${badgeWarna}; color:white; font-size:0.7rem; font-weight:800; padding:3px 8px; border-radius:6px;">${escapeHtml(item.kategori || 'EKSKUL')}</span>
+                                <h4 style="margin:6px 0 4px 0; font-size:1rem; color:#2b3674;">${escapeHtml(item.nama)}</h4>
+                                ${item.ketua ? `<p style="margin:2px 0; font-size:0.82rem; color:#334155;"><i class="fa-solid fa-user-tie" style="color:#4318ff; width:18px;"></i> <strong>Ketua / Pengurus:</strong> ${escapeHtml(item.ketua)}</p>` : ''}
+                                ${item.pembina ? `<p style="margin:2px 0; font-size:0.82rem; color:#334155;"><i class="fa-solid fa-chalkboard-user" style="color:#4318ff; width:18px;"></i> <strong>Pembina:</strong> ${escapeHtml(item.pembina)}</p>` : ''}
+                                ${item.jadwal ? `<p style="margin:2px 0; font-size:0.82rem; color:#b45309; font-weight:700;"><i class="fa-regular fa-clock" style="width:18px;"></i> Jadwal Kumpul: ${escapeHtml(item.jadwal)}</p>` : ''}
+                                ${item.deskripsi ? `<p style="margin:8px 0 0 0; font-size:0.8rem; color:#64748b; white-space:pre-wrap;">${escapeHtml(item.deskripsi)}</p>` : ''}
+                            </div>
+                            <div style="margin-top:12px; display:flex; gap:6px; flex-wrap:wrap;">
+                                ${cleanWa ? `<a href="https://wa.me/${cleanWa}?text=Assalamu'alaikum,%20saya%20ingin%20bertanya%20terkait%20${encodeURIComponent(item.nama)}%20SMAN%202%20Bayan." target="_blank" style="flex:1; text-align:center; background:#25D366; color:white; padding:8px 10px; border-radius:8px; text-decoration:none; font-size:0.8rem; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Hubungi WA</a>` : ''}
+                                ${isOperator ? `
+                                    <button type="button" onclick='isiFormEditEkskul(${JSON.stringify(item).replace(/'/g, "&#39;")})' style="background:#eef2ff; color:#4318ff; border:none; padding:8px 10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-pen"></i> Edit</button>
+                                    <button type="button" onclick="hapusDataEkskulOsis('${escapeHtml(item.id)}')" style="background:#fef2f2; color:#dc2626; border:none; padding:8px 10px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            listHtml += `</div>`;
+        }
+
+        document.getElementById('wadah-ekskul-osis').innerHTML = formOperatorHtml + listHtml;
+    }).catch(() => {
+        document.getElementById('wadah-ekskul-osis').innerHTML = `<p style="color:red;">Gagal memuat data ekskul & OSIS.</p>`;
+    });
+}
+
+function isiFormEditEkskul(item) {
+    document.getElementById('edit-ekskul-id').value = item.id || "";
+    document.getElementById('ekskul-kategori').value = item.kategori || "EKSKUL";
+    document.getElementById('ekskul-nama').value = item.nama || "";
+    document.getElementById('ekskul-ketua').value = item.ketua || "";
+    document.getElementById('ekskul-pembina').value = item.pembina || "";
+    document.getElementById('ekskul-jadwal').value = item.jadwal || "";
+    document.getElementById('ekskul-wa').value = item.whatsapp || "";
+    document.getElementById('ekskul-deskripsi').value = item.deskripsi || "";
+    document.getElementById('ekskul-foto').value = item.foto || "";
+    const prev = document.getElementById('preview-foto-ekskul');
+    if (prev && item.foto) {
+        prev.src = formatUrlGambar(item.foto);
+        prev.style.display = "block";
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetFormEkskulOsis() {
+    document.getElementById('edit-ekskul-id').value = "";
+    document.getElementById('ekskul-nama').value = "";
+    document.getElementById('ekskul-ketua').value = "";
+    document.getElementById('ekskul-pembina').value = "";
+    document.getElementById('ekskul-jadwal').value = "";
+    document.getElementById('ekskul-wa').value = "";
+    document.getElementById('ekskul-deskripsi').value = "";
+    document.getElementById('ekskul-foto').value = "";
+    const prev = document.getElementById('preview-foto-ekskul');
+    if (prev) prev.style.display = "none";
+}
+
+function simpanDataEkskulOsis() {
+    if (!currentUserSession || currentUserSession.role !== "Operator") return;
+    const editId = document.getElementById('edit-ekskul-id').value.trim();
+    const payload = {
+        kategori: document.getElementById('ekskul-kategori').value,
+        nama: document.getElementById('ekskul-nama').value.trim(),
+        ketua: document.getElementById('ekskul-ketua').value.trim(),
+        pembina: document.getElementById('ekskul-pembina').value.trim(),
+        jadwal: document.getElementById('ekskul-jadwal').value.trim(),
+        whatsapp: document.getElementById('ekskul-wa').value.trim(),
+        deskripsi: document.getElementById('ekskul-deskripsi').value.trim(),
+        foto: document.getElementById('ekskul-foto').value.trim(),
+        urutan: document.getElementById('ekskul-kategori').value === "OSIS" ? 1 : 2,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!payload.nama) return alert("Nama Organisasi atau Ekstrakurikuler wajib diisi!");
+
+    const req = editId
+        ? db.collection("ekskul_organisasi").doc(editId).set(payload, { merge: true })
+        : db.collection("ekskul_organisasi").add(payload);
+
+    req.then(() => {
+        kirimNotifikasiSistem({
+            tipe: "PEMBARUAN",
+            judul: `Pembaruan ${payload.kategori}: ${payload.nama}`,
+            pesan: payload.jadwal ? `Jadwal kumpul terbaru: ${payload.jadwal}` : "Data pengurus & kontak diperbarui oleh Operator.",
+            targetRole: "SEMUA",
+            pengirim: currentUserSession.nama
+        });
+        alert("Data OSIS / Ekstrakurikuler berhasil disimpan!");
+        renderEkskulDanOsis();
+    }).catch(err => alert("Gagal menyimpan data: " + err.message));
+}
+
+function hapusDataEkskulOsis(id) {
+    if (!currentUserSession || currentUserSession.role !== "Operator") return;
+    if (!confirm("Hapus data organisasi/ekskul ini?")) return;
+    db.collection("ekskul_organisasi").doc(id).delete().then(() => {
+        alert("Data berhasil dihapus.");
+        renderEkskulDanOsis();
+    }).catch(err => alert("Gagal menghapus: " + err.message));
+}
+
+// ==========================================
+// 11. MENU PEMILIHAN GURU TERBAIK & KONTROL SAKELAR PANEL
+// ==========================================
+function renderGuruFavorit() {
+    setActiveNav('nav-guru-favorit');
+    setFloatingWAVisible(false);
+
+    // Cek apakah fitur di-OFF-kan oleh Operator
+    if (!PENGATURAN_PANEL.guruFavoritAktif) {
+        contentDiv.innerHTML = `
+            <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda</button>
+            <div class="school-about-card" style="margin-top:0; text-align:center; padding:35px 20px;">
+                <div style="width:68px; height:68px; border-radius:50%; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 14px auto;">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 style="margin:0 0 8px 0; color:#2b3674;">Menu Pemilihan Guru Terbaik Belum Dibuka</h3>
+                <p style="max-width:480px; margin:0 auto; font-size:0.9rem; color:#475569; line-height:1.6;">
+                    ${escapeHtml(PENGATURAN_PANEL.alasanGuruFavoritNonaktif)}
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    contentDiv.innerHTML = `
+        <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda</button>
+        <div class="school-about-card" style="margin-top:0;">
+            <h2 style="margin:0 0 6px 0; font-size:1.22rem; color:#2b3674;"><i class="fa-solid fa-award" style="color:#f59e0b;"></i> Pemilihan Guru Terbaik SMAN 2 Bayan</h2>
+            <p style="font-size:0.84rem; color:#64748b; margin:0 0 15px 0;">Berikan apresiasi kepada guru favorit/terbaik Anda. Siswa dapat menyertakan alasan memilih guru tersebut secara opsional.</p>
+            <div id="wadah-guru-favorit"><p style="color:grey; font-size:0.85rem;">Memuat daftar guru dan hasil voting...</p></div>
+        </div>
+    `;
+
+    Promise.all([
+        db.collection("struktur_tendik").get(),
+        db.collection("voting_guru_terbaik").get()
+    ]).then(([guruSnap, voteSnap]) => {
+        let daftarGuru = [];
+        guruSnap.forEach((doc) => {
+            const g = { id: doc.id, ...doc.data() };
+            if ((g.kategoriJabatan || "Guru Mata Pelajaran") !== "Tenaga Kependidikan") {
+                daftarGuru.push(g);
+            }
+        });
+        if (daftarGuru.length === 0) daftarGuru.push(GURU_DATA);
+
+        let allVotes = [];
+        voteSnap.forEach((doc) => allVotes.push({ id: doc.id, ...doc.data() }));
+
+        const isSiswa = currentUserSession && currentUserSession.role === "Siswa";
+        const sudahVote = isSiswa ? allVotes.find(v => v.uidSiswa === currentUserSession.uid) : null;
+
+        let formVoteHtml = "";
+        if (!isSiswa) {
+            formVoteHtml = `
+                <div style="background:#eef2ff; color:#3730a3; padding:12px 14px; border-radius:10px; font-size:0.84rem; margin-bottom:16px;">
+                    <i class="fa-solid fa-circle-info"></i> Hanya akun <strong>Siswa</strong> yang dapat memberikan suara pemilihan Guru Terbaik. Anda sedang melihat rekapitulasi hasil sementara.
+                </div>
+            `;
+        } else if (sudahVote) {
+            formVoteHtml = `
+                <div style="background:#dcfce7; color:#166534; padding:14px; border-radius:12px; border:1px solid #86efac; margin-bottom:16px;">
+                    <strong><i class="fa-solid fa-circle-check"></i> Terima kasih! Suara Anda sudah tercatat.</strong>
+                    <p style="margin:4px 0 0 0; font-size:0.84rem;">Pilihan Anda: <strong>${escapeHtml(sudahVote.namaGuru)}</strong> ${sudahVote.alasan ? `— <em>"${escapeHtml(sudahVote.alasan)}"</em>` : ''}</p>
+                </div>
+            `;
+        } else {
+            let optionsHtml = `<option value="">-- Pilih Nama Guru Terbaik Anda --</option>`;
+            daftarGuru.forEach((g) => {
+                optionsHtml += `<option value="${escapeHtml(g.id)}" data-nama="${escapeHtml(g.nama)}">${escapeHtml(g.nama)} (${escapeHtml(g.mapel || g.jabatan || 'Guru')})</option>`;
+            });
+
+            formVoteHtml = `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:14px; margin-bottom:18px;">
+                    <label style="display:block; font-size:0.85rem; font-weight:700; color:#2b3674; margin-bottom:6px;">1. Pilih Guru Terbaik Pilihanmu:</label>
+                    <select id="select-guru-terbaik" class="form-input" style="margin-bottom:10px; background:white;">
+                        ${optionsHtml}
+                    </select>
+
+                    <label style="display:block; font-size:0.85rem; font-weight:700; color:#2b3674; margin-bottom:6px;">2. Alasan Memilih Guru Tersebut <span style="font-weight:400; color:#64748b;">(Opsional)</span>:</label>
+                    <textarea id="alasan-guru-terbaik" rows="2" class="form-input" style="background:white; margin-bottom:10px;" placeholder="Contoh: Penjelasannya mudah dipahami, sabar membimbing siswa, dan selalu menginspirasi..."></textarea>
+
+                    <button type="button" onclick="kirimVoteGuruTerbaik()" class="btn-primary" style="width:100%; padding:11px; border-radius:10px; font-weight:700;">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Pilihan Guru Terbaik
+                    </button>
+                </div>
+            `;
+        }
+
+        // Hitung perolehan suara tiap guru
+        const rekap = daftarGuru.map((g) => {
+            const suaraGuru = allVotes.filter(v => v.guruId === g.id || v.namaGuru === g.nama);
+            const alasanList = suaraGuru.filter(v => v.alasan && v.alasan.trim() !== "");
+            return { ...g, jumlahSuara: suaraGuru.length, alasanList };
+        }).sort((a, b) => b.jumlahSuara - a.jumlahSuara);
+
+        let rekapHtml = `<h4 style="margin:0 0 12px 0; font-size:0.98rem; color:#2b3674;"><i class="fa-solid fa-chart-simple" style="color:#4318ff;"></i> Perolehan Suara & Apresiasi Siswa (${allVotes.length} Total Suara)</h4>`;
+        rekap.forEach((g, idx) => {
+            const persen = allVotes.length > 0 ? Math.round((g.jumlahSuara / allVotes.length) * 100) : 0;
+            const fotoUrl = formatUrlGambar(g.foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.nama)}&background=4318ff&color=fff`;
+            const komentarHtml = g.alasanList.slice(0, 3).map(a => `
+                <div style="font-size:0.78rem; color:#475569; background:#f8fafc; padding:6px 10px; border-radius:8px; margin-top:5px; border-left:3px solid #f59e0b;">
+                    "${escapeHtml(a.alasan)}" <span style="color:#94a3b8;">— ${escapeHtml(a.kelasSiswa || 'Siswa')}</span>
+                </div>
+            `).join('');
+
+            rekapHtml += `
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:12px; margin-bottom:10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-weight:800; color:${idx === 0 && g.jumlahSuara > 0 ? '#f59e0b' : '#64748b'}; font-size:0.95rem;">#${idx + 1}</span>
+                            <img src="${escapeHtml(fotoUrl)}" referrerpolicy="no-referrer" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.92rem; color:#2b3674;">${escapeHtml(g.nama)}</div>
+                                <div style="font-size:0.76rem; color:#64748b;">${escapeHtml(g.mapel || g.jabatan || 'Guru')}</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="background:#eef2ff; color:#4318ff; font-weight:800; font-size:0.82rem; padding:4px 10px; border-radius:20px;">${g.jumlahSuara} Suara (${persen}%)</span>
+                        </div>
+                    </div>
+                    <div style="width:100%; height:6px; background:#e2e8f0; border-radius:99px; overflow:hidden; margin-top:8px;">
+                        <div style="width:${persen}%; height:100%; background:linear-gradient(90deg, #4318ff, #05cd99);"></div>
+                    </div>
+                    ${komentarHtml}
+                </div>
+            `;
+        });
+
+        document.getElementById('wadah-guru-favorit').innerHTML = formVoteHtml + rekapHtml;
+    }).catch(() => {
+        document.getElementById('wadah-guru-favorit').innerHTML = `<p style="color:red;">Gagal memuat halaman pemilihan guru terbaik.</p>`;
+    });
+}
+
+function kirimVoteGuruTerbaik() {
+    if (!currentUserSession || currentUserSession.role !== "Siswa") return;
+
+    const selectEl = document.getElementById('select-guru-terbaik');
+    const guruId = selectEl?.value || "";
+    const namaGuru = selectEl?.options[selectEl.selectedIndex]?.dataset?.nama || "";
+    const alasan = document.getElementById('alasan-guru-terbaik')?.value.trim() || "";
+
+    if (!guruId) return alert("Silakan pilih nama guru terbaik terlebih dahulu!");
+
+    db.collection("voting_guru_terbaik").doc(currentUserSession.uid).set({
+        uidSiswa: currentUserSession.uid,
+        namaSiswa: currentUserSession.nama,
+        kelasSiswa: currentUserSession.sub || "-",
+        guruId: guruId,
+        namaGuru: namaGuru,
+        alasan: alasan,
+        waktu: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert(`Pilihan Anda untuk ${namaGuru} berhasil dikirim!`);
+        renderGuruFavorit();
+    }).catch(err => alert("Gagal mengirim pilihan: " + err.message));
+}
+
+// ==========================================
+// 12. PILIH KELAS & MATERI PELAJARAN (DINAMIS UNTUK SEMUA 18 MAPEL)
 // ==========================================
 function renderKelas(namaMapel) {
     if (namaMapel) selectedMapelAktif = namaMapel;
@@ -1027,8 +1674,9 @@ function renderMateri(kelas, namaMapel) {
 
             currentMateriList.forEach((data, index) => {
                 const pengampuInfo = data.guruNama ? ` <span style="font-size:0.75rem; color:#4318ff; font-weight:600;">• ${escapeHtml(data.guruNama)}</span>` : '';
+                const badgeTugas = data.pr && data.pr.trim() !== "" ? ` <span style="background:#fef3c7; color:#b45309; font-size:0.68rem; padding:2px 6px; border-radius:4px; font-weight:700;">Ada Tugas</span>` : '';
                 html += `<div class="material-item materi-row-item" data-kelas="${safeKelas}" data-index="${index}" data-mapel="${safeMapel}">
-                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span>${pengampuInfo}</div>
+                            <div style="font-weight:700; color:#2b3674;">${index + 1}. ${escapeHtml(data.bab)} <span style="font-weight:400; color:#64748b; font-size:0.85rem;">(${escapeHtml(data.subBab)})</span>${pengampuInfo}${badgeTugas}</div>
                             <i class="fa-solid fa-chevron-right" style="color:#a3aed1;"></i>
                         </div>`;
             });
@@ -1144,7 +1792,7 @@ function renderDetailMateriDinamis(kelas, index, namaMapel) {
                 <h4 style="font-size:0.9rem; margin:0 0 8px 0; color:#2b3674;">Buat Pertanyaan Baru</h4>
                 <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;">Akun Anda: <strong>${namaAktif}</strong></p>
                 <textarea id="input-diskusi" rows="2" class="form-input" style="background:white;" placeholder="Tulis pertanyaanmu di sini..."></textarea>
-                <button class="btn-primary" style="width: 100%; padding:10px; border-radius:10px; font-weight:700;" onclick="tambahDiskusiUtama('${escapeHtml(babData.id)}')">Kirim Pertanyaan</button>
+                <button class="btn-primary" style="width: 100%; padding:10px; border-radius:10px; font-weight:700;" onclick="tambahDiskusiUtama('${escapeHtml(babData.id)}', '${escapeHtml(babData.bab)}', '${safeMapel}', '${safeKelas}')">Kirim Pertanyaan</button>
             </div>
         </div>
     `;
@@ -1160,7 +1808,7 @@ function renderDetailMateriDinamis(kelas, index, namaMapel) {
 }
 
 // ==========================================
-// 10. DISKUSI KELAS (NESTED REPLIES)
+// 13. DISKUSI KELAS & NOTIFIKASI PERTANYAAN SISWA
 // ==========================================
 let unsubscribeDiskusi = null;
 function listenDiskusi(materiId) {
@@ -1224,7 +1872,7 @@ function toggleReplyBox(parentId) {
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
-function tambahDiskusiUtama(materiId) {
+function tambahDiskusiUtama(materiId, judulBab = "", mapel = "", kelas = "") {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
         alert("Silakan Login terlebih dahulu untuk mengirim pertanyaan!");
         bukaModalLogin();
@@ -1234,15 +1882,24 @@ function tambahDiskusiUtama(materiId) {
     if (!pesan) return alert("Pesan pertanyaan tidak boleh kosong!");
 
     const isStaff = ["Operator", "Guru", "Guru / Staf"].includes(currentUserSession.role);
+    const pengirimLabel = `${currentUserSession.nama} (${currentUserSession.sub})`;
+
     db.collection("diskusi").add({
         materiId: materiId,
-        pengirim: `${currentUserSession.nama} (${currentUserSession.sub})`,
+        pengirim: pengirimLabel,
         pesan: pesan,
         parentId: null,
         isGuru: isStaff,
         waktu: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
-        document.getElementById('input-diskusi').value = ""; 
+        document.getElementById('input-diskusi').value = "";
+        kirimNotifikasiSistem({
+            tipe: "DISKUSI",
+            judul: isStaff ? `Tanggapan Guru di ${mapel} (${kelas})` : `Pertanyaan Siswa: ${pengirimLabel}`,
+            pesan: `${judulBab ? '[' + judulBab + '] ' : ''}${pesan}`,
+            targetRole: isStaff ? "SISWA" : "STAFF",
+            pengirim: pengirimLabel
+        });
     }).catch(err => alert("Gagal mengirim: " + err.message));
 }
 
@@ -1252,9 +1909,11 @@ function kirimBalasan(materiId, parentId) {
     if (!pesan) return alert("Pesan balasan tidak boleh kosong!");
 
     const isStaff = ["Operator", "Guru", "Guru / Staf"].includes(currentUserSession.role);
+    const pengirimLabel = `${currentUserSession.nama} (${currentUserSession.sub})`;
+
     db.collection("diskusi").add({
         materiId: materiId,
-        pengirim: `${currentUserSession.nama} (${currentUserSession.sub})`,
+        pengirim: pengirimLabel,
         pesan: pesan,
         parentId: parentId,
         isGuru: isStaff,
@@ -1262,11 +1921,18 @@ function kirimBalasan(materiId, parentId) {
     }).then(() => {
         document.getElementById(`reply-msg-${parentId}`).value = "";
         document.getElementById(`reply-box-${parentId}`).style.display = 'none';
+        kirimNotifikasiSistem({
+            tipe: "DISKUSI",
+            judul: isStaff ? `Guru Menjawab Diskusi` : `Balasan Diskusi dari ${pengirimLabel}`,
+            pesan: pesan,
+            targetRole: isStaff ? "SISWA" : "STAFF",
+            pengirim: pengirimLabel
+        });
     }).catch(err => alert("Gagal membalas: " + err.message));
 }
 
 // ==========================================
-// 11. MODAL PROFIL USER & PENGATURAN SANDI MANDIRI (SISWA / GURU / OPERATOR)
+// 14. MODAL PROFIL USER & PENGATURAN SANDI MANDIRI
 // ==========================================
 function openProfilSayaModal() {
     if (!currentUserSession || currentUserSession.role === "Tamu") {
@@ -1384,7 +2050,7 @@ function simpanEditProfilUser() {
 }
 
 // ==========================================
-// 12. DARK MODE & NOTIFIKASI MODERN
+// 15. DARK MODE & NOTIFIKASI MODERN
 // ==========================================
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
@@ -1417,7 +2083,7 @@ window.alert = function(pesan) {
 };
 
 // ==========================================
-// 13. PENGUMPULAN TUGAS & CEK NILAI SISWA
+// 16. PENGUMPULAN TUGAS (TERMASUK FOTO JAWABAN LANGSUNG DARI KAMERA) & NOTIFIKASI
 // ==========================================
 function cekStatusTugasSiswa(materiId, kelas, judulBab) {
     const wadah = document.getElementById('wadah-pengumpulan-tugas');
@@ -1440,14 +2106,19 @@ function cekStatusTugasSiswa(materiId, kelas, judulBab) {
                 ? `<div style="margin-top:8px; padding:8px 10px; background:#eff6ff; border-radius:6px; border-left:3px solid #4318ff; font-size:0.82rem; color:#1e3a8a;"><strong>Catatan Guru:</strong> ${escapeHtml(d.catatanGuru)}</div>`
                 : '';
 
+            const isFotoKamera = String(d.linkTugas || "").startsWith("data:image/");
+            const tampilanJawaban = isFotoKamera
+                ? `<div style="margin-top:6px;"><img src="${escapeHtml(d.linkTugas)}" alt="Foto Jawaban Tugas" style="width:100%; max-height:240px; object-fit:contain; border-radius:8px; border:1px solid #cbd5e1;"></div>`
+                : `<p style="font-size:0.82rem; color:#475569; margin:4px 0;"><strong>Link Jawaban:</strong> <a href="${escapeHtml(d.linkTugas)}" target="_blank" style="color:#4318ff; text-decoration:underline; word-break:break-all;">${escapeHtml(d.linkTugas)}</a></p>`;
+
             wadah.innerHTML = `
                 <div style="background:white; padding:12px; border-radius:10px; border:1px solid #fde68a;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
                         <strong style="color:#15803d; font-size:0.88rem;"><i class="fa-solid fa-circle-check"></i> Tugas Sudah Dikumpulkan</strong>
                         ${statusNilai}
                     </div>
-                    <p style="font-size:0.82rem; color:#475569; margin:4px 0;"><strong>Link Jawaban:</strong> <a href="${escapeHtml(d.linkTugas)}" target="_blank" style="color:#4318ff; text-decoration:underline; word-break:break-all;">${escapeHtml(d.linkTugas)}</a></p>
-                    ${d.catatanSiswa ? `<p style="font-size:0.82rem; color:#64748b; margin:2px 0;"><strong>Catatan Anda:</strong> ${escapeHtml(d.catatanSiswa)}</p>` : ''}
+                    ${tampilanJawaban}
+                    ${d.catatanSiswa ? `<p style="font-size:0.82rem; color:#64748b; margin:4px 0 0 0;"><strong>Catatan Anda:</strong> ${escapeHtml(d.catatanSiswa)}</p>` : ''}
                     ${catatanGuruHtml}
                 </div>
             `;
@@ -1455,7 +2126,16 @@ function cekStatusTugasSiswa(materiId, kelas, judulBab) {
             wadah.innerHTML = `
                 <div style="background:white; padding:12px; border-radius:10px; border:1px solid #fde68a;">
                     <strong style="display:block; font-size:0.88rem; color:#2b3674; margin-bottom:8px;"><i class="fa-solid fa-paper-plane" style="color:#4318ff;"></i> Kumpulkan Jawaban Tugas Anda</strong>
-                    <input type="url" id="input-link-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Paste Link Google Drive / Foto Jawaban (https://...)">
+                    
+                    <div style="margin-bottom:8px;">
+                        <label style="background:#05cd99; color:white; padding:8px 12px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-camera"></i> Foto Jawaban Langsung dari Kamera
+                            <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleInputKamera(this, 'input-link-tugas', 'preview-foto-tugas-siswa')">
+                        </label>
+                    </div>
+                    <img id="preview-foto-tugas-siswa" src="" alt="Preview Tugas" style="display:none; width:100%; max-height:200px; object-fit:contain; border-radius:8px; margin-bottom:8px; border:1px solid #cbd5e1;">
+
+                    <input type="text" id="input-link-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Atau tempel Link Google Drive / Dokumen (https://...)">
                     <input type="text" id="input-catatan-tugas" class="form-input" style="font-size:0.85rem; margin-bottom:8px;" placeholder="Catatan tambahan untuk guru (opsional)...">
                     <button type="button" id="btn-kirim-tugas-siswa" data-materi-id="${escapeHtml(materiId)}" data-kelas="${escapeHtml(kelas)}" data-judul-bab="${escapeHtml(judulBab)}" class="btn-primary" style="width:100%; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:700;">Kirim Jawaban Tugas</button>
                 </div>
@@ -1477,8 +2157,10 @@ function kirimTugasSiswa(materiId, kelas, judulBab) {
     const linkTugas = document.getElementById('input-link-tugas').value.trim();
     const catatanSiswa = document.getElementById('input-catatan-tugas').value.trim();
 
-    if (!linkTugas) return alert("Harap tempelkan link jawaban tugas (Google Drive / dokumen)!");
-    if (!linkTugas.startsWith("http")) return alert("Link jawaban harus diawali dengan http:// atau https://");
+    if (!linkTugas) return alert("Harap ambil foto jawaban via kamera atau tempelkan link jawaban tugas!");
+    if (!linkTugas.startsWith("http") && !linkTugas.startsWith("data:image/")) {
+        return alert("Link jawaban harus diawali http://, https://, atau hasil foto kamera.");
+    }
 
     const docId = `${materiId}_${currentUserSession.uid}`;
     db.collection("pengumpulan_tugas").doc(docId).set({
@@ -1494,7 +2176,41 @@ function kirimTugasSiswa(materiId, kelas, judulBab) {
         catatanGuru: "",
         waktuKumpul: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
+        kirimNotifikasiSistem({
+            tipe: "TUGAS",
+            judul: `Tugas Masuk: ${currentUserSession.nama} (${kelas})`,
+            pesan: `Mengumpulkan jawaban untuk materi "${judulBab}".`,
+            targetRole: "STAFF",
+            pengirim: currentUserSession.nama
+        });
         alert("Jawaban tugas berhasil dikirim ke guru!");
         cekStatusTugasSiswa(materiId, kelas, judulBab);
     }).catch(err => alert("Gagal mengirim tugas: " + err.message));
 }
+
+// ==========================================
+// 17. GUARD PEMILIHAN OSIS (PILKETOS) JIKA DI-OFF-KAN OPERATOR
+// ==========================================
+const _originalRenderPilketos = window.renderPilketos;
+window.renderPilketos = function() {
+    if (!PENGATURAN_PANEL.pilketosAktif) {
+        setActiveNav('nav-pilketos');
+        setFloatingWAVisible(false);
+        contentDiv.innerHTML = `
+            <button class="btn-back" onclick="renderHome()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda</button>
+            <div class="school-about-card" style="margin-top:0; text-align:center; padding:35px 20px;">
+                <div style="width:68px; height:68px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 14px auto;">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 style="margin:0 0 8px 0; color:#2b3674;">Menu Pemilihan OSIS (Pilketos) Belum Dibuka</h3>
+                <p style="max-width:480px; margin:0 auto; font-size:0.9rem; color:#475569; line-height:1.6;">
+                    ${escapeHtml(PENGATURAN_PANEL.alasanPilketosNonaktif)}
+                </p>
+            </div>
+        `;
+        return;
+    }
+    if (typeof _originalRenderPilketos === "function") {
+        _originalRenderPilketos();
+    }
+};
