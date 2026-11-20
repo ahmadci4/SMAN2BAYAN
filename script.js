@@ -159,7 +159,7 @@ function aturVisibilitasMenuSensitif() {
     const navEkskul = document.getElementById('nav-ekskul');
     const btnStaff = document.getElementById('btn-dashboard-staff');
 
-    // Jika Siswa sedang login, fokuskan navigasi hanya ke hal yang berkaitan dengan pelajaran & kartu siswa
+    // Jika Siswa sedang login, fokuskan navigasi hanya ke mata pelajaran, tugas, kartu QR, & Pilketos
     if (navTendik) navTendik.style.display = isSiswa ? "none" : "inline-flex";
     if (navEkskul) navEkskul.style.display = isSiswa ? "none" : "inline-flex";
 
@@ -178,22 +178,6 @@ function aturVisibilitasMenuSensitif() {
         }
     }
 
-    const btnLoginTop = document.getElementById('btn-open-login-top');
-    const areaUserTop = document.getElementById('user-logged-area-top');
-    const badge = document.getElementById('user-badge-status');
-
-    if (isLoggedIn) {
-        if (btnLoginTop) btnLoginTop.style.display = "none";
-        if (areaUserTop) areaUserTop.style.display = "inline-flex";
-        if (badge) {
-            const infoSub = currentUserSession.role === "Siswa" ? `Kelas ${currentUserSession.sub || '-'}` : currentUserSession.role;
-            badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${escapeHtml(currentUserSession.nama)} (${escapeHtml(infoSub)})`;
-        }
-    } else {
-        if (btnLoginTop) btnLoginTop.style.display = "inline-flex";
-        if (areaUserTop) areaUserTop.style.display = "none";
-    }
-}
     const btnLoginTop = document.getElementById('btn-open-login-top');
     const areaUserTop = document.getElementById('user-logged-area-top');
     const badge = document.getElementById('user-badge-status');
