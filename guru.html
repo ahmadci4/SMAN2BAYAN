@@ -274,6 +274,24 @@
             color: #4318ff;
         }
 
+        .kamera-box {
+            background: #f8fafc;
+            border: 1px dashed #4318ff;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .kamera-preview {
+            display: none;
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
         .item-row {
             background: #f8fafc;
             border: 1px solid var(--border-color);
@@ -382,9 +400,13 @@
                 <i class="fa-solid fa-camera-retro"></i> Dokumentasi TV (24 Jam)
             </button>
 
-            <!-- MENU KHUSUS OPERATOR (TERSEMBUNYI UNTUK GURU BIASA) -->
+            <!-- MENU KHUSUS OPERATOR (TANPA MENU PROFIL GURU FISIKA) -->
             <div id="operator-only-menu" style="display: none;">
                 <div class="sidebar-section-label" style="margin-top: 10px; color: #fbbf24;">Kendali Operator Sekolah</div>
+
+                <button class="side-btn" onclick="bukaTab('tab-kontrol-panel', this)">
+                    <i class="fa-solid fa-sliders"></i> Kontrol Menu ON/OFF
+                </button>
 
                 <button class="side-btn" onclick="bukaTab('tab-siswa', this)">
                     <i class="fa-solid fa-user-graduate"></i> Data Siswa & WA Ortu
@@ -398,12 +420,12 @@
                     <i class="fa-solid fa-bullhorn"></i> Pengumuman Sekolah
                 </button>
 
-                <button class="side-btn" onclick="bukaTab('tab-tendik', this)">
-                    <i class="fa-solid fa-sitemap"></i> Struktur Guru & Tendik
+                <button class="side-btn" onclick="bukaTab('tab-ekskul', this)">
+                    <i class="fa-solid fa-trophy"></i> Pengurus OSIS & Ekskul
                 </button>
 
-                <button class="side-btn" onclick="bukaTab('tab-profil-utama', this)">
-                    <i class="fa-solid fa-id-badge"></i> Profil Guru Fisika
+                <button class="side-btn" onclick="bukaTab('tab-tendik', this)">
+                    <i class="fa-solid fa-sitemap"></i> Struktur Guru & Tendik
                 </button>
 
                 <button class="side-btn" onclick="bukaTab('tab-pilketos', this)">
@@ -583,21 +605,24 @@
                     <label>Ringkasan / Penjelasan Materi</label>
                     <textarea id="mat-deskripsi" rows="3" class="form-control" placeholder="Tuliskan rangkuman materi yang akan dibaca siswa..."></textarea>
 
-                    <div class="grid-2">
-                        <div>
-                            <label>Judul Link Media / Video / Modul (Opsional)</label>
-                            <input type="text" id="mat-link-label" class="form-control" placeholder="Contoh: Video Penjelasan YouTube / Modul PDF">
+                    <!-- KAMERA LANGSUNG / LINK MEDIA UNTUK MATERI -->
+                    <div class="kamera-box">
+                        <label style="color: #4318ff;"><i class="fa-solid fa-camera"></i> Lampiran Foto Materi (Kamera Langsung) atau Link Video/Drive</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto dari Kamera
+                                <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="ambilFotoKamera(this, 'mat-link-url', 'prev-mat-foto')">
+                            </label>
+                            <input type="text" id="mat-link-label" class="form-control" style="flex: 1; min-width: 180px; margin: 0;" placeholder="Judul Lampiran (mis: Catatan Papan Tulis / Video)">
                         </div>
-                        <div>
-                            <label>URL Link YouTube / Google Drive (Opsional)</label>
-                            <input type="url" id="mat-link-url" class="form-control" placeholder="https://youtube.com/watch?v=... atau https://drive.google.com/...">
-                        </div>
+                        <input type="text" id="mat-link-url" class="form-control" style="margin-bottom: 0;" placeholder="Otomatis terisi saat jepret kamera, atau tempel URL YouTube / Google Drive">
+                        <img id="prev-mat-foto" class="kamera-preview" alt="Preview Foto Materi">
                     </div>
 
                     <label>Instruksi Tugas / PR Siswa (Kosongkan jika tidak ada tugas)</label>
-                    <textarea id="mat-pr" rows="2" class="form-control" placeholder="Contoh: Kerjakan latihan soal halaman 15, foto lalu unggah ke Google Drive."></textarea>
+                    <textarea id="mat-pr" rows="2" class="form-control" placeholder="Contoh: Kerjakan latihan soal halaman 15, foto jawaban langsung lewat aplikasi."></textarea>
 
-                    <button id="btn-simpan-materi" class="btn btn-primary" onclick="simpanMateri()">
+                    <button type="button" id="btn-simpan-materi" class="btn btn-primary" onclick="simpanMateri()">
                         <i class="fa-solid fa-plus"></i> Publikasikan Materi & Tugas
                     </button>
                 </div>
@@ -639,13 +664,13 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 3 (GURU): DOKUMENTASI KEGIATAN KBM (TAYANG 24 JAM)  -->
+            <!-- TAB 3 (GURU): DOKUMENTASI KEGIATAN KBM (KAMERA 24 JAM)  -->
             <!-- ======================================================= -->
             <section id="tab-dokumentasi" class="tab-section">
                 <div class="card">
                     <h3 style="margin-top: 0;"><i class="fa-solid fa-camera-retro" style="color: #05cd99;"></i> Upload Dokumentasi Kegiatan Hari Ini (Digital Signage TV)</h3>
                     <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 14px;">
-                        <strong>Tayang Otomatis di TV Lorong Sekolah:</strong> Foto dan keterangan kegiatan belajar mengajar yang Anda unggah di sini akan otomatis menjadi slide di layar <strong>Digital Signage</strong> dan hilang otomatis setelah <strong>1 x 24 jam</strong>.
+                        <strong>Langsung dari Kamera & Tayang di TV Lorong:</strong> Ambil foto kegiatan belajar langsung menggunakan kamera HP/laptop Anda tanpa perlu mengunggah ke Google Drive. Foto akan tampil di <strong>Digital Signage</strong> dan hilang otomatis setelah <strong>1 x 24 jam</strong>.
                     </div>
 
                     <div class="grid-2">
@@ -666,16 +691,26 @@
                                 <option value="Umum">Kegiatan Sekolah Umum</option>
                             </select>
                         </div>
-                        <div>
-                            <label>Link Foto Kegiatan (Google Drive / URL Gambar)</label>
-                            <input type="url" id="dok-foto" class="form-control" placeholder="https://drive.google.com/file/d/... atau https://...">
+                    </div>
+
+                    <!-- AMBIL FOTO LANGSUNG DARI KAMERA -->
+                    <div class="kamera-box">
+                        <label style="color: #059669;"><i class="fa-solid fa-camera"></i> Foto Dokumentasi Kegiatan (Kamera Langsung / Galeri / Link)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Buka Kamera & Jepret Foto
+                                <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="ambilFotoKamera(this, 'dok-foto', 'prev-dok-foto')">
+                            </label>
+                            <span style="font-size: 0.78rem; color: #64748b;">Foto otomatis dikompresi agar cepat tampil di layar TV.</span>
                         </div>
+                        <input type="text" id="dok-foto" class="form-control" style="margin-bottom: 0;" placeholder="Otomatis terisi hasil kamera, atau tempel URL gambar">
+                        <img id="prev-dok-foto" class="kamera-preview" alt="Preview Dokumentasi">
                     </div>
 
                     <label>Keterangan Singkat Kegiatan</label>
                     <textarea id="dok-deskripsi" rows="2" class="form-control" placeholder="Contoh: Siswa melakukan pengukuran arus dan tegangan listrik secara berkelompok di laboratorium."></textarea>
 
-                    <button id="btn-simpan-dok" class="btn btn-success" onclick="simpanDokumentasiKegiatan()">
+                    <button type="button" id="btn-simpan-dok" class="btn btn-success" onclick="simpanDokumentasiKegiatan()">
                         <i class="fa-solid fa-tv"></i> Tayangkan ke Digital Signage (24 Jam)
                     </button>
                 </div>
@@ -687,7 +722,47 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 4 (OPERATOR): DATA SISWA, EMAIL & WA ORANG TUA      -->
+            <!-- TAB 4 (OPERATOR): KONTROL MENU MUSIMAN ON / OFF         -->
+            <!-- ======================================================= -->
+            <section id="tab-kontrol-panel" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-sliders" style="color: #4318ff;"></i> Pengaturan ON / OFF Menu Musiman oleh Operator</h3>
+                    <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 0;">
+                        Nonaktifkan menu yang tidak digunakan setiap hari (seperti <strong>Pemilihan OSIS</strong> dan <strong>Pemilihan Guru Terbaik</strong>). Menu tetap muncul di navigasi siswa, tetapi saat diklik akan menampilkan pesan alasan penutupan Anda.
+                    </p>
+
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 0.94rem;"><i class="fa-solid fa-check-to-slot" style="color: #4318ff;"></i> Menu Pemilihan OSIS (Pilketos)</strong>
+                            <label style="margin: 0; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="op-toggle-pilketos" style="width: 18px; height: 18px;">
+                                <span>Aktifkan (ON)</span>
+                            </label>
+                        </div>
+                        <label>Pesan Alasan Jika Menu Pemilihan OSIS di-OFF-kan:</label>
+                        <input type="text" id="op-alasan-pilketos" class="form-control" style="margin-bottom: 0;" placeholder="Contoh: Menu pemilihan OSIS belum bisa dibuka karena masa kampanye belum dimulai.">
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 0.94rem;"><i class="fa-solid fa-award" style="color: #f59e0b;"></i> Menu Pemilihan Guru Terbaik / Favorit</strong>
+                            <label style="margin: 0; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="op-toggle-gurufav" style="width: 18px; height: 18px;">
+                                <span>Aktifkan (ON)</span>
+                            </label>
+                        </div>
+                        <label>Pesan Alasan Jika Menu Pemilihan Guru Terbaik di-OFF-kan:</label>
+                        <input type="text" id="op-alasan-gurufav" class="form-control" style="margin-bottom: 0;" placeholder="Contoh: Pemilihan Guru Terbaik belum dibuka. Jadwal pemungutan suara akan diumumkan pada Hari Guru.">
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="simpanKontrolPanelOperator()">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan ON/OFF Menu
+                    </button>
+                </div>
+            </section>
+
+            <!-- ======================================================= -->
+            <!-- TAB 5 (OPERATOR): DATA SISWA, EMAIL & WA ORANG TUA      -->
             <!-- ======================================================= -->
             <section id="tab-siswa" class="tab-section">
                 <div class="card">
@@ -725,10 +800,20 @@
                             </select>
                         </div>
                     </div>
-                    <label>Link Foto Profil / Kartu Pelajar (Opsional)</label>
-                    <input type="url" id="sis-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
 
-                    <button class="btn btn-primary" onclick="tambahSatuSiswa()">
+                    <div class="kamera-box">
+                        <label>Foto Profil / Kartu Pelajar (Kamera Langsung / Link Opsional)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto Siswa
+                                <input type="file" accept="image/*" capture="user" style="display: none;" onchange="ambilFotoKamera(this, 'sis-foto', 'prev-sis-foto')">
+                            </label>
+                            <input type="text" id="sis-foto" class="form-control" style="flex: 1; margin: 0;" placeholder="Otomatis terisi hasil kamera atau link foto...">
+                        </div>
+                        <img id="prev-sis-foto" class="kamera-preview" alt="Preview Foto Siswa">
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="tambahSatuSiswa()">
                         <i class="fa-solid fa-floppy-disk"></i> Simpan Data Siswa & WA Ortu
                     </button>
                 </div>
@@ -740,7 +825,7 @@
                         <code>NIS, Nama Lengkap, Jenis Kelamin, Kelas, Email Siswa, No WA Orang Tua, Link Foto</code>
                     </p>
                     <input type="file" id="csv-siswa-file" accept=".csv" class="form-control">
-                    <button class="btn btn-success" onclick="imporSiswaCSV()">
+                    <button type="button" class="btn btn-success" onclick="imporSiswaCSV()">
                         <i class="fa-solid fa-upload"></i> Proses & Impor File CSV
                     </button>
                 </div>
@@ -772,7 +857,7 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 5 (OPERATOR): BUAT AKUN & SANDI AWAL GURU           -->
+            <!-- TAB 6 (OPERATOR): BUAT AKUN & SANDI AWAL GURU           -->
             <!-- ======================================================= -->
             <section id="tab-akun-guru" class="tab-section">
                 <div class="card">
@@ -800,7 +885,7 @@
                         </div>
                     </div>
 
-                    <button id="btn-buat-akun-guru" class="btn btn-primary" onclick="buatAkunGuruBaru()">
+                    <button type="button" id="btn-buat-akun-guru" class="btn btn-primary" onclick="buatAkunGuruBaru()">
                         <i class="fa-solid fa-user-plus"></i> Daftarkan Akun Guru Sekarang
                     </button>
                 </div>
@@ -812,7 +897,7 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 6 (OPERATOR): PENGUMUMAN SEKOLAH                    -->
+            <!-- TAB 7 (OPERATOR): PENGUMUMAN SEKOLAH + KAMERA           -->
             <!-- ======================================================= -->
             <section id="tab-pengumuman" class="tab-section">
                 <div class="card">
@@ -834,10 +919,19 @@
                     <label>Isi Pengumuman Lengkap</label>
                     <textarea id="peng-isi" rows="4" class="form-control" placeholder="Tuliskan rincian pengumuman..."></textarea>
 
-                    <label>Link Gambar / Banner Poster (Opsional)</label>
-                    <input type="url" id="peng-banner" class="form-control" placeholder="https://drive.google.com/file/d/... atau https://...">
+                    <div class="kamera-box">
+                        <label>Foto Dokumentasi / Banner Poster (Kamera Langsung / Link Opsional)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto dari Kamera
+                                <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="ambilFotoKamera(this, 'peng-banner', 'prev-peng-banner')">
+                            </label>
+                            <input type="text" id="peng-banner" class="form-control" style="flex: 1; margin: 0;" placeholder="Otomatis terisi hasil kamera atau link gambar...">
+                        </div>
+                        <img id="prev-peng-banner" class="kamera-preview" alt="Preview Banner Pengumuman">
+                    </div>
 
-                    <button id="btn-simpan-pengumuman" class="btn btn-primary" onclick="simpanPengumuman()">
+                    <button type="button" id="btn-simpan-pengumuman" class="btn btn-primary" onclick="simpanPengumuman()">
                         <i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman Sekarang
                     </button>
                 </div>
@@ -849,7 +943,75 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 7 (OPERATOR): STRUKTUR GURU & TENAGA KEPENDIDIKAN   -->
+            <!-- TAB 8 (OPERATOR): KELOLA PENGURUS OSIS & EKSKUL         -->
+            <!-- ======================================================= -->
+            <section id="tab-ekskul" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-trophy" style="color: #05cd99;"></i> Tambah / Edit Pengurus OSIS & Ekstrakurikuler</h3>
+                    <input type="hidden" id="eks-edit-id" value="">
+                    <div class="grid-2">
+                        <div>
+                            <label>Jenis Organisasi</label>
+                            <select id="eks-kategori" class="form-control">
+                                <option value="OSIS">Pengurus OSIS</option>
+                                <option value="EKSKUL">Ekstrakurikuler</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Nama Organisasi / Ekskul</label>
+                            <input type="text" id="eks-nama" class="form-control" placeholder="Contoh: Pengurus OSIS / Pramuka / Futsal">
+                        </div>
+                        <div>
+                            <label>Nama Ketua / Pengurus Inti</label>
+                            <input type="text" id="eks-ketua" class="form-control" placeholder="Contoh: Lalu Rizki Pratama">
+                        </div>
+                        <div>
+                            <label>Nama Pembina</label>
+                            <input type="text" id="eks-pembina" class="form-control" placeholder="Contoh: Ahmad Fauzi, S.Pd.">
+                        </div>
+                        <div>
+                            <label>Jadwal & Jam Kumpul (Bisa Diubah Sewaktu-waktu)</label>
+                            <input type="text" id="eks-jadwal" class="form-control" placeholder="Contoh: Jumat & Sabtu, Pukul 15.30 WITA">
+                        </div>
+                        <div>
+                            <label>Nomor WhatsApp Aktif (Awali 62)</label>
+                            <input type="text" id="eks-wa" class="form-control" placeholder="Contoh: 6281234567890">
+                        </div>
+                    </div>
+
+                    <label>Susunan Pengurus / Keterangan Kegiatan</label>
+                    <textarea id="eks-deskripsi" rows="3" class="form-control" placeholder="Tuliskan susunan pengurus atau informasi kegiatan..."></textarea>
+
+                    <div class="kamera-box">
+                        <label>Foto Pengurus / Kegiatan (Kamera Langsung / Link)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Jepret Foto dari Kamera
+                                <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="ambilFotoKamera(this, 'eks-foto', 'prev-eks-foto')">
+                            </label>
+                            <input type="text" id="eks-foto" class="form-control" style="flex: 1; margin: 0;" placeholder="Otomatis terisi hasil kamera atau link foto...">
+                        </div>
+                        <img id="prev-eks-foto" class="kamera-preview" alt="Preview Ekskul">
+                    </div>
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" onclick="simpanEkskulOperator()">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Data OSIS / Ekskul
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFormEkskulOperator()">
+                            Reset Form
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top: 0;">Daftar Pengurus OSIS & Ekstrakurikuler</h3>
+                    <div id="list-ekskul-admin"><p style="color: grey; font-size: 0.85rem;">Memuat data...</p></div>
+                </div>
+            </section>
+
+            <!-- ======================================================= -->
+            <!-- TAB 9 (OPERATOR): STRUKTUR GURU & TENAGA KEPENDIDIKAN   -->
             <!-- ======================================================= -->
             <section id="tab-tendik" class="tab-section">
                 <div class="card">
@@ -892,13 +1054,23 @@
                             <input type="text" id="td-wa" class="form-control" placeholder="Contoh: 6281234567890">
                         </div>
                     </div>
-                    <label>Link Foto Profil</label>
-                    <input type="url" id="td-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
+
+                    <div class="kamera-box">
+                        <label>Foto Profil Guru / Tendik (Kamera Langsung / Link)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto Profil
+                                <input type="file" accept="image/*" capture="user" style="display: none;" onchange="ambilFotoKamera(this, 'td-foto', 'prev-td-foto')">
+                            </label>
+                            <input type="text" id="td-foto" class="form-control" style="flex: 1; margin: 0;" placeholder="Otomatis terisi hasil kamera atau link foto...">
+                        </div>
+                        <img id="prev-td-foto" class="kamera-preview" alt="Preview Tendik">
+                    </div>
 
                     <label>Motto / Kutipan Singkat</label>
                     <input type="text" id="td-quote" class="form-control" placeholder="Contoh: Mendidik dengan keteladanan dan kasih sayang.">
 
-                    <button class="btn btn-primary" onclick="simpanTendik()">
+                    <button type="button" class="btn btn-primary" onclick="simpanTendik()">
                         <i class="fa-solid fa-plus"></i> Tambahkan ke Struktur Sekolah
                     </button>
                 </div>
@@ -910,56 +1082,7 @@
             </section>
 
             <!-- ======================================================= -->
-            <!-- TAB 8 (OPERATOR): PROFIL GURU PENGAMPU UTAMA            -->
-            <!-- ======================================================= -->
-            <section id="tab-profil-utama" class="tab-section">
-                <div class="card">
-                    <h3 style="margin-top: 0;"><i class="fa-solid fa-id-badge" style="color: #4318ff;"></i> Edit Profil Guru Pengampu Mapel Fisika</h3>
-                    <div class="grid-2">
-                        <div>
-                            <label>Nama Lengkap & Gelar</label>
-                            <input type="text" id="pu-nama" class="form-control">
-                        </div>
-                        <div>
-                            <label>NIP</label>
-                            <input type="text" id="pu-nip" class="form-control">
-                        </div>
-                        <div>
-                            <label>Jabatan</label>
-                            <input type="text" id="pu-jabatan" class="form-control">
-                        </div>
-                        <div>
-                            <label>Gelar Pendidikan</label>
-                            <input type="text" id="pu-gelar" class="form-control">
-                        </div>
-                        <div>
-                            <label>Asal Kampus</label>
-                            <input type="text" id="pu-kampus" class="form-control">
-                        </div>
-                        <div>
-                            <label>Nomor WhatsApp (628...)</label>
-                            <input type="text" id="pu-wa" class="form-control">
-                        </div>
-                        <div>
-                            <label>Email</label>
-                            <input type="email" id="pu-email" class="form-control">
-                        </div>
-                        <div>
-                            <label>Link Foto Profil</label>
-                            <input type="url" id="pu-foto" class="form-control">
-                        </div>
-                    </div>
-                    <label>Kutipan / Motto Guru</label>
-                    <input type="text" id="pu-quote" class="form-control">
-
-                    <button class="btn btn-primary" onclick="simpanProfilGuruUtama()">
-                        <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil Guru
-                    </button>
-                </div>
-            </section>
-
-            <!-- ======================================================= -->
-            <!-- TAB 9 (OPERATOR): KELOLA KANDIDAT PILKETOS              -->
+            <!-- TAB 10 (OPERATOR): KELOLA KANDIDAT PILKETOS             -->
             <!-- ======================================================= -->
             <section id="tab-pilketos" class="tab-section">
                 <div class="card">
@@ -977,15 +1100,24 @@
                             <label>Kelas Paslon</label>
                             <input type="text" id="pk-kelas" class="form-control" placeholder="Contoh: XI.A & XI.B">
                         </div>
-                        <div>
-                            <label>Link Foto Paslon</label>
-                            <input type="url" id="pk-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
-                        </div>
                     </div>
+
+                    <div class="kamera-box">
+                        <label>Foto Paslon (Kamera Langsung / Link)</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                            <label class="btn btn-success" style="margin: 0; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> Ambil Foto Paslon
+                                <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="ambilFotoKamera(this, 'pk-foto', 'prev-pk-foto')">
+                            </label>
+                            <input type="text" id="pk-foto" class="form-control" style="flex: 1; margin: 0;" placeholder="Otomatis terisi hasil kamera atau link foto...">
+                        </div>
+                        <img id="prev-pk-foto" class="kamera-preview" alt="Preview Paslon">
+                    </div>
+
                     <label>Visi & Misi Singkat</label>
                     <textarea id="pk-visi" rows="3" class="form-control" placeholder="Tuliskan visi & misi unggulan paslon..."></textarea>
 
-                    <button class="btn btn-primary" onclick="simpanKandidatPilketos()">
+                    <button type="button" class="btn btn-primary" onclick="simpanKandidatPilketos()">
                         <i class="fa-solid fa-plus"></i> Tambah Kandidat OSIS
                     </button>
                 </div>
@@ -1052,6 +1184,62 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        // Kompresi Foto Langsung dari Kamera agar ringan (< 200 KB) di Firestore
+        function kompresFotoKamera(file, maxWidth = 800, quality = 0.72) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error("Tidak ada foto dipilih."));
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxWidth) {
+                            h = Math.round((h * maxWidth) / w);
+                            w = maxWidth;
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", quality));
+                    };
+                    img.onerror = () => reject(new Error("Gagal memproses foto kamera."));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error("Gagal membaca file kamera."));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function ambilFotoKamera(inputEl, targetInputId, previewImgId) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            kompresFotoKamera(file).then((base64Data) => {
+                const targetInput = document.getElementById(targetInputId);
+                if (targetInput) targetInput.value = base64Data;
+                const previewImg = document.getElementById(previewImgId);
+                if (previewImg) {
+                    previewImg.src = base64Data;
+                    previewImg.style.display = "block";
+                }
+            }).catch((err) => {
+                alert(err.message);
+            });
+        }
+
+        function kirimNotifikasiSistem({ tipe, judul, pesan, targetRole = "SEMUA", pengirim = "Guru" }) {
+            return db.collection("notifikasi_sistem").add({
+                tipe: tipe || "INFO",
+                judul: judul || "Pembaruan Sekolah",
+                pesan: pesan || "",
+                targetRole: targetRole,
+                pengirim: pengirim,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(() => {});
+        }
+
         window.alert = function(pesan) {
             if (typeof Swal !== 'undefined') {
                 const ok = String(pesan).toLowerCase().includes('berhasil') || String(pesan).toLowerCase().includes('tersimpan');
@@ -1103,10 +1291,11 @@
             muatDokumentasiAktif();
 
             if (isOperator) {
+                muatKontrolPanelOperator();
                 muatAkunGuruTerdaftar();
                 muatPengumumanAdmin();
+                muatEkskulAdmin();
                 muatTendikAdmin();
-                muatProfilGuruUtama();
                 muatPilketosAdmin();
             }
         });
@@ -1335,9 +1524,10 @@
         }
 
         // ==========================================
-        // 2. MATERI & PENILAIAN TUGAS
+        // 2. PUBLIKASI MATERI & PENILAIAN TUGAS (SUDAH DIPERBAIKI)
         // ==========================================
         async function simpanMateri() {
+            const btn = document.getElementById('btn-simpan-materi');
             const mapel = document.getElementById('mat-mapel').value.trim();
             const kelas = document.getElementById('mat-kelas').value;
             const bab = document.getElementById('mat-bab').value.trim();
@@ -1347,31 +1537,62 @@
             const linkUrl = document.getElementById('mat-link-url').value.trim();
             const pr = document.getElementById('mat-pr').value.trim();
 
-            if (!bab || !subBab) return alert("Judul Bab dan Sub Bab wajib diisi!");
+            if (!bab || !subBab) {
+                return alert("Judul Bab dan Sub Bab wajib diisi!");
+            }
 
-            const links = linkUrl ? [{ label: linkLabel || "Tautan Materi", url: linkUrl }] : [];
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mempublikasikan...`;
+            }
 
-            await db.collection("materi_pelajaran").add({
-                mapel,
-                kelas,
-                bab,
-                subBab,
-                deskripsi,
-                links,
-                pr,
-                guruNama: currentStaffSession.nama,
-                guruUid: currentStaffSession.uid || "",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            try {
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously().catch(() => {});
+                }
 
-            document.getElementById('mat-bab').value = "";
-            document.getElementById('mat-subbab').value = "";
-            document.getElementById('mat-deskripsi').value = "";
-            document.getElementById('mat-link-label').value = "";
-            document.getElementById('mat-link-url').value = "";
-            document.getElementById('mat-pr').value = "";
-            alert(`Materi ${mapel} (${kelas}) berhasil dipublikasikan!`);
-            muatMateriAdmin();
+                const links = linkUrl ? [{ label: linkLabel || "Lampiran Materi", url: linkUrl }] : [];
+
+                await db.collection("materi_pelajaran").add({
+                    mapel,
+                    kelas,
+                    bab,
+                    subBab,
+                    deskripsi,
+                    links,
+                    pr,
+                    guruNama: currentStaffSession ? currentStaffSession.nama : "Guru SMAN 2 Bayan",
+                    guruUid: currentStaffSession ? (currentStaffSession.uid || "") : "",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await kirimNotifikasiSistem({
+                    tipe: pr ? "TUGAS" : "PEMBARUAN",
+                    judul: pr ? `Tugas Baru ${mapel} (${kelas})` : `Materi Baru ${mapel} (${kelas})`,
+                    pesan: `${bab} - ${subBab} oleh ${currentStaffSession ? currentStaffSession.nama : 'Guru'}`,
+                    targetRole: "SISWA",
+                    pengirim: currentStaffSession ? currentStaffSession.nama : "Guru"
+                });
+
+                document.getElementById('mat-bab').value = "";
+                document.getElementById('mat-subbab').value = "";
+                document.getElementById('mat-deskripsi').value = "";
+                document.getElementById('mat-link-label').value = "";
+                document.getElementById('mat-link-url').value = "";
+                document.getElementById('mat-pr').value = "";
+                const prevMat = document.getElementById('prev-mat-foto');
+                if (prevMat) prevMat.style.display = "none";
+
+                alert(`Materi & Tugas ${mapel} (${kelas}) berhasil dipublikasikan dan notifikasi terkirim ke siswa!`);
+                muatMateriAdmin();
+            } catch (err) {
+                alert("Gagal mempublikasikan materi/tugas: " + (err.message || err));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-plus"></i> Publikasikan Materi & Tugas`;
+                }
+            }
         }
 
         function muatMateriAdmin() {
@@ -1395,10 +1616,14 @@
                 list.forEach(m => {
                     const row = document.createElement('div');
                     row.className = "item-row";
+                    const adaTugasBadge = m.pr && m.pr.trim() !== ""
+                        ? `<span class="badge" style="background: #f59e0b; margin-left: 4px;">Ada Tugas</span>`
+                        : "";
                     row.innerHTML = `
                         <div>
                             <span class="badge" style="background: #4318ff;">${escapeHtml(m.mapel || 'Fisika')}</span>
                             <span class="badge" style="background: #05cd99; margin-left: 4px;">${escapeHtml(m.kelas)}</span>
+                            ${adaTugasBadge}
                             <strong style="margin-left: 6px;">${escapeHtml(m.bab)} — ${escapeHtml(m.subBab)}</strong>
                             <div style="font-size: 0.76rem; color: #64748b; margin-top: 3px;">Pengampu: ${escapeHtml(m.guruNama || '-')}</div>
                         </div>
@@ -1420,6 +1645,11 @@
                 wadah.innerHTML = "";
                 snap.forEach(doc => {
                     const t = doc.data();
+                    const isFotoKamera = String(t.linkTugas || "").startsWith("data:image/");
+                    const tombolJawaban = isFotoKamera
+                        ? `<button type="button" class="btn btn-secondary btn-lihat-foto-tugas"><i class="fa-solid fa-image"></i> Lihat Foto Jawaban</button>`
+                        : `<a href="${escapeHtml(t.linkTugas)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><i class="fa-solid fa-up-right-from-square"></i> Buka Jawaban</a>`;
+
                     const row = document.createElement('div');
                     row.className = "item-row";
                     row.style.cssText = "flex-direction: column; align-items: stretch;";
@@ -1430,9 +1660,7 @@
                                 <strong style="margin-left: 6px;">${escapeHtml(t.namaSiswa)} (NIS: ${escapeHtml(t.nisSiswa)})</strong>
                                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 3px;">Materi: ${escapeHtml(t.judulBab)}</div>
                             </div>
-                            <a href="${escapeHtml(t.linkTugas)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
-                                <i class="fa-solid fa-up-right-from-square"></i> Buka Jawaban
-                            </a>
+                            ${tombolJawaban}
                         </div>
                         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
                             <input type="number" class="form-control inp-nilai" style="max-width: 120px; margin: 0;" placeholder="Nilai (0-100)" value="${escapeHtml(t.nilai ?? '')}">
@@ -1440,6 +1668,17 @@
                             <button type="button" class="btn btn-success btn-save-nilai">Simpan Nilai</button>
                         </div>
                     `;
+                    const btnLihatFoto = row.querySelector('.btn-lihat-foto-tugas');
+                    if (btnLihatFoto) {
+                        btnLihatFoto.addEventListener('click', () => {
+                            Swal.fire({
+                                title: `${t.namaSiswa} (${t.kelas})`,
+                                imageUrl: t.linkTugas,
+                                imageAlt: 'Jawaban Tugas Siswa',
+                                confirmButtonColor: '#4318ff'
+                            });
+                        });
+                    }
                     row.querySelector('.btn-save-nilai').addEventListener('click', async () => {
                         const nilaiVal = row.querySelector('.inp-nilai').value.trim();
                         const catVal = row.querySelector('.inp-catatan').value.trim();
@@ -1456,9 +1695,10 @@
         }
 
         // ==========================================
-        // 3. DOKUMENTASI KEGIATAN KBM (24 JAM)
+        // 3. DOKUMENTASI KEGIATAN KBM (KAMERA 24 JAM)
         // ==========================================
         async function simpanDokumentasiKegiatan() {
+            const btn = document.getElementById('btn-simpan-dok');
             const judul = document.getElementById('dok-judul').value.trim();
             const mapel = document.getElementById('dok-mapel').value.trim() || "Kegiatan KBM";
             const kelas = document.getElementById('dok-kelas').value;
@@ -1466,28 +1706,53 @@
             const deskripsi = document.getElementById('dok-deskripsi').value.trim();
 
             if (!judul || !fotoUrl) {
-                return alert("Judul Kegiatan dan Link Foto wajib diisi agar tampil di layar TV!");
+                return alert("Judul Kegiatan dan Foto Kamera (atau Link Foto) wajib diisi agar tampil di layar TV!");
             }
 
-            const nowMs = Date.now();
-            const expiresAtMs = nowMs + (24 * 60 * 60 * 1000); // Otomatis kadaluarsa 1 x 24 jam
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah ke TV...`;
+            }
 
-            await db.collection("dokumentasi_kegiatan").add({
-                judul,
-                mapel,
-                kelas,
-                fotoUrl,
-                deskripsi,
-                guruNama: currentStaffSession.nama,
-                createdAtMs: nowMs,
-                expiresAtMs: expiresAtMs
-            });
+            try {
+                const nowMs = Date.now();
+                const expiresAtMs = nowMs + (24 * 60 * 60 * 1000);
 
-            document.getElementById('dok-judul').value = "";
-            document.getElementById('dok-foto').value = "";
-            document.getElementById('dok-deskripsi').value = "";
-            alert("Dokumentasi kegiatan berhasil ditayangkan ke Digital Signage TV (aktif 1 x 24 jam)!");
-            muatDokumentasiAktif();
+                await db.collection("dokumentasi_kegiatan").add({
+                    judul,
+                    mapel,
+                    kelas,
+                    fotoUrl,
+                    deskripsi,
+                    guruNama: currentStaffSession.nama,
+                    createdAtMs: nowMs,
+                    expiresAtMs: expiresAtMs
+                });
+
+                await kirimNotifikasiSistem({
+                    tipe: "PEMBARUAN",
+                    judul: `Dokumentasi KBM: ${judul}`,
+                    pesan: `${mapel} (${kelas}) oleh ${currentStaffSession.nama}`,
+                    targetRole: "SEMUA",
+                    pengirim: currentStaffSession.nama
+                });
+
+                document.getElementById('dok-judul').value = "";
+                document.getElementById('dok-foto').value = "";
+                document.getElementById('dok-deskripsi').value = "";
+                const prevDok = document.getElementById('prev-dok-foto');
+                if (prevDok) prevDok.style.display = "none";
+
+                alert("Dokumentasi kegiatan berhasil ditayangkan ke Digital Signage TV (aktif 1 x 24 jam)!");
+                muatDokumentasiAktif();
+            } catch (err) {
+                alert("Gagal menyimpan dokumentasi: " + (err.message || err));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-tv"></i> Tayangkan ke Digital Signage (24 Jam)`;
+                }
+            }
         }
 
         function muatDokumentasiAktif() {
@@ -1501,7 +1766,6 @@
                     if (exp > nowMs) {
                         aktifList.push({ id: doc.id, ...d, exp });
                     } else {
-                        // Bersihkan otomatis dokumen yang sudah lewat 24 jam
                         db.collection("dokumentasi_kegiatan").doc(doc.id).delete().catch(() => {});
                     }
                 });
@@ -1532,7 +1796,43 @@
         }
 
         // ==========================================
-        // 4. OPERATOR: DATA SISWA, EMAIL & WA ORANG TUA
+        // 4. OPERATOR: KONTROL MENU MUSIMAN ON / OFF
+        // ==========================================
+        function muatKontrolPanelOperator() {
+            db.collection("pengaturan_sistem").doc("panel_musiman").get().then(doc => {
+                const d = doc.exists ? doc.data() : {
+                    pilketosAktif: true,
+                    alasanPilketosNonaktif: "Menu pemilihan OSIS belum bisa dibuka karena masa kampanye belum dimulai.",
+                    guruFavoritAktif: true,
+                    alasanGuruFavoritNonaktif: "Pemilihan Guru Terbaik belum dibuka oleh Operator Sekolah."
+                };
+                document.getElementById('op-toggle-pilketos').checked = Boolean(d.pilketosAktif);
+                document.getElementById('op-alasan-pilketos').value = d.alasanPilketosNonaktif || "";
+                document.getElementById('op-toggle-gurufav').checked = Boolean(d.guruFavoritAktif);
+                document.getElementById('op-alasan-gurufav').value = d.alasanGuruFavoritNonaktif || "";
+            });
+        }
+
+        async function simpanKontrolPanelOperator() {
+            const payload = {
+                pilketosAktif: document.getElementById('op-toggle-pilketos').checked,
+                alasanPilketosNonaktif: document.getElementById('op-alasan-pilketos').value.trim() || "Menu pemilihan OSIS belum dibuka oleh Operator Sekolah.",
+                guruFavoritAktif: document.getElementById('op-toggle-gurufav').checked,
+                alasanGuruFavoritNonaktif: document.getElementById('op-alasan-gurufav').value.trim() || "Menu pemilihan Guru Terbaik belum dibuka oleh Operator Sekolah."
+            };
+            await db.collection("pengaturan_sistem").doc("panel_musiman").set(payload, { merge: true });
+            await kirimNotifikasiSistem({
+                tipe: "PEMBARUAN",
+                judul: "Pembaruan Status Menu Pemilihan",
+                pesan: `Pilketos: ${payload.pilketosAktif ? 'DIBUKA' : 'DITUTUP'} • Guru Terbaik: ${payload.guruFavoritAktif ? 'DIBUKA' : 'DITUTUP'}`,
+                targetRole: "SEMUA",
+                pengirim: currentStaffSession.nama
+            });
+            alert("Pengaturan ON/OFF menu musiman berhasil disimpan!");
+        }
+
+        // ==========================================
+        // 5. OPERATOR: DATA SISWA, EMAIL & WA ORANG TUA
         // ==========================================
         async function tambahSatuSiswa() {
             const nis = document.getElementById('sis-nis').value.trim();
@@ -1556,6 +1856,9 @@
             document.getElementById('sis-email').value = "";
             document.getElementById('sis-wa-ortu').value = "";
             document.getElementById('sis-foto').value = "";
+            const prevSis = document.getElementById('prev-sis-foto');
+            if (prevSis) prevSis.style.display = "none";
+
             alert("Data siswa & nomor WhatsApp Orang Tua berhasil disimpan!");
             muatSiswaAdmin();
         }
@@ -1652,7 +1955,7 @@
         }
 
         // ==========================================
-        // 5. OPERATOR: PEMBUATAN AKUN & SANDI AWAL GURU
+        // 6. OPERATOR: PEMBUATAN AKUN & SANDI AWAL GURU
         // ==========================================
         async function buatAkunGuruBaru() {
             const nama = document.getElementById('akg-nama').value.trim();
@@ -1673,7 +1976,6 @@
 
             let secondaryApp = null;
             try {
-                // Gunakan Secondary App agar Operator tidak ter-logout saat membuat akun Guru baru
                 secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp_" + Date.now());
                 const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, pass);
 
@@ -1734,7 +2036,7 @@
         }
 
         // ==========================================
-        // 6. OPERATOR: PENGUMUMAN, TENDIK, PROFIL, PILKETOS
+        // 7. OPERATOR: PENGUMUMAN, EKSKUL/OSIS, TENDIK & PILKETOS
         // ==========================================
         async function simpanPengumuman() {
             const judul = document.getElementById('peng-judul').value.trim();
@@ -1749,9 +2051,20 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            await kirimNotifikasiSistem({
+                tipe: "PENGUMUMAN",
+                judul: `Pengumuman Baru: ${judul}`,
+                pesan: isi || "Silakan baca pengumuman terbaru di Beranda.",
+                targetRole: "SEMUA",
+                pengirim: currentStaffSession.nama
+            });
+
             document.getElementById('peng-judul').value = "";
             document.getElementById('peng-isi').value = "";
             document.getElementById('peng-banner').value = "";
+            const prevPeng = document.getElementById('prev-peng-banner');
+            if (prevPeng) prevPeng.style.display = "none";
+
             alert("Pengumuman berhasil diterbitkan!");
             muatPengumumanAdmin();
         }
@@ -1782,6 +2095,96 @@
             });
         }
 
+        async function simpanEkskulOperator() {
+            const editId = document.getElementById('eks-edit-id').value.trim();
+            const payload = {
+                kategori: document.getElementById('eks-kategori').value,
+                nama: document.getElementById('eks-nama').value.trim(),
+                ketua: document.getElementById('eks-ketua').value.trim(),
+                pembina: document.getElementById('eks-pembina').value.trim(),
+                jadwal: document.getElementById('eks-jadwal').value.trim(),
+                whatsapp: formatNomorWA(document.getElementById('eks-wa').value.trim()),
+                deskripsi: document.getElementById('eks-deskripsi').value.trim(),
+                foto: document.getElementById('eks-foto').value.trim(),
+                urutan: document.getElementById('eks-kategori').value === "OSIS" ? 1 : 2,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (!payload.nama) return alert("Nama Organisasi atau Ekskul wajib diisi!");
+
+            if (editId) {
+                await db.collection("ekskul_organisasi").doc(editId).set(payload, { merge: true });
+            } else {
+                await db.collection("ekskul_organisasi").add(payload);
+            }
+
+            await kirimNotifikasiSistem({
+                tipe: "PEMBARUAN",
+                judul: `Pembaruan ${payload.kategori}: ${payload.nama}`,
+                pesan: payload.jadwal ? `Jadwal kumpul: ${payload.jadwal}` : "Data pengurus diperbarui Operator.",
+                targetRole: "SEMUA",
+                pengirim: currentStaffSession.nama
+            });
+
+            resetFormEkskulOperator();
+            alert("Data Pengurus OSIS / Ekskul berhasil disimpan!");
+            muatEkskulAdmin();
+        }
+
+        function resetFormEkskulOperator() {
+            document.getElementById('eks-edit-id').value = "";
+            document.getElementById('eks-nama').value = "";
+            document.getElementById('eks-ketua').value = "";
+            document.getElementById('eks-pembina').value = "";
+            document.getElementById('eks-jadwal').value = "";
+            document.getElementById('eks-wa').value = "";
+            document.getElementById('eks-deskripsi').value = "";
+            document.getElementById('eks-foto').value = "";
+            const prev = document.getElementById('prev-eks-foto');
+            if (prev) prev.style.display = "none";
+        }
+
+        function muatEkskulAdmin() {
+            const wadah = document.getElementById('list-ekskul-admin');
+            db.collection("ekskul_organisasi").orderBy("urutan", "asc").get().then(snap => {
+                if (snap.empty) {
+                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada data OSIS / Ekstrakurikuler.</p>`;
+                    return;
+                }
+                wadah.innerHTML = "";
+                snap.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: ${item.kategori === 'OSIS' ? '#4318ff' : '#05cd99'};">${escapeHtml(item.kategori || 'EKSKUL')}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(item.nama)}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">Ketua: ${escapeHtml(item.ketua || '-')} • Jadwal: ${escapeHtml(item.jadwal || '-')} • WA: ${escapeHtml(item.whatsapp || '-')}</div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn btn-secondary btn-edit-eks"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button type="button" class="btn btn-danger btn-del-eks"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                    `;
+                    row.querySelector('.btn-edit-eks').addEventListener('click', () => {
+                        document.getElementById('eks-edit-id').value = item.id;
+                        document.getElementById('eks-kategori').value = item.kategori || "EKSKUL";
+                        document.getElementById('eks-nama').value = item.nama || "";
+                        document.getElementById('eks-ketua').value = item.ketua || "";
+                        document.getElementById('eks-pembina').value = item.pembina || "";
+                        document.getElementById('eks-jadwal').value = item.jadwal || "";
+                        document.getElementById('eks-wa').value = item.whatsapp || "";
+                        document.getElementById('eks-deskripsi').value = item.deskripsi || "";
+                        document.getElementById('eks-foto').value = item.foto || "";
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    row.querySelector('.btn-del-eks').addEventListener('click', () => hapusDokumen('ekskul_organisasi', item.id, muatEkskulAdmin));
+                    wadah.appendChild(row);
+                });
+            });
+        }
+
         async function simpanTendik() {
             const kategoriJabatan = document.getElementById('td-kategori').value;
             const urutan = Number(document.getElementById('td-urutan').value) || 99;
@@ -1790,7 +2193,7 @@
             const jabatan = document.getElementById('td-jabatan').value.trim();
             const mapel = document.getElementById('td-mapel').value.trim();
             const kampus = document.getElementById('td-kampus').value.trim();
-            const whatsapp = document.getElementById('td-wa').value.trim();
+            const whatsapp = formatNomorWA(document.getElementById('td-wa').value.trim());
             const foto = document.getElementById('td-foto').value.trim();
             const quote = document.getElementById('td-quote').value.trim();
 
@@ -1808,6 +2211,9 @@
             document.getElementById('td-wa').value = "";
             document.getElementById('td-foto').value = "";
             document.getElementById('td-quote').value = "";
+            const prevTd = document.getElementById('prev-td-foto');
+            if (prevTd) prevTd.style.display = "none";
+
             alert("Data Guru / Tendik berhasil ditambahkan!");
             muatTendikAdmin();
         }
@@ -1838,38 +2244,6 @@
             });
         }
 
-        function muatProfilGuruUtama() {
-            db.collection("profil_guru").doc("utama").get().then(doc => {
-                if (!doc.exists) return;
-                const g = doc.data();
-                document.getElementById('pu-nama').value = g.nama || "";
-                document.getElementById('pu-nip').value = g.nip || "";
-                document.getElementById('pu-jabatan').value = g.jabatan || "";
-                document.getElementById('pu-gelar').value = g.gelar || "";
-                document.getElementById('pu-kampus').value = g.kampus || "";
-                document.getElementById('pu-wa').value = g.whatsapp || "";
-                document.getElementById('pu-email').value = g.email || "";
-                document.getElementById('pu-foto').value = g.foto || "";
-                document.getElementById('pu-quote').value = g.quote || "";
-            });
-        }
-
-        async function simpanProfilGuruUtama() {
-            await db.collection("profil_guru").doc("utama").set({
-                nama: document.getElementById('pu-nama').value.trim(),
-                nip: document.getElementById('pu-nip').value.trim(),
-                jabatan: document.getElementById('pu-jabatan').value.trim(),
-                gelar: document.getElementById('pu-gelar').value.trim(),
-                kampus: document.getElementById('pu-kampus').value.trim(),
-                whatsapp: document.getElementById('pu-wa').value.trim(),
-                email: document.getElementById('pu-email').value.trim(),
-                foto: document.getElementById('pu-foto').value.trim(),
-                quote: document.getElementById('pu-quote').value.trim(),
-                mapel: "Fisika"
-            }, { merge: true });
-            alert("Profil Guru Pengampu berhasil diperbarui!");
-        }
-
         async function simpanKandidatPilketos() {
             const noUrut = Number(document.getElementById('pk-urut').value) || 1;
             const namaPaslon = document.getElementById('pk-nama').value.trim();
@@ -1888,6 +2262,9 @@
             document.getElementById('pk-kelas').value = "";
             document.getElementById('pk-foto').value = "";
             document.getElementById('pk-visi').value = "";
+            const prevPk = document.getElementById('prev-pk-foto');
+            if (prevPk) prevPk.style.display = "none";
+
             alert("Kandidat Pilketos berhasil ditambahkan!");
             muatPilketosAdmin();
         }
