@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signage - SMAN 2 BAYAN</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body {
+            background: #0b1120;
+            color: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar TV Header */
+        .tv-header {
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 55%, #065f46 100%);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        .school-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .school-brand img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: white;
+            padding: 3px;
+            object-fit: contain;
+        }
+        .school-brand h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+        .school-brand p {
+            font-size: 0.78rem;
+            color: #cbd5e1;
+        }
+
+        .tv-clock-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .clock-box {
+            text-align: right;
+            background: rgba(15, 23, 42, 0.55);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .clock-time {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #34d399;
+            line-height: 1.1;
+        }
+        .clock-date {
+            font-size: 0.75rem;
+            color: #e2e8f0;
+        }
+        .btn-tv {
+            background: rgba(255,255,255,0.14);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-tv:hover { background: #4318ff; }
+
+        /* Main Layout Split: Kiri Slideshow (65%) | Kanan Live Absen (35%) */
+        .tv-main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.85fr 1fr;
+            gap: 16px;
+            padding: 16px 20px;
+            overflow: hidden;
+        }
+
+        /* Kolom Kiri: Slideshow Dokumentasi Kegiatan + Rekap Per Kelas */
+        .left-stage {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow: hidden;
+        }
+        .slide-container {
+            flex: 1;
+            position: relative;
+            background: #1e293b;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+        }
+        .doc-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .doc-slide.active { opacity: 1; z-index: 2; }
+        .doc-slide img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .slide-overlay {
+            position: relative;
+            z-index: 3;
+            background: linear-gradient(to top, rgba(9, 13, 26, 0.96) 0%, rgba(9, 13, 26, 0.72) 55%, transparent 100%);
+            padding: 28px;
+        }
+        .slide-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #05cd99;
+            color: #064e3b;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .slide-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            line-height: 1.25;
+        }
+        .slide-desc {
+            font-size: 0.98rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            max-width: 92%;
+        }
+        .slide-meta {
+            margin-top: 12px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .slide-dots {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            z-index: 5;
+            display: flex;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.65);
+            padding: 6px 10px;
+            border-radius: 20px;
+        }
+        .dot-ind {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            transition: 0.3s;
+        }
+        .dot-ind.active {
+            background: #34d399;
+            width: 24px;
+            border-radius: 6px;
+        }
+
+        /* Rekap Kehadiran Per Kelas di Bawah Slideshow */
+        .rekap-kelas-bar {
+            background: #131c31;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+        .rekap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .rekap-header h3 {
+            font-size: 0.88rem;
+            color: #38bdf8;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .total-badge {
+            background: #4318ff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+        .kelas-pills-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        .kelas-stat-pill {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 7px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .kelas-stat-pill span {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #cbd5e1;
+        }
+        .kelas-stat-pill strong {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #34d399;
+        }
+
+        /* Kolom Kanan: Live Stream Absensi (Gaya YouTube Live Chat) */
+        .right-live-panel {
+            background: #131c31;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+        }
+        .live-panel-header {
+            background: #1e293b;
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #ffffff;
+        }
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulseLive 1.5s infinite;
+        }
+        @keyframes pulseLive {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Filter Tingkat Kelas di Panel Live */
+        .tingkat-tabs {
+            display: flex;
+            gap: 6px;
+            padding: 10px 14px;
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .tingkat-btn {
+            flex: 1;
+            padding: 6px 8px;
+            border: none;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .tingkat-btn.active {
+            background: #4318ff;
+            color: white;
+        }
+
+        /* Daftar Live Chat Feed (Item baru masuk dari bawah dan mendorong item lama naik ke atas) */
+        .live-feed-stream {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+        .live-feed-stream::-webkit-scrollbar { width: 5px; }
+        .live-feed-stream::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        .chat-absen-item {
+            background: rgba(30, 41, 59, 0.85);
+            border-left: 4px solid #34d399;
+            padding: 10px 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideUpChat 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chat-absen-item.role-guru {
+            border-left-color: #818cf8;
+            background: rgba(49, 46, 129, 0.45);
+        }
+        @keyframes slideUpChat {
+            from { opacity: 0; transform: translateY(22px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #05cd99, #0284c7);
+            color: white;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .role-guru .chat-avatar {
+            background: linear-gradient(135deg, #4318ff, #ec4899);
+        }
+        .chat-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+        .chat-name {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-kelas-tag {
+            background: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .role-guru .chat-kelas-tag {
+            background: rgba(129, 140, 248, 0.25);
+            color: #c7d2fe;
+        }
+        .chat-sub {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* Running Text Ticker Bawah */
+        .tv-ticker {
+            background: #090d16;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 20px;
+            font-size: 0.84rem;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .ticker-label {
+            background: #f59e0b;
+            color: #0f172a;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1024px) {
+            body { height: auto; overflow-y: auto; }
+            .tv-main { grid-template-columns: 1fr; }
+            .slide-container { min-height: 360px; }
+            .right-live-panel { height: 480px; }
+            .kelas-pills-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER TV -->
+    <header class="tv-header">
+        <div class="school-brand">
+            <img src="images/logo-sman2bayan.png" alt="Logo SMAN 2 Bayan" onerror="this.src='https://via.placeholder.com/48'">
+            <div>
+                <h1>SMA NEGERI 2 BAYAN</h1>
+                <p>Papan Informasi Digital & Kehadiran Real-Time • Kec. Bayan, Lombok Utara</p>
+            </div>
+        </div>
+
+        <div class="tv-clock-area">
+            <div class="clock-box">
+                <div class="clock-time" id="tv-jam">00:00:00</div>
+                <div class="clock-date" id="tv-tanggal">Memuat tanggal...</div>
+            </div>
+            <button onclick="toggleFullScreenTV()" class="btn-tv" title="Layar Penuh TV">
+                <i class="fa-solid fa-expand"></i> Layar Penuh
+            </button>
+            <a href="index.html" class="btn-tv">
+                <i class="fa-solid fa-house"></i> Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA 2 KOLOM -->
+    <main class="tv-main">
+        <!-- KOLOM KIRI: SLIDESHOW DOKUMENTASI KEGIATAN + REKAP KELAS -->
+        <section class="left-stage">
+            <div class="slide-container" id="slideshow-wrapper">
+                <!-- Slide default sebelum data guru dimuat -->
+                <div class="doc-slide active">
+                    <img src="images/hero-sman2bayan.jpg" alt="SMAN 2 Bayan" onerror="this.src='https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1400&q=80'">
+                    <div class="slide-overlay">
+                        <span class="slide-badge"><i class="fa-solid fa-school"></i> Selamat Datang di SMAN 2 Bayan</span>
+                        <h2 class="slide-title">Kegiatan Belajar Mengajar & Digitalisasi Sekolah</h2>
+                        <p class="slide-desc">Dokumentasi kegiatan pembelajaran harian yang diunggah Bapak/Ibu Guru akan tampil otomatis di layar ini selama 24 jam.</p>
+                        <div class="slide-meta">
+                            <span><i class="fa-solid fa-location-dot"></i> Jl. Raya Bayan - Ancak, Karang Bajo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REKAP KEHADIRAN PER KELAS -->
+            <div class="rekap-kelas-bar">
+                <div class="rekap-header">
+                    <h3><i class="fa-solid fa-chart-column"></i> Rekap Kehadiran Siswa Per Kelas Hari Ini</h3>
+                    <div style="display:flex; gap:8px;">
+                        <span class="total-badge" style="background:#05cd99; color:#064e3b;" id="badge-total-guru">Guru Hadir: 0</span>
+                        <span class="total-badge" id="badge-total-siswa">Total Siswa Hadir: 0</span>
+                    </div>
+                </div>
+                <div class="kelas-pills-grid" id="grid-rekap-kelas">
+                    <!-- Diisi otomatis oleh JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- KOLOM KANAN: LIVE ABSENSI (YOUTUBE LIVE CHAT STYLE) -->
+        <aside class="right-live-panel">
+            <div class="live-panel-header">
+                <div class="live-indicator">
+                    <span class="pulse-dot"></span>
+                    <span>LIVE ABSENSI HARI INI</span>
+                </div>
+                <span style="font-size:0.74rem; color:#94a3b8;" id="live-sort-label">Urut Kelas & Terbaru</span>
+            </div>
+
+            <div class="tingkat-tabs">
+                <button class="tingkat-btn active" onclick="setFilterTingkat('SEMUA', this)">Semua</button>
+                <button class="tingkat-btn" onclick="setFilterTingkat('X', this)">Kelas X</button>
+                <button class="tingkat-btn" onclick="setFilterTingkat('XI', this)">Kelas XI</button>
+                <button class="tingkat-btn" onclick="setFilterTingkat('XII', this)">Kelas XII</button>
+            </div>
+
+            <div class="live-feed-stream" id="live-absen-stream">
+                <p style="text-align:center; color:#64748b; font-size:0.85rem; margin:auto;">Menunggu data scan QR kehadiran hari ini...</p>
+            </div>
+        </aside>
+    </main>
+
+    <!-- RUNNING TEXT PENGUMUMAN -->
+    <footer class="tv-ticker">
+        <span class="ticker-label"><i class="fa-solid fa-bullhorn"></i> INFO SEKOLAH</span>
+        <marquee id="tv-running-text" scrollamount="5">Selamat datang tamu undangan, orang tua/wali murid, dan seluruh warga SMA Negeri 2 Bayan. Mari wujudkan generasi cerdas, berkarakter, dan berprestasi.</marquee>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKG-pHGN3Wz7X9q9BnSL-dChSNX87EpyY",
+            authDomain: "e-learning-sman-2-bayan.firebaseapp.com",
+            projectId: "e-learning-sman-2-bayan",
+            storageBucket: "e-learning-sman-2-bayan.firebasestorage.app",
+            messagingSenderId: "715837451881",
+            appId: "1:715837451881:web:48540594fe89d36d8c3cf8",
+            measurementId: "G-TTVZ22Z4H5"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const DAFTAR_KELAS = ["X.A", "X.B", "X.C", "X.D", "XI.A", "XI.B", "XI.C", "XI.D", "XII.A", "XII.B", "XII.C", "XII.D"];
+        let slideList = [];
+        let activeSlideIdx = 0;
+        let slideTimer = null;
+        let semuaAbsenHariIni = [];
+        let filterTingkatAktif = "SEMUA";
+
+        function escapeHTML(str) {
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function formatUrlGambar(rawUrl) {
+            if (!rawUrl) return "";
+            const url = String(rawUrl).trim();
+            const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+            if (gdriveMatch && gdriveMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
+            }
+            return /^https?:\/\//i.test(url) ? url : "";
+        }
+
+        function getTodayString() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // 1. JAM DIGITAL REAL-TIME WITA
+        function updateJamTV() {
+            const now = new Date();
+            document.getElementById('tv-jam').textContent = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            }) + " WITA";
+            document.getElementById('tv-tanggal').textContent = now.toLocaleDateString('id-ID', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+        setInterval(updateJamTV, 1000);
+        updateJamTV();
+
+        function toggleFullScreenTV() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // 2. SLIDESHOW DOKUMENTASI KEGIATAN GURU (OTOMATIS EXPIRE 1 x 24 JAM)
+        function listenDokumentasiKegiatan() {
+            db.collection("dokumentasi_kegiatan").orderBy("createdAtMs", "desc").onSnapshot((snapshot) => {
+                const nowMs = Date.now();
+                const batas24JamMs = 24 * 60 * 60 * 1000;
+                const validDocs = [];
+
+                snapshot.forEach((doc) => {
+                    const d = doc.data();
+                    const createdMs = Number(d.createdAtMs || 0);
+                    const expiresMs = Number(d.expiresAtMs || (createdMs + batas24JamMs));
+                    if (expiresMs > nowMs) {
+                        validDocs.push({ id: doc.id, ...d });
+                    }
+                });
+
+                slideList = validDocs;
+                renderSlideshow();
+            });
+        }
+
+        function renderSlideshow() {
+            const wrapper = document.getElementById('slideshow-wrapper');
+            if (slideTimer) clearInterval(slideTimer);
+
+            if (slideList.length === 0) {
+                wrapper.innerHTML = `
+                    <div class="doc-slide active">
+                        <img src="images/hero-sman2bayan.jpg" alt="SMAN 2 Bayan" onerror="this.src='https://images.unsplash.com/photo-1524901548305-08eeddc35080?auto=format&fit=crop&w=1400&q=80'">
+                        <div class="slide-overlay">
+                            <span class="slide-badge"><i class="fa-solid fa-school"></i> SMA Negeri 2 Bayan</span>
+                            <h2 class="slide-title">Suasana Belajar Mengajar & Aktivitas Sekolah</h2>
+                            <p class="slide-desc">Belum ada dokumentasi kegiatan baru dalam 24 jam terakhir. Guru dapat mengunggah foto kegiatan KBM melalui Ruang Kerja Guru.</p>
+                            <div class="slide-meta">
+                                <span><i class="fa-solid fa-clock"></i> Tayang Otomatis 1 x 24 Jam</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            activeSlideIdx = 0;
+            let slidesHtml = '<div class="slide-dots">';
+            slideList.forEach((_, i) => {
+                slidesHtml += `<span class="dot-ind ${i === 0 ? 'active' : ''}" id="dot-slide-${i}"></span>`;
+            });
+            slidesHtml += '</div>';
+
+            slideList.forEach((item, idx) => {
+                const imgUrl = formatUrlGambar(item.fotoUrl) || "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80";
+                const sisaJam = Math.max(1, Math.ceil(((item.expiresAtMs || (item.createdAtMs + 86400000)) - Date.now()) / 3600000));
+
+                slidesHtml += `
+                    <div class="doc-slide ${idx === 0 ? 'active' : ''}" id="doc-slide-${idx}">
+                        <img src="${escapeHTML(imgUrl)}" referrerpolicy="no-referrer" alt="${escapeHTML(item.judul)}" onerror="this.src='https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80'">
+                        <div class="slide-overlay">
+                            <span class="slide-badge"><i class="fa-solid fa-camera"></i> ${escapeHTML(item.mapel || 'Kegiatan KBM')} • Kelas ${escapeHTML(item.kelas || 'Umum')}</span>
+                            <h2 class="slide-title">${escapeHTML(item.judul)}</h2>
+                            <p class="slide-desc">${escapeHTML(item.deskripsi || '')}</p>
+                            <div class="slide-meta">
+                                <span><i class="fa-solid fa-chalkboard-user"></i> Guru: <strong>${escapeHTML(item.guruNama || 'Guru SMAN 2 Bayan')}</strong></span>
+                                <span><i class="fa-regular fa-clock"></i> Tayang s.d. ${sisaJam} jam lagi</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            wrapper.innerHTML = slidesHtml;
+
+            if (slideList.length > 1) {
+                slideTimer = setInterval(() => {
+                    const prevSlide = document.getElementById(`doc-slide-${activeSlideIdx}`);
+                    const prevDot = document.getElementById(`dot-slide-${activeSlideIdx}`);
+                    if (prevSlide) prevSlide.classList.remove('active');
+                    if (prevDot) prevDot.classList.remove('active');
+
+                    activeSlideIdx = (activeSlideIdx + 1) % slideList.length;
+
+                    const nextSlide = document.getElementById(`doc-slide-${activeSlideIdx}`);
+                    const nextDot = document.getElementById(`dot-slide-${activeSlideIdx}`);
+                    if (nextSlide) nextSlide.classList.add('active');
+                    if (nextDot) nextDot.classList.add('active');
+                }, 6000);
+            }
+        }
+
+        // 3. LIVE FEED ABSENSI (YOUTUBE LIVE CHAT STYLE + REKAP PER KELAS)
+        function setFilterTingkat(tingkat, btnEl) {
+            filterTingkatAktif = tingkat;
+            document.querySelectorAll('.tingkat-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            renderLiveAbsenFeed();
+        }
+
+        function listenLiveAbsensi() {
+            const todayStr = getTodayString();
+            db.collection("absensi").where("tanggal", "==", todayStr).onSnapshot((snapshot) => {
+                semuaAbsenHariIni = [];
+                snapshot.forEach((doc) => {
+                    semuaAbsenHariIni.push({ id: doc.id, ...doc.data() });
+                });
+
+                updateRekapPerKelas();
+                renderLiveAbsenFeed();
+            });
+        }
+
+        function updateRekapPerKelas() {
+            const hitungan = {};
+            DAFTAR_KELAS.forEach(k => hitungan[k] = 0);
+
+            let totalSiswa = 0;
+            let totalGuru = 0;
+
+            semuaAbsenHariIni.forEach((item) => {
+                const role = String(item.role || "Siswa").toLowerCase();
+                if (role.includes("guru") || role.includes("staf")) {
+                    totalGuru++;
+                } else {
+                    totalSiswa++;
+                    const kls = String(item.kelas || "").toUpperCase().trim();
+                    if (hitungan[kls] !== undefined) {
+                        hitungan[kls]++;
+                    }
+                }
+            });
+
+            document.getElementById('badge-total-siswa').textContent = `Total Siswa Hadir: ${totalSiswa}`;
+            document.getElementById('badge-total-guru').textContent = `Guru Hadir: ${totalGuru}`;
+
+            const grid = document.getElementById('grid-rekap-kelas');
+            grid.innerHTML = "";
+            DAFTAR_KELAS.forEach((kls) => {
+                const pill = document.createElement('div');
+                pill.className = "kelas-stat-pill";
+                pill.innerHTML = `<span>${kls}</span><strong>${hitungan[kls]}</strong>`;
+                grid.appendChild(pill);
+            });
+        }
+
+        function renderLiveAbsenFeed() {
+            const streamEl = document.getElementById('live-absen-stream');
+            let filtered = semuaAbsenHariIni.filter((item) => {
+                if (filterTingkatAktif === "SEMUA") return true;
+                const kls = String(item.kelas || "").toUpperCase();
+                return kls.startsWith(filterTingkatAktif + ".");
+            });
+
+            // Urutkan berdasarkan kelas lalu waktu scan (terbaru berada di paling bawah sehingga mendorong item lama ke atas)
+            filtered.sort((a, b) => {
+                const klsCmp = String(a.kelas || "ZZZ").localeCompare(String(b.kelas || "ZZZ"));
+                if (klsCmp !== 0) return klsCmp;
+                const tA = a.waktu && a.waktu.toMillis ? a.waktu.toMillis() : 0;
+                const tB = b.waktu && b.waktu.toMillis ? b.waktu.toMillis() : 0;
+                return tA - tB;
+            });
+
+            if (filtered.length === 0) {
+                streamEl.innerHTML = `<p style="text-align:center; color:#64748b; font-size:0.85rem; margin:auto;">Belum ada data kehadiran untuk filter ini hari ini.</p>`;
+                return;
+            }
+
+            streamEl.innerHTML = "";
+            filtered.forEach((item) => {
+                const isGuru = String(item.role || "Siswa").toLowerCase().includes("guru");
+                const nama = String(item.nama || "Siswa");
+                const kelasLabel = isGuru ? (item.jabatan || "Guru / Staf") : `Kelas ${item.kelas || '-'}`;
+                const jamLabel = item.jam || "-";
+
+                const row = document.createElement('div');
+                row.className = `chat-absen-item ${isGuru ? 'role-guru' : ''}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'chat-avatar';
+                avatar.textContent = nama.charAt(0).toUpperCase();
+
+                const body = document.createElement('div');
+                body.className = 'chat-body';
+
+                const top = document.createElement('div');
+                top.className = 'chat-top';
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'chat-name';
+                nameEl.textContent = nama;
+
+                const tagEl = document.createElement('span');
+                tagEl.className = 'chat-kelas-tag';
+                tagEl.textContent = kelasLabel;
+
+                top.append(nameEl, tagEl);
+
+                const sub = document.createElement('div');
+                sub.className = 'chat-sub';
+                sub.textContent = `Hadir pukul ${jamLabel} WITA • ${item.status || 'Hadir'}`;
+
+                body.append(top, sub);
+                row.append(avatar, body);
+                streamEl.appendChild(row);
+            });
+
+            // Auto-scroll ke bagian paling bawah agar entri terbaru selalu terlihat & item lama terdorong ke atas
+            streamEl.scrollTop = streamEl.scrollHeight;
+        }
+
+        // 4. RUNNING TEXT PENGUMUMAN
+        function listenPengumumanTicker() {
+            db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").limit(5).onSnapshot((snap) => {
+                if (snap.empty) return;
+                const teksList = [];
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    teksList.push(`[${p.kategori || 'INFO'}] ${p.judul}${p.isi ? ': ' + p.isi : ''}`);
+                });
+                document.getElementById('tv-running-text').textContent = teksList.join("   •   ");
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!auth.currentUser) {
+                await auth.signInAnonymously().catch(() => {});
+            }
+            listenDokumentasiKegiatan();
+            listenLiveAbsensi();
+            listenPengumumanTicker();
+        });
+    </script>
+</body>
+</html>
