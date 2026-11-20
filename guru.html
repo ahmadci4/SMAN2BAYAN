@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Guru & Operator - SMA NEGERI 2 BAYAN</title>
+    <title>Ruang Kerja Guru & Operator - SMA NEGERI 2 BAYAN</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Library Scanner QR Code (Kamera HP/Laptop) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Library Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         :root {
             --primary: #4318ff;
@@ -14,6 +20,7 @@
             --secondary: #05cd99;
             --bg-body: #f4f7fe;
             --bg-card: #ffffff;
+            --sidebar-bg: #111c44;
             --text-main: #2b3674;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
@@ -28,68 +35,162 @@
             margin: 0;
             background: var(--bg-body);
             color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
         }
 
-        .top-bar {
+        /* SIDEBAR SEBELAH KIRI */
+        .sidebar {
+            width: 270px;
+            background: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            transition: transform 0.25s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 22px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4318ff, #05cd99);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section-label {
+            padding: 16px 20px 6px 20px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+        }
+
+        .nav-menu {
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .side-btn {
+            width: 100%;
+            background: transparent;
+            color: #cbd5e1;
+            border: none;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .side-btn i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .side-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .side-btn.active {
+            background: linear-gradient(135deg, #4318ff, #290bb4);
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(67, 24, 255, 0.35);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .side-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .side-link-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        /* KONTEN UTAMA SEBELAH KANAN */
+        .main-wrapper {
+            flex: 1;
+            margin-left: 270px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .top-header {
             background: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
-            padding: 14px 20px;
-            position: sticky;
-            top: 0;
-            z-index: 80;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-        }
-
-        .top-inner {
-            max-width: 1180px;
-            margin: 0 auto;
+            padding: 14px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 70;
         }
 
-        .container {
-            max-width: 1180px;
-            margin: 18px auto 60px auto;
-            padding: 0 16px;
-        }
-
-        .tab-bar {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 18px;
-            scrollbar-width: none;
-        }
-
-        .tab-bar::-webkit-scrollbar {
+        .mobile-menu-toggle {
             display: none;
-        }
-
-        .tab-btn {
-            background: var(--bg-card);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 0.83rem;
-            font-weight: 700;
+            background: #eef2ff;
+            color: #4318ff;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 1.1rem;
             cursor: pointer;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            transition: all 0.2s;
         }
 
-        .tab-btn.active,
-        .tab-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
+        .content-area {
+            padding: 22px 24px 60px 24px;
+            max-width: 1120px;
+            width: 100%;
         }
 
         .tab-section {
@@ -111,7 +212,7 @@
 
         .grid-2 {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 14px;
         }
 
@@ -145,6 +246,7 @@
             align-items: center;
             justify-content: center;
             gap: 7px;
+            text-decoration: none;
         }
 
         .btn-primary {
@@ -154,6 +256,11 @@
 
         .btn-success {
             background: linear-gradient(135deg, #05cd99, #02946d);
+            color: white;
+        }
+
+        .btn-wa {
+            background: #25D366;
             color: white;
         }
 
@@ -205,92 +312,308 @@
             font-weight: 800;
             color: var(--text-main);
         }
+
+        #reader-guru {
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 3px solid #4318ff;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            z-index: 95;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-backdrop.open {
+                display: block;
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+            .mobile-menu-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <header class="top-bar">
-        <div class="top-inner">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #4318ff, #290bb4); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 800; font-size: 1.02rem;">PANEL KENDALI GURU & OPERATOR</div>
-                    <div id="staff-session-info" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 600;">Memverifikasi sesi akses...</div>
-                </div>
-            </div>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleSidebarMobile()"></div>
 
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">
-                    <i class="fa-solid fa-house"></i> Kembali ke Beranda
-                </a>
-                <a href="absen.html" class="btn btn-success" style="text-decoration: none;">
-                    <i class="fa-solid fa-qrcode"></i> Buka Absensi QR
-                </a>
+    <!-- SIDEBAR MENU DI SEBELAH KIRI -->
+    <aside id="left-sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <div style="font-weight: 800; font-size: 0.96rem; letter-spacing: 0.3px;">SMAN 2 BAYAN</div>
+                <div id="sidebar-role-tag" style="font-size: 0.72rem; color: #34d399; font-weight: 700;">Ruang Kerja Guru</div>
             </div>
         </div>
-    </header>
 
-    <div class="container">
-        <!-- NAVIGASI TAB PANEL -->
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="bukaTab('tab-pengumuman', this)"><i class="fa-solid fa-bullhorn"></i> Pengumuman Sekolah</button>
-            <button class="tab-btn" onclick="bukaTab('tab-materi', this)"><i class="fa-solid fa-book-open"></i> Materi & Tugas</button>
-            <button class="tab-btn" onclick="bukaTab('tab-nilai', this)"><i class="fa-solid fa-star"></i> Penilaian Tugas Siswa</button>
-            <button class="tab-btn" onclick="bukaTab('tab-siswa', this)"><i class="fa-solid fa-user-graduate"></i> Data Siswa & Email</button>
-            <button class="tab-btn" onclick="bukaTab('tab-tendik', this)"><i class="fa-solid fa-sitemap"></i> Struktur Guru & Tendik</button>
-            <button class="tab-btn" onclick="bukaTab('tab-profil-utama', this)"><i class="fa-solid fa-id-badge"></i> Profil Guru Fisika</button>
-            <button class="tab-btn" onclick="bukaTab('tab-pilketos', this)"><i class="fa-solid fa-check-to-slot"></i> Kelola Pilketos</button>
-        </div>
+        <nav class="nav-menu">
+            <div class="sidebar-section-label">Menu Utama Guru</div>
 
-        <!-- ======================================================= -->
-        <!-- TAB 1: PENGUMUMAN SEKOLAH                               -->
-        <!-- ======================================================= -->
-        <section id="tab-pengumuman" class="tab-section active">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-bullhorn" style="color: #f59e0b;"></i> Buat Pengumuman Baru di Beranda</h3>
-                <div class="grid-2">
-                    <div>
-                        <label>Judul Pengumuman</label>
-                        <input type="text" id="peng-judul" class="form-control" placeholder="Contoh: Jadwal Penilaian Akhir Semester Ganjil">
-                    </div>
-                    <div>
-                        <label>Kategori Pengumuman</label>
-                        <select id="peng-kategori" class="form-control">
-                            <option value="INFO">INFO UMUM</option>
-                            <option value="PENTING">PENTING / MENDESAK</option>
-                            <option value="KEGIATAN">KEGIATAN SEKOLAH</option>
-                        </select>
-                    </div>
-                </div>
-                <label>Isi Pengumuman Lengkap</label>
-                <textarea id="peng-isi" rows="4" class="form-control" placeholder="Tuliskan rincian pengumuman untuk siswa, guru, dan pengunjung..."></textarea>
+            <button class="side-btn active" onclick="bukaTab('tab-absen-guru', this)">
+                <i class="fa-solid fa-qrcode"></i> Absensi & WA Ortu
+            </button>
 
-                <label>Link Gambar / Banner Poster (Opsional - Google Drive atau URL Gambar)</label>
-                <input type="url" id="peng-banner" class="form-control" placeholder="https://drive.google.com/file/d/... atau https://...">
+            <button class="side-btn" onclick="bukaTab('tab-materi', this)">
+                <i class="fa-solid fa-book-open"></i> Materi & Nilai Tugas
+            </button>
 
-                <button id="btn-simpan-pengumuman" class="btn btn-primary" onclick="simpanPengumuman()">
-                    <i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman Sekarang
+            <button class="side-btn" onclick="bukaTab('tab-dokumentasi', this)">
+                <i class="fa-solid fa-camera-retro"></i> Dokumentasi TV (24 Jam)
+            </button>
+
+            <!-- MENU KHUSUS OPERATOR (TERSEMBUNYI UNTUK GURU BIASA) -->
+            <div id="operator-only-menu" style="display: none;">
+                <div class="sidebar-section-label" style="margin-top: 10px; color: #fbbf24;">Kendali Operator Sekolah</div>
+
+                <button class="side-btn" onclick="bukaTab('tab-siswa', this)">
+                    <i class="fa-solid fa-user-graduate"></i> Data Siswa & WA Ortu
+                </button>
+
+                <button class="side-btn" onclick="bukaTab('tab-akun-guru', this)">
+                    <i class="fa-solid fa-user-shield"></i> Akun & Sandi Awal Guru
+                </button>
+
+                <button class="side-btn" onclick="bukaTab('tab-pengumuman', this)">
+                    <i class="fa-solid fa-bullhorn"></i> Pengumuman Sekolah
+                </button>
+
+                <button class="side-btn" onclick="bukaTab('tab-tendik', this)">
+                    <i class="fa-solid fa-sitemap"></i> Struktur Guru & Tendik
+                </button>
+
+                <button class="side-btn" onclick="bukaTab('tab-profil-utama', this)">
+                    <i class="fa-solid fa-id-badge"></i> Profil Guru Fisika
+                </button>
+
+                <button class="side-btn" onclick="bukaTab('tab-pilketos', this)">
+                    <i class="fa-solid fa-check-to-slot"></i> Kelola Pilketos
                 </button>
             </div>
+        </nav>
 
-            <div class="card">
-                <h3 style="margin-top: 0;">Daftar Pengumuman Aktif</h3>
-                <div id="list-pengumuman-admin"><p style="color: grey; font-size: 0.85rem;">Memuat data...</p></div>
+        <div class="sidebar-footer">
+            <a href="display.html" target="_blank" class="side-link-btn" style="background: rgba(5, 205, 153, 0.22); color: #6ee7b7;">
+                <i class="fa-solid fa-tv"></i> Buka Display TV Lorong
+            </a>
+            <a href="index.html" class="side-link-btn">
+                <i class="fa-solid fa-house"></i> Kembali ke Beranda
+            </a>
+        </div>
+    </aside>
+
+    <!-- AREA KONTEN SEBELAH KANAN -->
+    <div class="main-wrapper">
+        <header class="top-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="mobile-menu-toggle" onclick="toggleSidebarMobile()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <div id="page-title-header" style="font-weight: 800; font-size: 1.05rem;">Absensi Siswa & Notifikasi WA Orang Tua</div>
+                    <div id="staff-session-info" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 600;">Memverifikasi akun...</div>
+                </div>
             </div>
-        </section>
 
-        <!-- ======================================================= -->
-        <!-- TAB 2: MATERI PELAJARAN & TUGAS (18 MAPEL LENGKAP)      -->
-        <!-- ======================================================= -->
-        <section id="tab-materi" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-book-open" style="color: #4318ff;"></i> Tambah Materi Pembelajaran Baru</h3>
-                <div class="grid-2">
-                    <div>
-                        <label>Mata Pelajaran</label>
-                        <select id="mat-mapel" class="form-control">
+            <button id="btn-absen-guru-top" class="btn btn-success" onclick="catatAbsenGuruSendiri()">
+                <i class="fa-solid fa-user-check"></i> Absen Hadir Guru
+            </button>
+        </header>
+
+        <main class="content-area">
+
+            <!-- ======================================================= -->
+            <!-- TAB 1 (GURU): SCAN ABSENSI QR + OTOMATIS WA ORANG TUA   -->
+            <!-- ======================================================= -->
+            <section id="tab-absen-guru" class="tab-section active">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+                        <div>
+                            <h3 style="margin: 0;"><i class="fa-solid fa-qrcode" style="color: #4318ff;"></i> Scan QR Code Kartu Pelajar Siswa</h3>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 0 0;">Saat QR Code dipindai, kehadiran langsung tampil di <strong>Display TV Lorong</strong> dan diarahkan ke <strong>WhatsApp Orang Tua</strong>.</p>
+                        </div>
+                        <label style="background: #dcfce7; color: #166534; padding: 8px 12px; border-radius: 10px; cursor: pointer; margin: 0;">
+                            <input type="checkbox" id="auto-open-wa-ortu" checked> Otomatis Buka WA Orang Tua setelah Scan
+                        </label>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 14px;">
+                        <button id="btn-start-cam" class="btn btn-primary" onclick="mulaiKameraGuru()">
+                            <i class="fa-solid fa-camera"></i> Aktifkan Kamera Scanner
+                        </button>
+                        <button id="btn-stop-cam" class="btn btn-danger" style="display: none;" onclick="hentikanKameraGuru()">
+                            <i class="fa-solid fa-stop"></i> Matikan Kamera
+                        </button>
+                    </div>
+
+                    <div id="reader-guru"></div>
+
+                    <!-- Input NIS Manual -->
+                    <div style="max-width: 420px; margin: 16px auto 0 auto; display: flex; gap: 8px;">
+                        <input type="text" id="manual-nis-guru" class="form-control" style="margin: 0;" placeholder="Atau ketik NIS siswa secara manual...">
+                        <button class="btn btn-success" onclick="prosesAbsenSiswaByNIS(document.getElementById('manual-nis-guru').value.trim())">Absen</button>
+                    </div>
+
+                    <!-- Hasil Scan & Tombol Langsung ke WA Orang Tua -->
+                    <div id="hasil-scan-box" style="display: none; max-width: 500px; margin: 18px auto 0 auto; background: #ecfdf5; border: 2px solid #05cd99; border-radius: 16px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="width: 44px; height: 44px; border-radius: 50%; background: #05cd99; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.72rem; font-weight: 800; color: #059669;">KEHADIRAN TERCATAT & TAYANG DI TV</div>
+                                <strong id="scan-res-nama" style="font-size: 1.05rem; color: #064e3b;">Nama Siswa</strong>
+                                <div id="scan-res-info" style="font-size: 0.8rem; color: #047857;">NIS: - | Kelas: - | Jam: -</div>
+                            </div>
+                        </div>
+                        <a id="link-wa-ortu-langsung" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-wa" style="width: 100%; display: none;">
+                            <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Kirim Notifikasi Hadir ke WA Orang Tua
+                        </a>
+                        <p id="info-wa-kosong" style="display: none; font-size: 0.78rem; color: #b45309; margin: 6px 0 0 0;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Nomor WhatsApp Orang Tua belum diisi oleh Operator pada data siswa ini.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rekap Kehadiran Hari Ini + Export PDF -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Rekap Kehadiran Siswa Hari Ini</h3>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <select id="filter-kelas-absen" class="form-control" style="width: auto; margin: 0;" onchange="muatRekapAbsenHarian()">
+                                <option value="SEMUA">Semua Kelas</option>
+                                <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                                <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                                <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                            </select>
+                            <button class="btn btn-danger" onclick="exportRekapAbsenPDF()">
+                                <i class="fa-solid fa-file-pdf"></i> Unduh PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>NIS</th>
+                                    <th>Nama Siswa</th>
+                                    <th>Kelas</th>
+                                    <th>Jam Hadir</th>
+                                    <th>WA Orang Tua</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-rekap-harian">
+                                <tr><td colspan="6" style="text-align: center; color: grey;">Memuat rekap absensi...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======================================================= -->
+            <!-- TAB 2 (GURU): MATERI PELAJARAN, TUGAS & PENILAIAN       -->
+            <!-- ======================================================= -->
+            <section id="tab-materi" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-book-open" style="color: #4318ff;"></i> Tambah Materi & Tugas Pembelajaran</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Mata Pelajaran</label>
+                            <select id="mat-mapel" class="form-control">
+                                <option value="Pend. Agama">Pend. Agama</option>
+                                <option value="Pend. Pancasila">Pend. Pancasila</option>
+                                <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                <option value="Matematika">Matematika</option>
+                                <option value="Bahasa Inggris">Bahasa Inggris</option>
+                                <option value="Sejarah">Sejarah</option>
+                                <option value="PJOK">PJOK</option>
+                                <option value="Seni & Prakarya">Seni & Prakarya</option>
+                                <option value="Informatika">Informatika</option>
+                                <option value="Biologi">Biologi</option>
+                                <option value="Kimia">Kimia</option>
+                                <option value="Fisika" selected>Fisika</option>
+                                <option value="MTK Lanjut">MTK Lanjut</option>
+                                <option value="Sosiologi">Sosiologi</option>
+                                <option value="Ekonomi">Ekonomi</option>
+                                <option value="Geografi">Geografi</option>
+                                <option value="Antropologi">Antropologi</option>
+                                <option value="PKWU">PKWU</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Kelas Tujuan</label>
+                            <select id="mat-kelas" class="form-control">
+                                <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                                <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                                <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Judul Bab</label>
+                            <input type="text" id="mat-bab" class="form-control" placeholder="Contoh: Bab 1 - Pengukuran & Besaran">
+                        </div>
+                        <div>
+                            <label>Sub Bab / Topik</label>
+                            <input type="text" id="mat-subbab" class="form-control" placeholder="Contoh: Angka Penting & Ketidakpastian">
+                        </div>
+                    </div>
+
+                    <label>Ringkasan / Penjelasan Materi</label>
+                    <textarea id="mat-deskripsi" rows="3" class="form-control" placeholder="Tuliskan rangkuman materi yang akan dibaca siswa..."></textarea>
+
+                    <div class="grid-2">
+                        <div>
+                            <label>Judul Link Media / Video / Modul (Opsional)</label>
+                            <input type="text" id="mat-link-label" class="form-control" placeholder="Contoh: Video Penjelasan YouTube / Modul PDF">
+                        </div>
+                        <div>
+                            <label>URL Link YouTube / Google Drive (Opsional)</label>
+                            <input type="url" id="mat-link-url" class="form-control" placeholder="https://youtube.com/watch?v=... atau https://drive.google.com/...">
+                        </div>
+                    </div>
+
+                    <label>Instruksi Tugas / PR Siswa (Kosongkan jika tidak ada tugas)</label>
+                    <textarea id="mat-pr" rows="2" class="form-control" placeholder="Contoh: Kerjakan latihan soal halaman 15, foto lalu unggah ke Google Drive."></textarea>
+
+                    <button id="btn-simpan-materi" class="btn btn-primary" onclick="simpanMateri()">
+                        <i class="fa-solid fa-plus"></i> Publikasikan Materi & Tugas
+                    </button>
+                </div>
+
+                <!-- Penilaian Tugas Siswa -->
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-star" style="color: #05cd99;"></i> Penilaian Tugas Dikumpulkan Siswa</h3>
+                    <div id="list-tugas-siswa"><p style="color: grey; font-size: 0.85rem;">Memuat kiriman tugas...</p></div>
+                </div>
+
+                <!-- Daftar Materi Terpublikasi -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Daftar Materi Terpublikasi</h3>
+                        <select id="filter-mapel-materi" class="form-control" style="max-width: 230px; margin: 0;" onchange="muatMateriAdmin()">
+                            <option value="SEMUA">Semua Mata Pelajaran</option>
                             <option value="Pend. Agama">Pend. Agama</option>
                             <option value="Pend. Pancasila">Pend. Pancasila</option>
                             <option value="Bahasa Indonesia">Bahasa Indonesia</option>
@@ -302,7 +625,7 @@
                             <option value="Informatika">Informatika</option>
                             <option value="Biologi">Biologi</option>
                             <option value="Kimia">Kimia</option>
-                            <option value="Fisika" selected>Fisika</option>
+                            <option value="Fisika">Fisika</option>
                             <option value="MTK Lanjut">MTK Lanjut</option>
                             <option value="Sosiologi">Sosiologi</option>
                             <option value="Ekonomi">Ekonomi</option>
@@ -311,337 +634,369 @@
                             <option value="PKWU">PKWU</option>
                         </select>
                     </div>
-                    <div>
-                        <label>Kelas Tujuan</label>
-                        <select id="mat-kelas" class="form-control">
-                            <option value="X.A">X.A</option>
-                            <option value="X.B">X.B</option>
-                            <option value="X.C">X.C</option>
-                            <option value="X.D">X.D</option>
-                            <option value="XI.A">XI.A</option>
-                            <option value="XI.B">XI.B</option>
-                            <option value="XI.C">XI.C</option>
-                            <option value="XI.D">XI.D</option>
-                            <option value="XII.A">XII.A</option>
-                            <option value="XII.B">XII.B</option>
-                            <option value="XII.C">XII.C</option>
-                            <option value="XII.D">XII.D</option>
-                        </select>
+                    <div id="list-materi-admin"><p style="color: grey; font-size: 0.85rem;">Memuat materi...</p></div>
+                </div>
+            </section>
+
+            <!-- ======================================================= -->
+            <!-- TAB 3 (GURU): DOKUMENTASI KEGIATAN KBM (TAYANG 24 JAM)  -->
+            <!-- ======================================================= -->
+            <section id="tab-dokumentasi" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-camera-retro" style="color: #05cd99;"></i> Upload Dokumentasi Kegiatan Hari Ini (Digital Signage TV)</h3>
+                    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 14px;">
+                        <strong>Tayang Otomatis di TV Lorong Sekolah:</strong> Foto dan keterangan kegiatan belajar mengajar yang Anda unggah di sini akan otomatis menjadi slide di layar <strong>Digital Signage</strong> dan hilang otomatis setelah <strong>1 x 24 jam</strong>.
                     </div>
-                    <div>
-                        <label>Judul Bab</label>
-                        <input type="text" id="mat-bab" class="form-control" placeholder="Contoh: Bab 1 - Pengukuran & Besaran">
+
+                    <div class="grid-2">
+                        <div>
+                            <label>Judul Kegiatan / Materi Hari Ini</label>
+                            <input type="text" id="dok-judul" class="form-control" placeholder="Contoh: Praktikum Hukum Ohm Kelas XI.A">
+                        </div>
+                        <div>
+                            <label>Mata Pelajaran</label>
+                            <input type="text" id="dok-mapel" class="form-control" placeholder="Contoh: Fisika">
+                        </div>
+                        <div>
+                            <label>Kelas</label>
+                            <select id="dok-kelas" class="form-control">
+                                <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                                <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                                <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                                <option value="Umum">Kegiatan Sekolah Umum</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Link Foto Kegiatan (Google Drive / URL Gambar)</label>
+                            <input type="url" id="dok-foto" class="form-control" placeholder="https://drive.google.com/file/d/... atau https://...">
+                        </div>
                     </div>
-                    <div>
-                        <label>Sub Bab / Topik</label>
-                        <input type="text" id="mat-subbab" class="form-control" placeholder="Contoh: Angka Penting & Ketidakpastian">
-                    </div>
+
+                    <label>Keterangan Singkat Kegiatan</label>
+                    <textarea id="dok-deskripsi" rows="2" class="form-control" placeholder="Contoh: Siswa melakukan pengukuran arus dan tegangan listrik secara berkelompok di laboratorium."></textarea>
+
+                    <button id="btn-simpan-dok" class="btn btn-success" onclick="simpanDokumentasiKegiatan()">
+                        <i class="fa-solid fa-tv"></i> Tayangkan ke Digital Signage (24 Jam)
+                    </button>
                 </div>
 
-                <label>Ringkasan / Penjelasan Materi</label>
-                <textarea id="mat-deskripsi" rows="4" class="form-control" placeholder="Tuliskan rangkuman materi yang akan dibaca siswa..."></textarea>
+                <div class="card">
+                    <h3 style="margin-top: 0;">Dokumentasi Sedang Tayang (Aktif 24 Jam)</h3>
+                    <div id="list-dokumentasi-aktif"><p style="color: grey; font-size: 0.85rem;">Memuat dokumentasi...</p></div>
+                </div>
+            </section>
 
-                <div class="grid-2">
-                    <div>
-                        <label>Judul Link Media / Video / Modul (Opsional)</label>
-                        <input type="text" id="mat-link-label" class="form-control" placeholder="Contoh: Video Penjelasan YouTube / Modul PDF">
+            <!-- ======================================================= -->
+            <!-- TAB 4 (OPERATOR): DATA SISWA, EMAIL & WA ORANG TUA      -->
+            <!-- ======================================================= -->
+            <section id="tab-siswa" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-user-plus" style="color: #4318ff;"></i> Tambah / Daftarkan Siswa, Email & WhatsApp Orang Tua</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>NIS (Nomor Induk Siswa)</label>
+                            <input type="text" id="sis-nis" class="form-control" placeholder="Contoh: 2026001">
+                        </div>
+                        <div>
+                            <label>Nama Lengkap Siswa</label>
+                            <input type="text" id="sis-nama" class="form-control" placeholder="Contoh: Ahmad Baihaqi">
+                        </div>
+                        <div>
+                            <label>Email Aktif Siswa (Untuk Login Siswa)</label>
+                            <input type="email" id="sis-email" class="form-control" placeholder="contoh: ahmad.siswa@gmail.com">
+                        </div>
+                        <div>
+                            <label>No. WhatsApp Orang Tua / Wali (Awali 62 / 08)</label>
+                            <input type="text" id="sis-wa-ortu" class="form-control" placeholder="Contoh: 081234567890 atau 6281234567890">
+                        </div>
+                        <div>
+                            <label>Kelas</label>
+                            <select id="sis-kelas" class="form-control">
+                                <option value="X.A">X.A</option><option value="X.B">X.B</option><option value="X.C">X.C</option><option value="X.D">X.D</option>
+                                <option value="XI.A">XI.A</option><option value="XI.B">XI.B</option><option value="XI.C">XI.C</option><option value="XI.D">XI.D</option>
+                                <option value="XII.A">XII.A</option><option value="XII.B">XII.B</option><option value="XII.C">XII.C</option><option value="XII.D">XII.D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Jenis Kelamin</label>
+                            <select id="sis-jk" class="form-control">
+                                <option value="Laki-laki">Laki-laki</option>
+                                <option value="Perempuan">Perempuan</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label>URL Link YouTube / Google Drive (Opsional)</label>
-                        <input type="url" id="mat-link-url" class="form-control" placeholder="https://youtube.com/watch?v=... atau https://drive.google.com/...">
-                    </div>
+                    <label>Link Foto Profil / Kartu Pelajar (Opsional)</label>
+                    <input type="url" id="sis-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
+
+                    <button class="btn btn-primary" onclick="tambahSatuSiswa()">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Data Siswa & WA Ortu
+                    </button>
                 </div>
 
-                <label>Instruksi Tugas / PR Siswa (Kosongkan jika tidak ada tugas)</label>
-                <textarea id="mat-pr" rows="3" class="form-control" placeholder="Contoh: Kerjakan latihan soal halaman 15 di buku catatan, foto lalu unggah ke Google Drive dan tempel linknya di sini."></textarea>
-
-                <button id="btn-simpan-materi" class="btn btn-primary" onclick="simpanMateri()">
-                    <i class="fa-solid fa-plus"></i> Publikasikan Materi & Tugas
-                </button>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-                    <h3 style="margin: 0;">Daftar Materi Terpublikasi</h3>
-                    <select id="filter-mapel-materi" class="form-control" style="max-width: 230px; margin: 0;" onchange="muatMateriAdmin()">
-                        <option value="SEMUA">Semua Mata Pelajaran</option>
-                        <option value="Pend. Agama">Pend. Agama</option>
-                        <option value="Pend. Pancasila">Pend. Pancasila</option>
-                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
-                        <option value="Matematika">Matematika</option>
-                        <option value="Bahasa Inggris">Bahasa Inggris</option>
-                        <option value="Sejarah">Sejarah</option>
-                        <option value="PJOK">PJOK</option>
-                        <option value="Seni & Prakarya">Seni & Prakarya</option>
-                        <option value="Informatika">Informatika</option>
-                        <option value="Biologi">Biologi</option>
-                        <option value="Kimia">Kimia</option>
-                        <option value="Fisika">Fisika</option>
-                        <option value="MTK Lanjut">MTK Lanjut</option>
-                        <option value="Sosiologi">Sosiologi</option>
-                        <option value="Ekonomi">Ekonomi</option>
-                        <option value="Geografi">Geografi</option>
-                        <option value="Antropologi">Antropologi</option>
-                        <option value="PKWU">PKWU</option>
-                    </select>
-                </div>
-                <div id="list-materi-admin"><p style="color: grey; font-size: 0.85rem;">Memuat materi...</p></div>
-            </div>
-        </section>
-
-        <!-- ======================================================= -->
-        <!-- TAB 3: PENILAIAN TUGAS SISWA                            -->
-        <!-- ======================================================= -->
-        <section id="tab-nilai" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-star" style="color: #05cd99;"></i> Daftar Tugas Dikumpulkan Siswa</h3>
-                <p style="font-size: 0.83rem; color: var(--text-muted); margin-top: 0;">Periksa tautan jawaban siswa, berikan nilai (0–100), dan tambahkan catatan umpan balik.</p>
-                <div id="list-tugas-siswa"><p style="color: grey; font-size: 0.85rem;">Memuat kiriman tugas...</p></div>
-            </div>
-        </section>
-
-        <!-- ======================================================= -->
-        <!-- TAB 4: DATA SISWA & EMAIL (UNTUK LOGIN MANDIRI SISWA)   -->
-        <!-- ======================================================= -->
-        <section id="tab-siswa" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-user-plus" style="color: #4318ff;"></i> Tambah / Daftarkan Siswa & Email</h3>
-                <div style="background: #eef2ff; border: 1px solid #c7d2fe; color: #3730a3; padding: 10px 14px; border-radius: 10px; font-size: 0.8rem; margin-bottom: 14px;">
-                    <strong>Penting:</strong> Pastikan kolom <strong>Email Siswa</strong> diisi dengan benar. Siswa akan mengaktivasi akun dan membuat kata sandi sendiri menggunakan Email + NIS tersebut di halaman Beranda.
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-file-csv" style="color: #05cd99;"></i> Impor Massal Data Siswa dari CSV</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0;">
+                        Format urutan kolom CSV (pisahkan dengan koma <code>,</code> atau titik koma <code>;</code>):<br>
+                        <code>NIS, Nama Lengkap, Jenis Kelamin, Kelas, Email Siswa, No WA Orang Tua, Link Foto</code>
+                    </p>
+                    <input type="file" id="csv-siswa-file" accept=".csv" class="form-control">
+                    <button class="btn btn-success" onclick="imporSiswaCSV()">
+                        <i class="fa-solid fa-upload"></i> Proses & Impor File CSV
+                    </button>
                 </div>
 
-                <div class="grid-2">
-                    <div>
-                        <label>NIS (Nomor Induk Siswa)</label>
-                        <input type="text" id="sis-nis" class="form-control" placeholder="Contoh: 2026001">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Database Siswa Terdaftar (<span id="total-siswa-count">0</span>)</h3>
+                        <input type="text" id="cari-siswa-input" class="form-control" style="max-width: 260px; margin: 0;" placeholder="Cari nama, NIS, kelas, WA..." oninput="filterTabelSiswa()">
                     </div>
-                    <div>
-                        <label>Nama Lengkap Siswa</label>
-                        <input type="text" id="sis-nama" class="form-control" placeholder="Contoh: Ahmad Baihaqi">
-                    </div>
-                    <div>
-                        <label>Email Aktif Siswa (Wajib untuk Login)</label>
-                        <input type="email" id="sis-email" class="form-control" placeholder="contoh: ahmad.siswa@gmail.com">
-                    </div>
-                    <div>
-                        <label>Kelas</label>
-                        <select id="sis-kelas" class="form-control">
-                            <option value="X.A">X.A</option>
-                            <option value="X.B">X.B</option>
-                            <option value="X.C">X.C</option>
-                            <option value="X.D">X.D</option>
-                            <option value="XI.A">XI.A</option>
-                            <option value="XI.B">XI.B</option>
-                            <option value="XI.C">XI.C</option>
-                            <option value="XI.D">XI.D</option>
-                            <option value="XII.A">XII.A</option>
-                            <option value="XII.B">XII.B</option>
-                            <option value="XII.C">XII.C</option>
-                            <option value="XII.D">XII.D</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Jenis Kelamin</label>
-                        <select id="sis-jk" class="form-control">
-                            <option value="Laki-laki">Laki-laki</option>
-                            <option value="Perempuan">Perempuan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Link Foto Profil / Kartu Pelajar (Opsional)</label>
-                        <input type="url" id="sis-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NIS</th>
+                                    <th>Nama Lengkap</th>
+                                    <th>Kelas</th>
+                                    <th>Email Siswa</th>
+                                    <th>WA Orang Tua</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-siswa">
+                                <tr><td colspan="7" style="text-align: center; color: grey;">Memuat data siswa...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </section>
 
-                <button class="btn btn-primary" onclick="tambahSatuSiswa()">
-                    <i class="fa-solid fa-floppy-disk"></i> Simpan Data Siswa
-                </button>
-            </div>
+            <!-- ======================================================= -->
+            <!-- TAB 5 (OPERATOR): BUAT AKUN & SANDI AWAL GURU           -->
+            <!-- ======================================================= -->
+            <section id="tab-akun-guru" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-user-shield" style="color: #4318ff;"></i> Pembuatan Akun & Kata Sandi Awal Guru (Khusus Operator)</h3>
+                    <div style="background: #eef2ff; border: 1px solid #c7d2fe; color: #3730a3; padding: 10px 14px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 14px;">
+                        Hanya Operator yang dapat membuat akun login untuk Bapak/Ibu Guru. Berikan Email dan Kata Sandi Awal ini kepada guru yang bersangkutan (Guru dapat mengubah sandinya sendiri nanti lewat menu Profil).
+                    </div>
 
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-file-csv" style="color: #05cd99;"></i> Impor Massal Data Siswa dari CSV</h3>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0;">
-                    Format urutan kolom CSV (pisahkan dengan koma <code>,</code> atau titik koma <code>;</code>):<br>
-                    <code>NIS, Nama Lengkap, Jenis Kelamin, Kelas, Email Siswa, Link Foto</code>
-                </p>
-                <input type="file" id="csv-siswa-file" accept=".csv" class="form-control">
-                <button class="btn btn-success" onclick="imporSiswaCSV()">
-                    <i class="fa-solid fa-upload"></i> Proses & Impor File CSV
-                </button>
-            </div>
+                    <div class="grid-2">
+                        <div>
+                            <label>Nama Lengkap & Gelar Guru</label>
+                            <input type="text" id="akg-nama" class="form-control" placeholder="Contoh: Rianti, S.Pd.">
+                        </div>
+                        <div>
+                            <label>Mata Pelajaran / Jabatan</label>
+                            <input type="text" id="akg-sub" class="form-control" placeholder="Contoh: Guru Fisika">
+                        </div>
+                        <div>
+                            <label>Email Login Guru</label>
+                            <input type="email" id="akg-email" class="form-control" placeholder="Contoh: rianti@sman2bayan.sch.id">
+                        </div>
+                        <div>
+                            <label>Kata Sandi Awal (Min. 8 karakter huruf & angka)</label>
+                            <input type="text" id="akg-pass" class="form-control" placeholder="Contoh: GuruBayan2026">
+                        </div>
+                    </div>
 
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-                    <h3 style="margin: 0;">Database Siswa Terdaftar (<span id="total-siswa-count">0</span>)</h3>
-                    <input type="text" id="cari-siswa-input" class="form-control" style="max-width: 260px; margin: 0;" placeholder="Cari nama, NIS, kelas, email..." oninput="filterTabelSiswa()">
+                    <button id="btn-buat-akun-guru" class="btn btn-primary" onclick="buatAkunGuruBaru()">
+                        <i class="fa-solid fa-user-plus"></i> Daftarkan Akun Guru Sekarang
+                    </button>
                 </div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>NIS</th>
-                                <th>Nama Lengkap</th>
-                                <th>Email</th>
-                                <th>Kelas</th>
-                                <th>Status Akun</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-siswa">
-                            <tr><td colspan="6" style="text-align: center; color: grey;">Memuat data siswa...</td></tr>
-                        </tbody>
-                    </table>
+
+                <div class="card">
+                    <h3 style="margin-top: 0;">Daftar Akun Guru Terdaftar</h3>
+                    <div id="list-akun-guru-terdaftar"><p style="color: grey; font-size: 0.85rem;">Memuat daftar akun...</p></div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- ======================================================= -->
-        <!-- TAB 5: STRUKTUR ORGANISASI, GURU & TENAGA KEPENDIDIKAN  -->
-        <!-- ======================================================= -->
-        <section id="tab-tendik" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-sitemap" style="color: #4318ff;"></i> Tambah Guru / Tenaga Kependidikan</h3>
-                <div class="grid-2">
-                    <div>
-                        <label>Kategori Struktur</label>
-                        <select id="td-kategori" class="form-control">
-                            <option value="Pimpinan & Manajemen">Pimpinan & Manajemen</option>
-                            <option value="Guru Mata Pelajaran" selected>Guru Mata Pelajaran</option>
-                            <option value="Tenaga Kependidikan">Tenaga Kependidikan & TU</option>
-                        </select>
+            <!-- ======================================================= -->
+            <!-- TAB 6 (OPERATOR): PENGUMUMAN SEKOLAH                    -->
+            <!-- ======================================================= -->
+            <section id="tab-pengumuman" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-bullhorn" style="color: #f59e0b;"></i> Buat Pengumuman Baru di Beranda & Ticker TV</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Judul Pengumuman</label>
+                            <input type="text" id="peng-judul" class="form-control" placeholder="Contoh: Jadwal Penilaian Akhir Semester Ganjil">
+                        </div>
+                        <div>
+                            <label>Kategori Pengumuman</label>
+                            <select id="peng-kategori" class="form-control">
+                                <option value="INFO">INFO UMUM</option>
+                                <option value="PENTING">PENTING / MENDESAK</option>
+                                <option value="KEGIATAN">KEGIATAN SEKOLAH</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label>Nomor Urut Tampil</label>
-                        <input type="number" id="td-urutan" class="form-control" value="10">
-                    </div>
-                    <div>
-                        <label>Nama Lengkap & Gelar</label>
-                        <input type="text" id="td-nama" class="form-control" placeholder="Contoh: Lalu Ahmad, S.Pd.">
-                    </div>
-                    <div>
-                        <label>NIP / NUPTK (Isi - jika non-ASN)</label>
-                        <input type="text" id="td-nip" class="form-control" placeholder="Contoh: 198501012010011001">
-                    </div>
-                    <div>
-                        <label>Jabatan / Tugas Utama</label>
-                        <input type="text" id="td-jabatan" class="form-control" placeholder="Contoh: Kepala Sekolah / Guru Matematika">
-                    </div>
-                    <div>
-                        <label>Mata Pelajaran / Bidang</label>
-                        <input type="text" id="td-mapel" class="form-control" placeholder="Contoh: Matematika">
-                    </div>
-                    <div>
-                        <label>Pendidikan Terakhir & Kampus</label>
-                        <input type="text" id="td-kampus" class="form-control" placeholder="Contoh: S1 Pend. Matematika - Universitas Mataram">
-                    </div>
-                    <div>
-                        <label>Nomor WhatsApp (Awali 62)</label>
-                        <input type="text" id="td-wa" class="form-control" placeholder="Contoh: 6281234567890">
-                    </div>
+                    <label>Isi Pengumuman Lengkap</label>
+                    <textarea id="peng-isi" rows="4" class="form-control" placeholder="Tuliskan rincian pengumuman..."></textarea>
+
+                    <label>Link Gambar / Banner Poster (Opsional)</label>
+                    <input type="url" id="peng-banner" class="form-control" placeholder="https://drive.google.com/file/d/... atau https://...">
+
+                    <button id="btn-simpan-pengumuman" class="btn btn-primary" onclick="simpanPengumuman()">
+                        <i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman Sekarang
+                    </button>
                 </div>
-                <label>Link Foto Profil (Google Drive / URL)</label>
-                <input type="url" id="td-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
 
-                <label>Motto / Kutipan Singkat</label>
-                <input type="text" id="td-quote" class="form-control" placeholder="Contoh: Mendidik dengan keteladanan dan kasih sayang.">
-
-                <button class="btn btn-primary" onclick="simpanTendik()">
-                    <i class="fa-solid fa-plus"></i> Tambahkan ke Struktur Sekolah
-                </button>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top: 0;">Daftar Guru & Tendik Terdaftar</h3>
-                <div id="list-tendik-admin"><p style="color: grey; font-size: 0.85rem;">Memuat daftar...</p></div>
-            </div>
-        </section>
-
-        <!-- ======================================================= -->
-        <!-- TAB 6: PROFIL GURU PENGAMPU UTAMA                       -->
-        <!-- ======================================================= -->
-        <section id="tab-profil-utama" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-id-badge" style="color: #4318ff;"></i> Edit Profil Guru Pengampu Mapel Fisika</h3>
-                <div class="grid-2">
-                    <div>
-                        <label>Nama Lengkap & Gelar</label>
-                        <input type="text" id="pu-nama" class="form-control">
-                    </div>
-                    <div>
-                        <label>NIP</label>
-                        <input type="text" id="pu-nip" class="form-control">
-                    </div>
-                    <div>
-                        <label>Jabatan</label>
-                        <input type="text" id="pu-jabatan" class="form-control">
-                    </div>
-                    <div>
-                        <label>Gelar Pendidikan</label>
-                        <input type="text" id="pu-gelar" class="form-control">
-                    </div>
-                    <div>
-                        <label>Asal Kampus</label>
-                        <input type="text" id="pu-kampus" class="form-control">
-                    </div>
-                    <div>
-                        <label>Nomor WhatsApp (628...)</label>
-                        <input type="text" id="pu-wa" class="form-control">
-                    </div>
-                    <div>
-                        <label>Email</label>
-                        <input type="email" id="pu-email" class="form-control">
-                    </div>
-                    <div>
-                        <label>Link Foto Profil</label>
-                        <input type="url" id="pu-foto" class="form-control">
-                    </div>
+                <div class="card">
+                    <h3 style="margin-top: 0;">Daftar Pengumuman Aktif</h3>
+                    <div id="list-pengumuman-admin"><p style="color: grey; font-size: 0.85rem;">Memuat data...</p></div>
                 </div>
-                <label>Kutipan / Motto Guru</label>
-                <input type="text" id="pu-quote" class="form-control">
+            </section>
 
-                <button class="btn btn-primary" onclick="simpanProfilGuruUtama()">
-                    <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil Guru
-                </button>
-            </div>
-        </section>
+            <!-- ======================================================= -->
+            <!-- TAB 7 (OPERATOR): STRUKTUR GURU & TENAGA KEPENDIDIKAN   -->
+            <!-- ======================================================= -->
+            <section id="tab-tendik" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-sitemap" style="color: #4318ff;"></i> Tambah Guru / Tenaga Kependidikan</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Kategori Struktur</label>
+                            <select id="td-kategori" class="form-control">
+                                <option value="Pimpinan & Manajemen">Pimpinan & Manajemen</option>
+                                <option value="Guru Mata Pelajaran" selected>Guru Mata Pelajaran</option>
+                                <option value="Tenaga Kependidikan">Tenaga Kependidikan & TU</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Nomor Urut Tampil</label>
+                            <input type="number" id="td-urutan" class="form-control" value="10">
+                        </div>
+                        <div>
+                            <label>Nama Lengkap & Gelar</label>
+                            <input type="text" id="td-nama" class="form-control" placeholder="Contoh: Lalu Ahmad, S.Pd.">
+                        </div>
+                        <div>
+                            <label>NIP / NUPTK</label>
+                            <input type="text" id="td-nip" class="form-control" placeholder="Contoh: 198501012010011001">
+                        </div>
+                        <div>
+                            <label>Jabatan / Tugas Utama</label>
+                            <input type="text" id="td-jabatan" class="form-control" placeholder="Contoh: Kepala Sekolah / Guru Matematika">
+                        </div>
+                        <div>
+                            <label>Mata Pelajaran / Bidang</label>
+                            <input type="text" id="td-mapel" class="form-control" placeholder="Contoh: Matematika">
+                        </div>
+                        <div>
+                            <label>Pendidikan Terakhir & Kampus</label>
+                            <input type="text" id="td-kampus" class="form-control" placeholder="Contoh: S1 Pend. Matematika - Universitas Mataram">
+                        </div>
+                        <div>
+                            <label>Nomor WhatsApp (Awali 62)</label>
+                            <input type="text" id="td-wa" class="form-control" placeholder="Contoh: 6281234567890">
+                        </div>
+                    </div>
+                    <label>Link Foto Profil</label>
+                    <input type="url" id="td-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
 
-        <!-- ======================================================= -->
-        <!-- TAB 7: KELOLA KANDIDAT PILKETOS                         -->
-        <!-- ======================================================= -->
-        <section id="tab-pilketos" class="tab-section">
-            <div class="card">
-                <h3 style="margin-top: 0;"><i class="fa-solid fa-check-to-slot" style="color: #4318ff;"></i> Tambah Paslon Ketua & Wakil Ketua OSIS</h3>
-                <div class="grid-2">
-                    <div>
-                        <label>Nomor Urut Paslon</label>
-                        <input type="number" id="pk-urut" class="form-control" placeholder="Contoh: 1">
-                    </div>
-                    <div>
-                        <label>Nama Calon Ketua & Wakil Ketua</label>
-                        <input type="text" id="pk-nama" class="form-control" placeholder="Contoh: Lalu Rizki & Baiq Sinta">
-                    </div>
-                    <div>
-                        <label>Kelas Paslon</label>
-                        <input type="text" id="pk-kelas" class="form-control" placeholder="Contoh: XI.A & XI.B">
-                    </div>
-                    <div>
-                        <label>Link Foto Paslon (Google Drive / URL)</label>
-                        <input type="url" id="pk-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
-                    </div>
+                    <label>Motto / Kutipan Singkat</label>
+                    <input type="text" id="td-quote" class="form-control" placeholder="Contoh: Mendidik dengan keteladanan dan kasih sayang.">
+
+                    <button class="btn btn-primary" onclick="simpanTendik()">
+                        <i class="fa-solid fa-plus"></i> Tambahkan ke Struktur Sekolah
+                    </button>
                 </div>
-                <label>Visi & Misi Singkat</label>
-                <textarea id="pk-visi" rows="3" class="form-control" placeholder="Tuliskan visi & misi unggulan paslon..."></textarea>
 
-                <button class="btn btn-primary" onclick="simpanKandidatPilketos()">
-                    <i class="fa-solid fa-plus"></i> Tambah Kandidat OSIS
-                </button>
-            </div>
+                <div class="card">
+                    <h3 style="margin-top: 0;">Daftar Guru & Tendik Terdaftar</h3>
+                    <div id="list-tendik-admin"><p style="color: grey; font-size: 0.85rem;">Memuat daftar...</p></div>
+                </div>
+            </section>
 
-            <div class="card">
-                <h3 style="margin-top: 0;">Daftar Kandidat & Rekap Suara Pilketos</h3>
-                <div id="list-pilketos-admin"><p style="color: grey; font-size: 0.85rem;">Memuat kandidat...</p></div>
-            </div>
-        </section>
+            <!-- ======================================================= -->
+            <!-- TAB 8 (OPERATOR): PROFIL GURU PENGAMPU UTAMA            -->
+            <!-- ======================================================= -->
+            <section id="tab-profil-utama" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-id-badge" style="color: #4318ff;"></i> Edit Profil Guru Pengampu Mapel Fisika</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Nama Lengkap & Gelar</label>
+                            <input type="text" id="pu-nama" class="form-control">
+                        </div>
+                        <div>
+                            <label>NIP</label>
+                            <input type="text" id="pu-nip" class="form-control">
+                        </div>
+                        <div>
+                            <label>Jabatan</label>
+                            <input type="text" id="pu-jabatan" class="form-control">
+                        </div>
+                        <div>
+                            <label>Gelar Pendidikan</label>
+                            <input type="text" id="pu-gelar" class="form-control">
+                        </div>
+                        <div>
+                            <label>Asal Kampus</label>
+                            <input type="text" id="pu-kampus" class="form-control">
+                        </div>
+                        <div>
+                            <label>Nomor WhatsApp (628...)</label>
+                            <input type="text" id="pu-wa" class="form-control">
+                        </div>
+                        <div>
+                            <label>Email</label>
+                            <input type="email" id="pu-email" class="form-control">
+                        </div>
+                        <div>
+                            <label>Link Foto Profil</label>
+                            <input type="url" id="pu-foto" class="form-control">
+                        </div>
+                    </div>
+                    <label>Kutipan / Motto Guru</label>
+                    <input type="text" id="pu-quote" class="form-control">
+
+                    <button class="btn btn-primary" onclick="simpanProfilGuruUtama()">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil Guru
+                    </button>
+                </div>
+            </section>
+
+            <!-- ======================================================= -->
+            <!-- TAB 9 (OPERATOR): KELOLA KANDIDAT PILKETOS              -->
+            <!-- ======================================================= -->
+            <section id="tab-pilketos" class="tab-section">
+                <div class="card">
+                    <h3 style="margin-top: 0;"><i class="fa-solid fa-check-to-slot" style="color: #4318ff;"></i> Tambah Paslon Ketua & Wakil Ketua OSIS</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Nomor Urut Paslon</label>
+                            <input type="number" id="pk-urut" class="form-control" placeholder="Contoh: 1">
+                        </div>
+                        <div>
+                            <label>Nama Calon Ketua & Wakil Ketua</label>
+                            <input type="text" id="pk-nama" class="form-control" placeholder="Contoh: Lalu Rizki & Baiq Sinta">
+                        </div>
+                        <div>
+                            <label>Kelas Paslon</label>
+                            <input type="text" id="pk-kelas" class="form-control" placeholder="Contoh: XI.A & XI.B">
+                        </div>
+                        <div>
+                            <label>Link Foto Paslon</label>
+                            <input type="url" id="pk-foto" class="form-control" placeholder="https://drive.google.com/file/d/...">
+                        </div>
+                    </div>
+                    <label>Visi & Misi Singkat</label>
+                    <textarea id="pk-visi" rows="3" class="form-control" placeholder="Tuliskan visi & misi unggulan paslon..."></textarea>
+
+                    <button class="btn btn-primary" onclick="simpanKandidatPilketos()">
+                        <i class="fa-solid fa-plus"></i> Tambah Kandidat OSIS
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top: 0;">Daftar Kandidat & Rekap Suara Pilketos</h3>
+                    <div id="list-pilketos-admin"><p style="color: grey; font-size: 0.85rem;">Memuat kandidat...</p></div>
+                </div>
+            </section>
+
+        </main>
     </div>
 
     <!-- FIREBASE SDK -->
@@ -665,10 +1020,16 @@
         const auth = firebase.auth();
 
         let semuaSiswaCache = [];
+        let mapSiswaByNIS = {};
+        let rekapHarianCache = [];
         let currentStaffSession = null;
+        let html5QrGuru = null;
+        let isScanningGuru = false;
+        let lastScanNis = "";
+        let lastScanTs = 0;
 
         function escapeHtml(str) {
-            return String(str || "")
+            return String(str ?? "")
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
@@ -676,15 +1037,19 @@
                 .replace(/'/g, "&#39;");
         }
 
-        function formatUrlGambar(rawUrl) {
-            if (!rawUrl) return "";
-            let url = String(rawUrl).trim();
-            if (!url) return "";
-            const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
-            if (gdriveMatch && gdriveMatch[1]) {
-                return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
-            }
-            return url;
+        function formatNomorWA(nomor) {
+            if (!nomor) return "";
+            let clean = String(nomor).replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) clean = '62' + clean.substring(1);
+            return clean;
+        }
+
+        function getTodayString() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
         }
 
         window.alert = function(pesan) {
@@ -696,7 +1061,14 @@
             }
         };
 
-        // Verifikasi Sesi Guru / Operator
+        function toggleSidebarMobile() {
+            document.getElementById('left-sidebar').classList.toggle('open');
+            document.getElementById('sidebar-backdrop').classList.toggle('open');
+        }
+
+        // ==========================================
+        // VERIFIKASI PERAN GURU VS OPERATOR
+        // ==========================================
         window.addEventListener('DOMContentLoaded', async () => {
             const rawSession = sessionStorage.getItem("sman2bayan_session");
             if (!rawSession) {
@@ -711,101 +1083,259 @@
             }
 
             currentStaffSession = user;
-            document.getElementById('staff-session-info').innerText = `Masuk sebagai: ${user.nama} (${user.role})`;
+            const isOperator = user.role === "Operator";
+
+            document.getElementById('staff-session-info').textContent = `Masuk sebagai: ${user.nama} (${user.role})`;
+            document.getElementById('sidebar-role-tag').textContent = isOperator ? "Panel Kendali Operator" : "Ruang Kerja Guru";
+
+            // Tampilkan menu operator HANYA jika role === "Operator"
+            document.getElementById('operator-only-menu').style.display = isOperator ? "block" : "none";
 
             if (!auth.currentUser) {
                 await auth.signInAnonymously().catch(() => {});
             }
 
-            muatSemuaDataAdmin();
+            cekStatusAbsenGuruHariIni();
+            muatSiswaAdmin();
+            muatRekapAbsenHarian();
+            muatMateriAdmin();
+            muatTugasSiswaAdmin();
+            muatDokumentasiAktif();
+
+            if (isOperator) {
+                muatAkunGuruTerdaftar();
+                muatPengumumanAdmin();
+                muatTendikAdmin();
+                muatProfilGuruUtama();
+                muatPilketosAdmin();
+            }
         });
 
         function bukaTab(tabId, btnEl) {
             document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.side-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if (btnEl) btnEl.classList.add('active');
-        }
-
-        function muatSemuaDataAdmin() {
-            muatPengumumanAdmin();
-            muatMateriAdmin();
-            muatTugasSiswaAdmin();
-            muatSiswaAdmin();
-            muatTendikAdmin();
-            muatProfilGuruUtama();
-            muatPilketosAdmin();
-        }
-
-        // ==========================================
-        // 1. PENGUMUMAN SEKOLAH
-        // ==========================================
-        async function simpanPengumuman() {
-            const judul = document.getElementById('peng-judul').value.trim();
-            const kategori = document.getElementById('peng-kategori').value;
-            const isi = document.getElementById('peng-isi').value.trim();
-            const gambarBanner = document.getElementById('peng-banner').value.trim();
-            const btn = document.getElementById('btn-simpan-pengumuman');
-
-            if (!judul) return alert("Judul pengumuman wajib diisi!");
-
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-
-            try {
-                if (!auth.currentUser) await auth.signInAnonymously();
-                const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                await db.collection("pengumuman_sekolah").add({
-                    judul,
-                    kategori,
-                    isi,
-                    gambarBanner,
-                    tanggal,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('peng-judul').value = "";
-                document.getElementById('peng-isi').value = "";
-                document.getElementById('peng-banner').value = "";
-                alert("Pengumuman berhasil diterbitkan di Beranda!");
-                muatPengumumanAdmin();
-            } catch (err) {
-                alert("Gagal menyimpan pengumuman: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Terbitkan Pengumuman Sekarang`;
+            if (btnEl) {
+                btnEl.classList.add('active');
+                document.getElementById('page-title-header').textContent = btnEl.textContent.trim();
+            }
+            if (tabId !== 'tab-absen-guru' && isScanningGuru) {
+                hentikanKameraGuru();
+            }
+            if (window.innerWidth <= 900) {
+                document.getElementById('left-sidebar').classList.remove('open');
+                document.getElementById('sidebar-backdrop').classList.remove('open');
             }
         }
 
-        function muatPengumumanAdmin() {
-            const wadah = document.getElementById('list-pengumuman-admin');
-            db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").get().then(snap => {
-                if (snap.empty) {
-                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada pengumuman.</p>`;
-                    return;
+        // ==========================================
+        // ABSENSI GURU SENDIRI (TAMPIL DI TV LORONG)
+        // ==========================================
+        function cekStatusAbsenGuruHariIni() {
+            const tgl = getTodayString();
+            const idGuru = String(currentStaffSession.uid || currentStaffSession.email || currentStaffSession.nama).replace(/[^a-zA-Z0-9]/g, '_');
+            db.collection("absensi").doc(`${tgl}_guru_${idGuru}`).get().then(doc => {
+                if (doc.exists) {
+                    const btn = document.getElementById('btn-absen-guru-top');
+                    btn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Hadir (${doc.data().jam || '-'})`;
+                    btn.disabled = true;
                 }
-                let html = '';
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    html += `
-                        <div class="item-row">
-                            <div>
-                                <span class="badge" style="background: #4318ff;">${escapeHtml(p.kategori)}</span>
-                                <strong style="margin-left: 6px;">${escapeHtml(p.judul)}</strong>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">${escapeHtml(p.tanggal || '')}</div>
-                            </div>
-                            <button class="btn btn-danger" onclick="hapusDokumen('pengumuman_sekolah', '${doc.id}', muatPengumumanAdmin)">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
-                        </div>
-                    `;
-                });
-                wadah.innerHTML = html;
             });
         }
 
+        async function catatAbsenGuruSendiri() {
+            const tgl = getTodayString();
+            const idGuru = String(currentStaffSession.uid || currentStaffSession.email || currentStaffSession.nama).replace(/[^a-zA-Z0-9]/g, '_');
+            const jamStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            await db.collection("absensi").doc(`${tgl}_guru_${idGuru}`).set({
+                role: "Guru",
+                nama: currentStaffSession.nama,
+                jabatan: currentStaffSession.sub || currentStaffSession.role,
+                tanggal: tgl,
+                jam: jamStr,
+                status: "Hadir",
+                waktu: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            alert("Kehadiran Guru berhasil dicatat dan langsung tampil di Digital Signage TV!");
+            cekStatusAbsenGuruHariIni();
+        }
+
         // ==========================================
-        // 2. MATERI & TUGAS (SEMUA 18 MAPEL)
+        // 1. SCANNER QR SISWA + NOTIFIKASI WA ORANG TUA
+        // ==========================================
+        function mulaiKameraGuru() {
+            if (isScanningGuru) return;
+            html5QrGuru = new Html5Qrcode("reader-guru");
+            document.getElementById('btn-start-cam').style.display = 'none';
+            document.getElementById('btn-stop-cam').style.display = 'inline-flex';
+
+            html5QrGuru.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 230, height: 230 } },
+                (decodedText) => {
+                    const now = Date.now();
+                    if (decodedText === lastScanNis && (now - lastScanTs) < 4000) return;
+                    lastScanNis = decodedText;
+                    lastScanTs = now;
+                    prosesAbsenSiswaByNIS(decodedText.trim());
+                },
+                () => {}
+            ).then(() => {
+                isScanningGuru = true;
+            }).catch((err) => {
+                alert("Tidak dapat membuka kamera: " + err + ". Gunakan input NIS manual di bawah.");
+                document.getElementById('btn-start-cam').style.display = 'inline-flex';
+                document.getElementById('btn-stop-cam').style.display = 'none';
+            });
+        }
+
+        function hentikanKameraGuru() {
+            if (html5QrGuru && isScanningGuru) {
+                html5QrGuru.stop().then(() => {
+                    isScanningGuru = false;
+                    document.getElementById('btn-start-cam').style.display = 'inline-flex';
+                    document.getElementById('btn-stop-cam').style.display = 'none';
+                });
+            }
+        }
+
+        async function prosesAbsenSiswaByNIS(nis) {
+            if (!nis) return alert("NIS tidak boleh kosong!");
+            const siswa = mapSiswaByNIS[nis];
+            if (!siswa) {
+                return alert(`NIS "${nis}" tidak ditemukan di database siswa! Minta Operator menambahkan NIS & nomor WA Orang Tua terlebih dahulu.`);
+            }
+
+            const tgl = getTodayString();
+            const jamStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const docId = `${tgl}_siswa_${nis}`;
+
+            await db.collection("absensi").doc(docId).set({
+                role: "Siswa",
+                nis: siswa.nis,
+                nama: siswa.nama,
+                kelas: siswa.kelas || "-",
+                waOrtu: siswa.waOrtu || "",
+                tanggal: tgl,
+                jam: jamStr,
+                status: "Hadir",
+                dicatatOleh: currentStaffSession.nama,
+                waktu: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch (e) {}
+
+            document.getElementById('hasil-scan-box').style.display = 'block';
+            document.getElementById('scan-res-nama').textContent = siswa.nama;
+            document.getElementById('scan-res-info').textContent = `NIS: ${siswa.nis} | Kelas: ${siswa.kelas || '-'} | Pukul ${jamStr} WITA`;
+            document.getElementById('manual-nis-guru').value = '';
+
+            const btnWa = document.getElementById('link-wa-ortu-langsung');
+            const infoKosong = document.getElementById('info-wa-kosong');
+            const cleanWa = formatNomorWA(siswa.waOrtu);
+
+            if (cleanWa) {
+                const pesan = `Assalamu'alaikum Wr. Wb.\nYth. Bapak/Ibu Orang Tua/Wali dari:\n\n*Nama Siswa:* ${siswa.nama}\n*NIS:* ${siswa.nis}\n*Kelas:* ${siswa.kelas || '-'}\n\nKami menginformasikan bahwa ananda telah *HADIR* di *SMA NEGERI 2 BAYAN* pada:\n*Tanggal:* ${tgl}\n*Pukul:* ${jamStr} WITA\n*Dicatat oleh:* ${currentStaffSession.nama}\n\nTerima kasih.\n_Sistem Informasi Kehadiran SMAN 2 Bayan_`;
+                const waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(pesan)}`;
+                btnWa.href = waUrl;
+                btnWa.style.display = 'inline-flex';
+                infoKosong.style.display = 'none';
+
+                if (document.getElementById('auto-open-wa-ortu').checked) {
+                    window.open(waUrl, '_blank', 'noopener,noreferrer');
+                }
+            } else {
+                btnWa.style.display = 'none';
+                infoKosong.style.display = 'block';
+            }
+
+            muatRekapAbsenHarian();
+        }
+
+        function muatRekapAbsenHarian() {
+            const tgl = getTodayString();
+            const filterKelas = document.getElementById('filter-kelas-absen').value;
+            const tbody = document.getElementById('tbody-rekap-harian');
+
+            db.collection("absensi").where("tanggal", "==", tgl).get().then(snap => {
+                rekapHarianCache = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if ((d.role || "Siswa") === "Siswa") {
+                        if (filterKelas === "SEMUA" || d.kelas === filterKelas) {
+                            rekapHarianCache.push(d);
+                        }
+                    }
+                });
+
+                rekapHarianCache.sort((a, b) => String(a.kelas || "").localeCompare(String(b.kelas || "")) || String(a.nama || "").localeCompare(String(b.nama || "")));
+
+                if (!rekapHarianCache.length) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: grey;">Belum ada siswa yang tercatat hadir hari ini.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                rekapHarianCache.forEach((row, idx) => {
+                    const tr = document.createElement('tr');
+                    const cleanWa = formatNomorWA(row.waOrtu);
+                    const pesan = `Assalamu'alaikum Wr. Wb. Laporan kehadiran ananda *${row.nama}* (Kelas ${row.kelas}) di SMAN 2 Bayan hari ini (${tgl}): *Hadir* pukul ${row.jam} WITA.`;
+
+                    tr.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td><strong>${escapeHtml(row.nis)}</strong></td>
+                        <td>${escapeHtml(row.nama)}</td>
+                        <td>${escapeHtml(row.kelas)}</td>
+                        <td>${escapeHtml(row.jam)} WITA</td>
+                        <td>
+                            ${cleanWa
+                                ? `<a href="https://wa.me/${cleanWa}?text=${encodeURIComponent(pesan)}" target="_blank" rel="noopener noreferrer" style="color:#16a34a; font-weight:700; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> +${escapeHtml(cleanWa)}</a>`
+                                : `<span style="color:#94a3b8;">Belum diisi</span>`
+                            }
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function exportRekapAbsenPDF() {
+            if (!rekapHarianCache.length) return alert("Belum ada data kehadiran untuk diunduh!");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const tgl = getTodayString();
+            const filterKelas = document.getElementById('filter-kelas-absen').value;
+
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text("SMA NEGERI 2 BAYAN - REKAP KEHADIRAN SISWA", 105, 16, { align: "center" });
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Tanggal: ${tgl} | Kelas: ${filterKelas} | Total Hadir: ${rekapHarianCache.length} Siswa`, 105, 23, { align: "center" });
+
+            doc.autoTable({
+                startY: 28,
+                head: [['No', 'NIS', 'Nama Siswa', 'Kelas', 'Jam Hadir', 'Status']],
+                body: rekapHarianCache.map((r, i) => [i + 1, r.nis, r.nama, r.kelas, `${r.jam} WITA`, 'Hadir']),
+                theme: 'grid',
+                headStyles: { fillColor: [67, 24, 255] }
+            });
+
+            doc.save(`Absensi_SMAN2Bayan_${filterKelas}_${tgl}.pdf`);
+        }
+
+        // ==========================================
+        // 2. MATERI & PENILAIAN TUGAS
         // ==========================================
         async function simpanMateri() {
             const mapel = document.getElementById('mat-mapel').value.trim();
@@ -816,102 +1346,70 @@
             const linkLabel = document.getElementById('mat-link-label').value.trim();
             const linkUrl = document.getElementById('mat-link-url').value.trim();
             const pr = document.getElementById('mat-pr').value.trim();
-            const btn = document.getElementById('btn-simpan-materi');
 
             if (!bab || !subBab) return alert("Judul Bab dan Sub Bab wajib diisi!");
 
-            const links = [];
-            if (linkUrl) {
-                links.push({ label: linkLabel || "Tautan Materi", url: linkUrl });
-            }
+            const links = linkUrl ? [{ label: linkLabel || "Tautan Materi", url: linkUrl }] : [];
 
-            const guruNama = currentStaffSession ? currentStaffSession.nama : "Guru SMAN 2 Bayan";
-            const guruUid = currentStaffSession ? (currentStaffSession.uid || "") : "";
+            await db.collection("materi_pelajaran").add({
+                mapel,
+                kelas,
+                bab,
+                subBab,
+                deskripsi,
+                links,
+                pr,
+                guruNama: currentStaffSession.nama,
+                guruUid: currentStaffSession.uid || "",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-            btn.disabled = true;
-            try {
-                if (!auth.currentUser) await auth.signInAnonymously();
-                await db.collection("materi_pelajaran").add({
-                    mapel,
-                    kelas,
-                    bab,
-                    subBab,
-                    deskripsi,
-                    links,
-                    pr,
-                    guruNama,
-                    guruUid,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('mat-bab').value = "";
-                document.getElementById('mat-subbab').value = "";
-                document.getElementById('mat-deskripsi').value = "";
-                document.getElementById('mat-link-label').value = "";
-                document.getElementById('mat-link-url').value = "";
-                document.getElementById('mat-pr').value = "";
-                alert(`Materi ${mapel} (${kelas}) berhasil dipublikasikan!`);
-                muatMateriAdmin();
-            } catch (err) {
-                alert("Gagal menyimpan materi: " + err.message);
-            } finally {
-                btn.disabled = false;
-            }
+            document.getElementById('mat-bab').value = "";
+            document.getElementById('mat-subbab').value = "";
+            document.getElementById('mat-deskripsi').value = "";
+            document.getElementById('mat-link-label').value = "";
+            document.getElementById('mat-link-url').value = "";
+            document.getElementById('mat-pr').value = "";
+            alert(`Materi ${mapel} (${kelas}) berhasil dipublikasikan!`);
+            muatMateriAdmin();
         }
 
         function muatMateriAdmin() {
             const wadah = document.getElementById('list-materi-admin');
-            const filterMapelEl = document.getElementById('filter-mapel-materi');
-            const filterMapel = filterMapelEl ? filterMapelEl.value : "SEMUA";
+            const filterMapel = document.getElementById('filter-mapel-materi').value;
 
             db.collection("materi_pelajaran").get().then(snap => {
-                if (snap.empty) {
+                let list = [];
+                snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+                if (filterMapel !== "SEMUA") {
+                    list = list.filter(m => (m.mapel || "Fisika") === filterMapel);
+                }
+                list.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+
+                if (!list.length) {
                     wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada materi.</p>`;
                     return;
                 }
 
-                let daftarMateri = [];
-                snap.forEach(doc => daftarMateri.push({ id: doc.id, ...doc.data() }));
-
-                if (filterMapel !== "SEMUA") {
-                    daftarMateri = daftarMateri.filter(m => (m.mapel || "Fisika") === filterMapel);
-                }
-
-                daftarMateri.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
-
-                if (daftarMateri.length === 0) {
-                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Tidak ada materi untuk mata pelajaran ${escapeHtml(filterMapel)}.</p>`;
-                    return;
-                }
-
-                let html = '';
-                daftarMateri.forEach(m => {
-                    const namaMapel = m.mapel || "Fisika";
-                    const pengampu = m.guruNama ? ` • Pengampu: ${escapeHtml(m.guruNama)}` : "";
-                    html += `
-                        <div class="item-row">
-                            <div>
-                                <span class="badge" style="background: #4318ff;">${escapeHtml(namaMapel)}</span>
-                                <span class="badge" style="background: #05cd99; margin-left: 4px;">${escapeHtml(m.kelas)}</span>
-                                <strong style="margin-left: 6px;">${escapeHtml(m.bab)} — ${escapeHtml(m.subBab)}</strong>
-                                <div style="font-size: 0.76rem; color: #64748b; margin-top: 3px;">
-                                    ${m.pr ? `<span style="color: #b45309; font-weight: 700;"><i class="fa-solid fa-tasks"></i> Ada Tugas/PR</span>` : 'Materi Bacaan / Media'}
-                                    ${pengampu}
-                                </div>
-                            </div>
-                            <button class="btn btn-danger" onclick="hapusDokumen('materi_pelajaran', '${m.id}', muatMateriAdmin)">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
+                wadah.innerHTML = "";
+                list.forEach(m => {
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: #4318ff;">${escapeHtml(m.mapel || 'Fisika')}</span>
+                            <span class="badge" style="background: #05cd99; margin-left: 4px;">${escapeHtml(m.kelas)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(m.bab)} — ${escapeHtml(m.subBab)}</strong>
+                            <div style="font-size: 0.76rem; color: #64748b; margin-top: 3px;">Pengampu: ${escapeHtml(m.guruNama || '-')}</div>
                         </div>
+                        <button type="button" class="btn btn-danger btn-del-item"><i class="fa-solid fa-trash"></i> Hapus</button>
                     `;
+                    row.querySelector('.btn-del-item').addEventListener('click', () => hapusDokumen('materi_pelajaran', m.id, muatMateriAdmin));
+                    wadah.appendChild(row);
                 });
-                wadah.innerHTML = html;
             });
         }
 
-        // ==========================================
-        // 3. PENILAIAN TUGAS SISWA
-        // ==========================================
         function muatTugasSiswaAdmin() {
             const wadah = document.getElementById('list-tugas-siswa');
             db.collection("pengumpulan_tugas").get().then(snap => {
@@ -919,70 +1417,146 @@
                     wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada siswa yang mengumpulkan tugas.</p>`;
                     return;
                 }
-                let html = '';
+                wadah.innerHTML = "";
                 snap.forEach(doc => {
                     const t = doc.data();
-                    html += `
-                        <div class="item-row" style="flex-direction: column; align-items: stretch;">
-                            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                                <div>
-                                    <span class="badge" style="background: #4318ff;">${escapeHtml(t.kelas)}</span>
-                                    <strong style="margin-left: 6px;">${escapeHtml(t.namaSiswa)} (NIS: ${escapeHtml(t.nisSiswa)})</strong>
-                                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 3px;">Materi: ${escapeHtml(t.judulBab)}</div>
-                                </div>
-                                <a href="${escapeHtml(t.linkTugas)}" target="_blank" class="btn btn-secondary" style="text-decoration: none;">
-                                    <i class="fa-solid fa-up-right-from-square"></i> Buka Jawaban
-                                </a>
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.style.cssText = "flex-direction: column; align-items: stretch;";
+                    row.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                            <div>
+                                <span class="badge" style="background: #4318ff;">${escapeHtml(t.kelas)}</span>
+                                <strong style="margin-left: 6px;">${escapeHtml(t.namaSiswa)} (NIS: ${escapeHtml(t.nisSiswa)})</strong>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 3px;">Materi: ${escapeHtml(t.judulBab)}</div>
                             </div>
-                            ${t.catatanSiswa ? `<div style="font-size: 0.8rem; color: #334155;">Catatan Siswa: "${escapeHtml(t.catatanSiswa)}"</div>` : ''}
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px;">
-                                <input type="number" id="nilai-${doc.id}" class="form-control" style="max-width: 120px; margin: 0;" placeholder="Nilai (0-100)" value="${escapeHtml(t.nilai ?? '')}">
-                                <input type="text" id="cat-guru-${doc.id}" class="form-control" style="flex: 1; min-width: 200px; margin: 0;" placeholder="Catatan evaluasi guru..." value="${escapeHtml(t.catatanGuru || '')}">
-                                <button class="btn btn-success" onclick="simpanNilaiTugas('${doc.id}')">Simpan Nilai</button>
-                            </div>
+                            <a href="${escapeHtml(t.linkTugas)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                                <i class="fa-solid fa-up-right-from-square"></i> Buka Jawaban
+                            </a>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
+                            <input type="number" class="form-control inp-nilai" style="max-width: 120px; margin: 0;" placeholder="Nilai (0-100)" value="${escapeHtml(t.nilai ?? '')}">
+                            <input type="text" class="form-control inp-catatan" style="flex: 1; min-width: 200px; margin: 0;" placeholder="Catatan evaluasi guru..." value="${escapeHtml(t.catatanGuru || '')}">
+                            <button type="button" class="btn btn-success btn-save-nilai">Simpan Nilai</button>
                         </div>
                     `;
+                    row.querySelector('.btn-save-nilai').addEventListener('click', async () => {
+                        const nilaiVal = row.querySelector('.inp-nilai').value.trim();
+                        const catVal = row.querySelector('.inp-catatan').value.trim();
+                        if (nilaiVal === "") return alert("Masukkan angka nilai terlebih dahulu!");
+                        await db.collection("pengumpulan_tugas").doc(doc.id).update({
+                            nilai: Number(nilaiVal),
+                            catatanGuru: catVal
+                        });
+                        alert("Nilai tugas berhasil disimpan!");
+                    });
+                    wadah.appendChild(row);
                 });
-                wadah.innerHTML = html;
             });
-        }
-
-        async function simpanNilaiTugas(docId) {
-            const nilai = document.getElementById(`nilai-${docId}`).value.trim();
-            const catatanGuru = document.getElementById(`cat-guru-${docId}`).value.trim();
-            if (nilai === "") return alert("Masukkan angka nilai terlebih dahulu!");
-
-            await db.collection("pengumpulan_tugas").doc(docId).update({
-                nilai: Number(nilai),
-                catatanGuru: catatanGuru
-            });
-            alert("Nilai dan catatan tugas berhasil disimpan!");
         }
 
         // ==========================================
-        // 4. DATA SISWA & EMAIL (MANUAL & CSV)
+        // 3. DOKUMENTASI KEGIATAN KBM (24 JAM)
+        // ==========================================
+        async function simpanDokumentasiKegiatan() {
+            const judul = document.getElementById('dok-judul').value.trim();
+            const mapel = document.getElementById('dok-mapel').value.trim() || "Kegiatan KBM";
+            const kelas = document.getElementById('dok-kelas').value;
+            const fotoUrl = document.getElementById('dok-foto').value.trim();
+            const deskripsi = document.getElementById('dok-deskripsi').value.trim();
+
+            if (!judul || !fotoUrl) {
+                return alert("Judul Kegiatan dan Link Foto wajib diisi agar tampil di layar TV!");
+            }
+
+            const nowMs = Date.now();
+            const expiresAtMs = nowMs + (24 * 60 * 60 * 1000); // Otomatis kadaluarsa 1 x 24 jam
+
+            await db.collection("dokumentasi_kegiatan").add({
+                judul,
+                mapel,
+                kelas,
+                fotoUrl,
+                deskripsi,
+                guruNama: currentStaffSession.nama,
+                createdAtMs: nowMs,
+                expiresAtMs: expiresAtMs
+            });
+
+            document.getElementById('dok-judul').value = "";
+            document.getElementById('dok-foto').value = "";
+            document.getElementById('dok-deskripsi').value = "";
+            alert("Dokumentasi kegiatan berhasil ditayangkan ke Digital Signage TV (aktif 1 x 24 jam)!");
+            muatDokumentasiAktif();
+        }
+
+        function muatDokumentasiAktif() {
+            const wadah = document.getElementById('list-dokumentasi-aktif');
+            db.collection("dokumentasi_kegiatan").orderBy("createdAtMs", "desc").get().then(snap => {
+                const nowMs = Date.now();
+                const aktifList = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const exp = Number(d.expiresAtMs || ((d.createdAtMs || 0) + 86400000));
+                    if (exp > nowMs) {
+                        aktifList.push({ id: doc.id, ...d, exp });
+                    } else {
+                        // Bersihkan otomatis dokumen yang sudah lewat 24 jam
+                        db.collection("dokumentasi_kegiatan").doc(doc.id).delete().catch(() => {});
+                    }
+                });
+
+                if (!aktifList.length) {
+                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada dokumentasi yang sedang tayang.</p>`;
+                    return;
+                }
+
+                wadah.innerHTML = "";
+                aktifList.forEach(item => {
+                    const sisaJam = Math.max(1, Math.ceil((item.exp - nowMs) / 3600000));
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: #05cd99;">Tayang s.d. ${sisaJam} jam lagi</span>
+                            <span class="badge" style="background: #4318ff; margin-left: 4px;">${escapeHtml(item.kelas)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(item.judul)}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">Oleh: ${escapeHtml(item.guruNama || '-')} • ${escapeHtml(item.mapel || '')}</div>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-del-dok"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    `;
+                    row.querySelector('.btn-del-dok').addEventListener('click', () => hapusDokumen('dokumentasi_kegiatan', item.id, muatDokumentasiAktif));
+                    wadah.appendChild(row);
+                });
+            });
+        }
+
+        // ==========================================
+        // 4. OPERATOR: DATA SISWA, EMAIL & WA ORANG TUA
         // ==========================================
         async function tambahSatuSiswa() {
             const nis = document.getElementById('sis-nis').value.trim();
             const nama = document.getElementById('sis-nama').value.trim();
             const email = document.getElementById('sis-email').value.trim().toLowerCase();
+            const waOrtu = formatNomorWA(document.getElementById('sis-wa-ortu').value.trim());
             const kelas = document.getElementById('sis-kelas').value;
             const jk = document.getElementById('sis-jk').value;
             const foto = document.getElementById('sis-foto').value.trim();
 
-            if (!nis || !nama || !email) {
-                return alert("NIS, Nama Lengkap, dan Email Siswa wajib diisi!");
+            if (!nis || !nama) {
+                return alert("NIS dan Nama Lengkap Siswa wajib diisi!");
             }
 
-            await db.collection("data_siswa").add({
-                nis, nama, email, kelas, jk, foto, akunAktif: false
-            });
+            await db.collection("data_siswa").doc(nis).set({
+                nis, nama, email, waOrtu, kelas, jk, foto, akunAktif: false
+            }, { merge: true });
 
             document.getElementById('sis-nis').value = "";
             document.getElementById('sis-nama').value = "";
             document.getElementById('sis-email').value = "";
+            document.getElementById('sis-wa-ortu').value = "";
             document.getElementById('sis-foto').value = "";
-            alert("Data siswa dan email berhasil disimpan!");
+            alert("Data siswa & nomor WhatsApp Orang Tua berhasil disimpan!");
             muatSiswaAdmin();
         }
 
@@ -1008,17 +1582,18 @@
                     const jk = cols[2] || "Laki-laki";
                     const kelas = cols[3] || "X.A";
                     const email = (cols[4] || "").toLowerCase();
-                    const foto = cols[5] || "";
+                    const waOrtu = formatNomorWA(cols[5] || "");
+                    const foto = cols[6] || "";
 
                     if (nis && nama) {
-                        await db.collection("data_siswa").add({
-                            nis, nama, jk, kelas, email, foto, akunAktif: false
-                        });
+                        await db.collection("data_siswa").doc(nis).set({
+                            nis, nama, jk, kelas, email, waOrtu, foto, akunAktif: false
+                        }, { merge: true });
                         berhasil++;
                     }
                 }
 
-                alert(`Berhasil mengimpor ${berhasil} data siswa ke database!`);
+                alert(`Berhasil mengimpor ${berhasil} data siswa (termasuk WA Orang Tua) ke database!`);
                 fileInput.value = "";
                 muatSiswaAdmin();
             };
@@ -1028,9 +1603,15 @@
         function muatSiswaAdmin() {
             db.collection("data_siswa").get().then(snap => {
                 semuaSiswaCache = [];
-                snap.forEach(doc => semuaSiswaCache.push({ id: doc.id, ...doc.data() }));
+                mapSiswaByNIS = {};
+                snap.forEach(doc => {
+                    const d = { id: doc.id, ...doc.data() };
+                    semuaSiswaCache.push(d);
+                    if (d.nis) mapSiswaByNIS[String(d.nis)] = d;
+                });
                 semuaSiswaCache.sort((a, b) => String(a.kelas).localeCompare(String(b.kelas)) || String(a.nama).localeCompare(String(b.nama)));
-                document.getElementById('total-siswa-count').innerText = semuaSiswaCache.length;
+                const countEl = document.getElementById('total-siswa-count');
+                if (countEl) countEl.textContent = String(semuaSiswaCache.length);
                 renderTabelSiswa(semuaSiswaCache);
             });
         }
@@ -1041,44 +1622,166 @@
                 String(s.nama || "").toLowerCase().includes(q) ||
                 String(s.nis || "").toLowerCase().includes(q) ||
                 String(s.kelas || "").toLowerCase().includes(q) ||
-                String(s.email || "").toLowerCase().includes(q)
+                String(s.waOrtu || "").toLowerCase().includes(q)
             );
             renderTabelSiswa(hasil);
         }
 
         function renderTabelSiswa(list) {
             const tbody = document.getElementById('tbody-siswa');
+            if (!tbody) return;
             if (!list.length) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: grey;">Tidak ada data siswa ditemukan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: grey;">Tidak ada data siswa ditemukan.</td></tr>`;
                 return;
             }
-            let html = '';
+            tbody.innerHTML = "";
             list.forEach(s => {
-                const statusBadge = s.akunAktif
-                    ? `<span class="badge" style="background: #05cd99;">Aktif</span>`
-                    : `<span class="badge" style="background: #f59e0b;">Belum Aktivasi</span>`;
-
-                html += `
-                    <tr>
-                        <td><strong>${escapeHtml(s.nis)}</strong></td>
-                        <td>${escapeHtml(s.nama)}</td>
-                        <td>${escapeHtml(s.email || '-')}</td>
-                        <td>${escapeHtml(s.kelas)}</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.76rem;" onclick="hapusDokumen('data_siswa', '${s.id}', muatSiswaAdmin)">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(s.nis)}</strong></td>
+                    <td>${escapeHtml(s.nama)}</td>
+                    <td>${escapeHtml(s.kelas)}</td>
+                    <td>${escapeHtml(s.email || '-')}</td>
+                    <td>${s.waOrtu ? `<span style="color:#16a34a; font-weight:700;">+${escapeHtml(s.waOrtu)}</span>` : '<span style="color:#94a3b8;">-</span>'}</td>
+                    <td>${s.akunAktif ? '<span class="badge" style="background:#05cd99;">Aktif</span>' : '<span class="badge" style="background:#f59e0b;">Belum Aktivasi</span>'}</td>
+                    <td><button type="button" class="btn btn-danger btn-del-sis" style="padding: 5px 10px; font-size: 0.76rem;"><i class="fa-solid fa-trash"></i></button></td>
                 `;
+                tr.querySelector('.btn-del-sis').addEventListener('click', () => hapusDokumen('data_siswa', s.id, muatSiswaAdmin));
+                tbody.appendChild(tr);
             });
-            tbody.innerHTML = html;
         }
 
         // ==========================================
-        // 5. STRUKTUR GURU & TENAGA KEPENDIDIKAN
+        // 5. OPERATOR: PEMBUATAN AKUN & SANDI AWAL GURU
         // ==========================================
+        async function buatAkunGuruBaru() {
+            const nama = document.getElementById('akg-nama').value.trim();
+            const sub = document.getElementById('akg-sub').value.trim() || "Guru Mata Pelajaran";
+            const email = document.getElementById('akg-email').value.trim().toLowerCase();
+            const pass = document.getElementById('akg-pass').value.trim();
+            const btn = document.getElementById('btn-buat-akun-guru');
+
+            if (!nama || !email || !pass) {
+                return alert("Nama Guru, Email, dan Kata Sandi Awal wajib diisi!");
+            }
+            if (pass.length < 8 || !/[A-Za-z]/.test(pass) || !/[0-9]/.test(pass)) {
+                return alert("Kata sandi awal minimal 8 karakter dengan kombinasi huruf dan angka!");
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mendaftarkan Akun...`;
+
+            let secondaryApp = null;
+            try {
+                // Gunakan Secondary App agar Operator tidak ter-logout saat membuat akun Guru baru
+                secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp_" + Date.now());
+                const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, pass);
+
+                await db.collection("users_sekolah").doc(cred.user.uid).set({
+                    uid: cred.user.uid,
+                    role: "Guru",
+                    nama: nama,
+                    sub: sub,
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await secondaryApp.auth().signOut();
+                await secondaryApp.delete();
+
+                document.getElementById('akg-nama').value = "";
+                document.getElementById('akg-sub').value = "";
+                document.getElementById('akg-email').value = "";
+                document.getElementById('akg-pass').value = "";
+
+                alert(`Akun Guru "${nama}" berhasil dibuat! Silakan serahkan Email (${email}) dan Kata Sandi Awal tersebut kepada guru yang bersangkutan.`);
+                muatAkunGuruTerdaftar();
+            } catch (err) {
+                if (secondaryApp) await secondaryApp.delete().catch(() => {});
+                if (err.code === "auth/email-already-in-use") {
+                    alert("Email ini sudah terdaftar di Firebase Authentication!");
+                } else {
+                    alert("Gagal membuat akun guru: " + err.message);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Daftarkan Akun Guru Sekarang`;
+            }
+        }
+
+        function muatAkunGuruTerdaftar() {
+            const wadah = document.getElementById('list-akun-guru-terdaftar');
+            db.collection("users_sekolah").get().then(snap => {
+                if (snap.empty) {
+                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada data akun guru di koleksi users_sekolah.</p>`;
+                    return;
+                }
+                wadah.innerHTML = "";
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: ${u.role === 'Operator' ? '#dc2626' : '#4318ff'};">${escapeHtml(u.role)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(u.nama)}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">Email: ${escapeHtml(u.email)} • ${escapeHtml(u.sub || '')}</div>
+                        </div>
+                    `;
+                    wadah.appendChild(row);
+                });
+            });
+        }
+
+        // ==========================================
+        // 6. OPERATOR: PENGUMUMAN, TENDIK, PROFIL, PILKETOS
+        // ==========================================
+        async function simpanPengumuman() {
+            const judul = document.getElementById('peng-judul').value.trim();
+            const kategori = document.getElementById('peng-kategori').value;
+            const isi = document.getElementById('peng-isi').value.trim();
+            const gambarBanner = document.getElementById('peng-banner').value.trim();
+            if (!judul) return alert("Judul pengumuman wajib diisi!");
+
+            const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            await db.collection("pengumuman_sekolah").add({
+                judul, kategori, isi, gambarBanner, tanggal,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            document.getElementById('peng-judul').value = "";
+            document.getElementById('peng-isi').value = "";
+            document.getElementById('peng-banner').value = "";
+            alert("Pengumuman berhasil diterbitkan!");
+            muatPengumumanAdmin();
+        }
+
+        function muatPengumumanAdmin() {
+            const wadah = document.getElementById('list-pengumuman-admin');
+            db.collection("pengumuman_sekolah").orderBy("timestamp", "desc").get().then(snap => {
+                if (snap.empty) {
+                    wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada pengumuman.</p>`;
+                    return;
+                }
+                wadah.innerHTML = "";
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: #4318ff;">${escapeHtml(p.kategori)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(p.judul)}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">${escapeHtml(p.tanggal || '')}</div>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-del-peng"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    `;
+                    row.querySelector('.btn-del-peng').addEventListener('click', () => hapusDokumen('pengumuman_sekolah', doc.id, muatPengumumanAdmin));
+                    wadah.appendChild(row);
+                });
+            });
+        }
+
         async function simpanTendik() {
             const kategoriJabatan = document.getElementById('td-kategori').value;
             const urutan = Number(document.getElementById('td-urutan').value) || 99;
@@ -1116,29 +1819,25 @@
                     wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada data struktur tendik.</p>`;
                     return;
                 }
-                let html = '';
+                wadah.innerHTML = "";
                 snap.forEach(doc => {
                     const t = doc.data();
-                    html += `
-                        <div class="item-row">
-                            <div>
-                                <span class="badge" style="background: #4318ff;">${escapeHtml(t.kategoriJabatan)}</span>
-                                <strong style="margin-left: 6px;">${escapeHtml(t.nama)}</strong>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">${escapeHtml(t.jabatan)} • Urutan: ${escapeHtml(t.urutan)}</div>
-                            </div>
-                            <button class="btn btn-danger" onclick="hapusDokumen('struktur_tendik', '${doc.id}', muatTendikAdmin)">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: #4318ff;">${escapeHtml(t.kategoriJabatan)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(t.nama)}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">${escapeHtml(t.jabatan)} • Urutan: ${escapeHtml(t.urutan)}</div>
                         </div>
+                        <button type="button" class="btn btn-danger btn-del-td"><i class="fa-solid fa-trash"></i> Hapus</button>
                     `;
+                    row.querySelector('.btn-del-td').addEventListener('click', () => hapusDokumen('struktur_tendik', doc.id, muatTendikAdmin));
+                    wadah.appendChild(row);
                 });
-                wadah.innerHTML = html;
             });
         }
 
-        // ==========================================
-        // 6. PROFIL GURU UTAMA
-        // ==========================================
         function muatProfilGuruUtama() {
             db.collection("profil_guru").doc("utama").get().then(doc => {
                 if (!doc.exists) return;
@@ -1171,9 +1870,6 @@
             alert("Profil Guru Pengampu berhasil diperbarui!");
         }
 
-        // ==========================================
-        // 7. KELOLA KANDIDAT PILKETOS
-        // ==========================================
         async function simpanKandidatPilketos() {
             const noUrut = Number(document.getElementById('pk-urut').value) || 1;
             const namaPaslon = document.getElementById('pk-nama').value.trim();
@@ -1203,29 +1899,25 @@
                     wadah.innerHTML = `<p style="color: grey; font-size: 0.85rem;">Belum ada kandidat Pilketos.</p>`;
                     return;
                 }
-                let html = '';
+                wadah.innerHTML = "";
                 snap.forEach(doc => {
                     const k = doc.data();
-                    html += `
-                        <div class="item-row">
-                            <div>
-                                <span class="badge" style="background: #4318ff;">No. Urut ${escapeHtml(k.noUrut)}</span>
-                                <strong style="margin-left: 6px;">${escapeHtml(k.namaPaslon)}</strong> (${escapeHtml(k.kelas || '-')})
-                                <div style="font-size: 0.8rem; color: #05cd99; font-weight: 700; margin-top: 3px;">Perolehan Suara: ${escapeHtml(k.jumlahSuara || 0)} Suara</div>
-                            </div>
-                            <button class="btn btn-danger" onclick="hapusDokumen('kandidat_pilketos', '${doc.id}', muatPilketosAdmin)">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
+                    const row = document.createElement('div');
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <span class="badge" style="background: #4318ff;">No. Urut ${escapeHtml(k.noUrut)}</span>
+                            <strong style="margin-left: 6px;">${escapeHtml(k.namaPaslon)}</strong> (${escapeHtml(k.kelas || '-')})
+                            <div style="font-size: 0.8rem; color: #05cd99; font-weight: 700; margin-top: 3px;">Perolehan Suara: ${escapeHtml(k.jumlahSuara || 0)} Suara</div>
                         </div>
+                        <button type="button" class="btn btn-danger btn-del-pk"><i class="fa-solid fa-trash"></i> Hapus</button>
                     `;
+                    row.querySelector('.btn-del-pk').addEventListener('click', () => hapusDokumen('kandidat_pilketos', doc.id, muatPilketosAdmin));
+                    wadah.appendChild(row);
                 });
-                wadah.innerHTML = html;
             });
         }
 
-        // ==========================================
-        // UTILITAS HAPUS DOKUMEN UMUM
-        // ==========================================
         async function hapusDokumen(koleksi, docId, callbackRefresh) {
             if (!confirm("Yakin ingin menghapus data ini secara permanen?")) return;
             await db.collection(koleksi).doc(docId).delete();
