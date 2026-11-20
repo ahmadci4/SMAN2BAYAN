@@ -155,25 +155,45 @@ function aturVisibilitasMenuSensitif() {
     const navMapel = document.getElementById('nav-mapel');
     const navPilketos = document.getElementById('nav-pilketos');
     const navKartu = document.getElementById('nav-kartu');
-    const navAbsen = document.getElementById('nav-absen');
+    const navTendik = document.getElementById('nav-tendik');
+    const navEkskul = document.getElementById('nav-ekskul');
     const btnStaff = document.getElementById('btn-dashboard-staff');
 
+    // Jika Siswa sedang login, fokuskan navigasi hanya ke hal yang berkaitan dengan pelajaran & kartu siswa
+    if (navTendik) navTendik.style.display = isSiswa ? "none" : "inline-flex";
+    if (navEkskul) navEkskul.style.display = isSiswa ? "none" : "inline-flex";
+
     if (navMapel) navMapel.style.display = isLoggedIn ? "inline-flex" : "none";
+    if (navKartu) navKartu.style.display = isSiswa ? "inline-flex" : "none";
     if (navPilketos) navPilketos.style.display = (isSiswa || isStaff) ? "inline-flex" : "none";
-    if (navKartu) navKartu.style.display = (isSiswa || isStaff) ? "inline-flex" : "none";
-    if (navAbsen) navAbsen.style.display = isLoggedIn ? "inline-flex" : "none";
 
     if (btnStaff) {
         if (isStaff) {
             btnStaff.style.display = "inline-flex";
             btnStaff.innerHTML = currentUserSession.role === "Operator"
-                ? `<i class="fa-solid fa-shield-halved"></i> Panel Operator & Guru`
+                ? `<i class="fa-solid fa-shield-halved"></i> Panel Kendali Operator`
                 : `<i class="fa-solid fa-chalkboard-user"></i> Ruang Kerja Guru`;
         } else {
             btnStaff.style.display = "none";
         }
     }
 
+    const btnLoginTop = document.getElementById('btn-open-login-top');
+    const areaUserTop = document.getElementById('user-logged-area-top');
+    const badge = document.getElementById('user-badge-status');
+
+    if (isLoggedIn) {
+        if (btnLoginTop) btnLoginTop.style.display = "none";
+        if (areaUserTop) areaUserTop.style.display = "inline-flex";
+        if (badge) {
+            const infoSub = currentUserSession.role === "Siswa" ? `Kelas ${currentUserSession.sub || '-'}` : currentUserSession.role;
+            badge.innerHTML = `<i class="fa-solid fa-circle-user"></i> ${escapeHtml(currentUserSession.nama)} (${escapeHtml(infoSub)})`;
+        }
+    } else {
+        if (btnLoginTop) btnLoginTop.style.display = "inline-flex";
+        if (areaUserTop) areaUserTop.style.display = "none";
+    }
+}
     const btnLoginTop = document.getElementById('btn-open-login-top');
     const areaUserTop = document.getElementById('user-logged-area-top');
     const badge = document.getElementById('user-badge-status');
