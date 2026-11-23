@@ -208,7 +208,7 @@ const subjectsList = [
 // ==========================================
 let notifikasiListCache = [];
 
-function inisialisasiNotifikasiLogin() {
+function inisialisasiNotifikasiRealtime() {
     const raw = sessionStorage.getItem("sman2bayan_session");
     const btnLonceng = document.getElementById("btn-lonceng-notif");
     if (!raw) {
@@ -218,36 +218,37 @@ function inisialisasiNotifikasiLogin() {
     if (btnLonceng) btnLonceng.style.display = "inline-flex";
     const user = JSON.parse(raw);
 
-    db.collection("notifikasi_sistem").orderBy("timestamp", "desc").limit(15).onSnapshot(snap => {
-        const wadah = document.getElementById("list-notifikasi-items");
-        const badge = document.getElementById("badge-notif-count");
-        let list = [];
+    db.collection("notifikasi_sistem").orderBy("timestamp", "desc").limit(25).onSnapshot(snap => {
+        notifikasiListCache = [];
+        const lastRead = Number(localStorage.getItem("sman2bayan_notif_last_read") || "0");
+        let unreadCount = 0;
+
         snap.forEach(doc => {
             const d = { id: doc.id, ...doc.data() };
-            if (d.targetRole === "SEMUA" || (d.targetRole === "SISWA" && user.role === "Siswa")) {
-                list.push(d);
+            const target = d.targetRole || "SEMUA";
+            const userRole = user.role || "Tamu";
+            const cocokRole =
+                target === "SEMUA" ||
+                (target === "STAFF" && ["Operator", "Guru", "Guru / Staf"].includes(userRole)) ||
+                (target === "SISWA" && userRole === "Siswa");
+
+            if (cocokRole) {
+                notifikasiListCache.push(d);
+                const ts = d.timestamp && d.timestamp.toMillis ? d.timestamp.toMillis() : 0;
+                if (ts > lastRead) unreadCount++;
             }
         });
-        if (badge) badge.textContent = list.length;
-        if (!wadah) return;
 
-        wadah.innerHTML = list.length ? "" : "<div style='padding:12px;color:#64748b;font-size:0.8rem;'>Belum ada notifikasi.</div>";
-        list.forEach(n => {
-            const el = document.createElement("div");
-            el.style.cssText = "padding:10px 12px; border-bottom:1px solid #e2e8f0; cursor:pointer;";
-            el.innerHTML = `<strong style="font-size:0.82rem; color:#1e293b;">${n.judul}</strong><div style="font-size:0.75rem; color:#64748b;">${n.pesan}</div>`;
-            el.onclick = () => {
-                if (n.linkTujuan && n.linkTujuan.startsWith("display.html")) {
-                    window.open("display.html", "_blank");
-                } else if (n.tipe === "TUGAS" || n.tipe === "PEMBARUAN") {
-                    if (typeof bukaSection === "function") bukaSection("sec-akademik");
-                } else if (n.tipe === "PENGUMUMAN") {
-                    if (typeof bukaSection === "function") bukaSection("sec-beranda");
-                }
-            };
-            wadah.appendChild(el);
-        });
-    });
+        const badge = document.getElementById('notif-badge-count');
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.style.display = "flex";
+                badge.innerText = unreadCount > 9 ? "9+" : String(unreadCount);
+            } else {
+                badge.style.display = "none";
+            }
+        }
+    }, () => {});
 }
 
     // Dengarkan notifikasi real-time dari Firestore
