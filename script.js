@@ -203,7 +203,6 @@ const subjectsList = [
     { name: "PKWU", icon: "fa-lightbulb", grad: "linear-gradient(135deg, #e65c00, #f9d423)", active: true }
 ];
 
-// ==========================================
 // 3. SISTEM NOTIFIKASI REAL-TIME (TUGAS, PERTANYAAN SISWA & PEMBARUAN)
 // ==========================================
 let notifikasiListCache = [];
@@ -216,39 +215,41 @@ function inisialisasiNotifikasiRealtime() {
         return;
     }
     if (btnLonceng) btnLonceng.style.display = "inline-flex";
-    const user = JSON.parse(raw);
 
-    db.collection("notifikasi_sistem").orderBy("timestamp", "desc").limit(25).onSnapshot(snap => {
-        notifikasiListCache = [];
-        const lastRead = Number(localStorage.getItem("sman2bayan_notif_last_read") || "0");
-        let unreadCount = 0;
+    db.collection("notifikasi_sistem")
+        .orderBy("timestamp", "desc")
+        .limit(25)
+        .onSnapshot((snapshot) => {
+            notifikasiListCache = [];
+            const lastRead = Number(localStorage.getItem("sman2bayan_notif_last_read") || "0");
+            let unreadCount = 0;
 
-        snap.forEach(doc => {
-            const d = { id: doc.id, ...doc.data() };
-            const target = d.targetRole || "SEMUA";
-            const userRole = user.role || "Tamu";
-            const cocokRole =
-                target === "SEMUA" ||
-                (target === "STAFF" && ["Operator", "Guru", "Guru / Staf"].includes(userRole)) ||
-                (target === "SISWA" && userRole === "Siswa");
+            snapshot.forEach((doc) => {
+                const d = { id: doc.id, ...doc.data() };
+                const target = d.targetRole || "SEMUA";
+                const userRole = currentUserSession ? currentUserSession.role : "Tamu";
+                const cocokRole =
+                    target === "SEMUA" ||
+                    (target === "STAFF" && ["Operator", "Guru", "Guru / Staf"].includes(userRole)) ||
+                    (target === "SISWA" && userRole === "Siswa");
 
-            if (cocokRole) {
-                notifikasiListCache.push(d);
-                const ts = d.timestamp && d.timestamp.toMillis ? d.timestamp.toMillis() : 0;
-                if (ts > lastRead) unreadCount++;
+                if (cocokRole) {
+                    notifikasiListCache.push(d);
+                    const ts = d.timestamp && d.timestamp.toMillis ? d.timestamp.toMillis() : 0;
+                    if (ts > lastRead) unreadCount++;
+                }
+            });
+
+            const badge = document.getElementById('notif-badge-count');
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.style.display = "flex";
+                    badge.innerText = unreadCount > 9 ? "9+" : String(unreadCount);
+                } else {
+                    badge.style.display = "none";
+                }
             }
-        });
-
-        const badge = document.getElementById('notif-badge-count');
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.style.display = "flex";
-                badge.innerText = unreadCount > 9 ? "9+" : String(unreadCount);
-            } else {
-                badge.style.display = "none";
-            }
-        }
-    }, () => {});
+        }, () => {});
 }
 
     // Dengarkan notifikasi real-time dari Firestore
