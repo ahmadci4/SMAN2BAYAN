@@ -516,6 +516,10 @@
                 <button id="btn-dark-mode" class="btn-icon-round" onclick="toggleDarkMode()" title="Ubah Tema Gelap / Terang">
                     <i class="fa-solid fa-moon"></i>
                 </button>
+                <button id="btn-lonceng-notif" class="btn-icon-round" onclick="bukaModalNotifikasi()" title="Notifikasi" style="display: none; position: relative;">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notif-badge-count" style="display: none; position: absolute; top: -4px; right: -4px; background: #dc2626; color: white; font-size: 0.65rem; font-weight: 800; width: 17px; height: 17px; border-radius: 50%; align-items: center; justify-content: center;">0</span>
+                </button>
                 <!-- Tombol unduh aplikasi -->
               <button id="btn-install-app" onclick="installAplikasiPortal()" style="display:inline-flex; align-items:center; gap:6px; background:#05cd99; color:#fff; border:none; padding:8px 14px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer;">
                     <i class="fa-solid fa-download"></i> Unduh Aplikasi
