@@ -560,6 +560,9 @@
         function formatUrlGambar(rawUrl) {
             if (!rawUrl) return "";
             const url = String(rawUrl).trim();
+            if (url.startsWith("data:image/")) {
+                return url;
+            }
             const gdriveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
             if (gdriveMatch && gdriveMatch[1]) {
                 return `https://lh3.googleusercontent.com/d/${gdriveMatch[1]}`;
@@ -639,33 +642,49 @@
             }
 
             activeSlideIdx = 0;
-            let slidesHtml = '<div class="slide-dots">';
+            wrapper.innerHTML = "";
+
+            const dotsWrap = document.createElement('div');
+            dotsWrap.className = 'slide-dots';
             slideList.forEach((_, i) => {
-                slidesHtml += `<span class="dot-ind ${i === 0 ? 'active' : ''}" id="dot-slide-${i}"></span>`;
+                const dot = document.createElement('span');
+                dot.className = `dot-ind ${i === 0 ? 'active' : ''}`;
+                dot.id = `dot-slide-${i}`;
+                dotsWrap.appendChild(dot);
             });
-            slidesHtml += '</div>';
+            wrapper.appendChild(dotsWrap);
 
             slideList.forEach((item, idx) => {
                 const imgUrl = formatUrlGambar(item.fotoUrl) || "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80";
                 const sisaJam = Math.max(1, Math.ceil(((item.expiresAtMs || (item.createdAtMs + 86400000)) - Date.now()) / 3600000));
 
-                slidesHtml += `
-                    <div class="doc-slide ${idx === 0 ? 'active' : ''}" id="doc-slide-${idx}">
-                        <img src="${escapeHTML(imgUrl)}" referrerpolicy="no-referrer" alt="${escapeHTML(item.judul)}" onerror="this.src='https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80'">
-                        <div class="slide-overlay">
-                            <span class="slide-badge"><i class="fa-solid fa-camera"></i> ${escapeHTML(item.mapel || 'Kegiatan KBM')} • Kelas ${escapeHTML(item.kelas || 'Umum')}</span>
-                            <h2 class="slide-title">${escapeHTML(item.judul)}</h2>
-                            <p class="slide-desc">${escapeHTML(item.deskripsi || '')}</p>
-                            <div class="slide-meta">
-                                <span><i class="fa-solid fa-chalkboard-user"></i> Guru: <strong>${escapeHTML(item.guruNama || 'Guru SMAN 2 Bayan')}</strong></span>
-                                <span><i class="fa-regular fa-clock"></i> Tayang s.d. ${sisaJam} jam lagi</span>
-                            </div>
-                        </div>
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `doc-slide ${idx === 0 ? 'active' : ''}`;
+                slideDiv.id = `doc-slide-${idx}`;
+
+                const imgEl = document.createElement('img');
+                imgEl.src = imgUrl;
+                imgEl.alt = item.judul || "Dokumentasi KBM";
+                imgEl.onerror = function() {
+                    this.src = "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80";
+                };
+
+                const overlayDiv = document.createElement('div');
+                overlayDiv.className = 'slide-overlay';
+                overlayDiv.innerHTML = `
+                    <span class="slide-badge"><i class="fa-solid fa-camera"></i> ${escapeHTML(item.mapel || 'Kegiatan KBM')} • Kelas ${escapeHTML(item.kelas || 'Umum')}</span>
+                    <h2 class="slide-title">${escapeHTML(item.judul)}</h2>
+                    <p class="slide-desc">${escapeHTML(item.deskripsi || '')}</p>
+                    <div class="slide-meta">
+                        <span><i class="fa-solid fa-chalkboard-user"></i> Guru: <strong>${escapeHTML(item.guruNama || 'Guru SMAN 2 Bayan')}</strong></span>
+                        <span><i class="fa-regular fa-clock"></i> Tayang s.d. ${sisaJam} jam lagi</span>
                     </div>
                 `;
-            });
 
-            wrapper.innerHTML = slidesHtml;
+                slideDiv.appendChild(imgEl);
+                slideDiv.appendChild(overlayDiv);
+                wrapper.appendChild(slideDiv);
+            });
 
             if (slideList.length > 1) {
                 slideTimer = setInterval(() => {
@@ -683,7 +702,6 @@
                 }, 6000);
             }
         }
-
         // 3. LIVE FEED ABSENSI (YOUTUBE LIVE CHAT STYLE + REKAP PER KELAS)
         function setFilterTingkat(tingkat, btnEl) {
             filterTingkatAktif = tingkat;
