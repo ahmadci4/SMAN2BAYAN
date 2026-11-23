@@ -208,22 +208,47 @@ const subjectsList = [
 // ==========================================
 let notifikasiListCache = [];
 
-function inisialisasiNotifikasiRealtime() {
-    // Pasang tombol lonceng notifikasi di pojok atas jika belum ada
-    const areaTop = document.getElementById('user-logged-area-top') || document.body;
-    if (!document.getElementById('btn-notifikasi-bell')) {
-        const bellBtn = document.createElement('button');
-        bellBtn.id = 'btn-notifikasi-bell';
-        bellBtn.type = 'button';
-        bellBtn.onclick = bukaModalNotifikasi;
-        bellBtn.title = 'Notifikasi Tugas, Diskusi & Pembaruan';
-        bellBtn.style.cssText = 'position:fixed; bottom:25px; left:20px; width:50px; height:50px; border-radius:50%; background:#4318ff; color:white; border:none; box-shadow:0 6px 20px rgba(67,24,255,0.4); cursor:pointer; z-index:96; display:flex; align-items:center; justify-content:center; font-size:1.2rem;';
-        bellBtn.innerHTML = `
-            <i class="fa-solid fa-bell"></i>
-            <span id="notif-badge-count" style="display:none; position:absolute; top:-4px; right:-4px; background:#dc2626; color:white; font-size:0.7rem; font-weight:800; min-width:20px; height:20px; border-radius:50%; align-items:center; justify-content:center; padding:0 4px; border:2px solid white;">0</span>
-        `;
-        document.body.appendChild(bellBtn);
+function inisialisasiNotifikasiLogin() {
+    const raw = sessionStorage.getItem("sman2bayan_session");
+    const btnLonceng = document.getElementById("btn-lonceng-notif");
+    if (!raw) {
+        if (btnLonceng) btnLonceng.style.display = "none";
+        return;
     }
+    if (btnLonceng) btnLonceng.style.display = "inline-flex";
+    const user = JSON.parse(raw);
+
+    db.collection("notifikasi_sistem").orderBy("timestamp", "desc").limit(15).onSnapshot(snap => {
+        const wadah = document.getElementById("list-notifikasi-items");
+        const badge = document.getElementById("badge-notif-count");
+        let list = [];
+        snap.forEach(doc => {
+            const d = { id: doc.id, ...doc.data() };
+            if (d.targetRole === "SEMUA" || (d.targetRole === "SISWA" && user.role === "Siswa")) {
+                list.push(d);
+            }
+        });
+        if (badge) badge.textContent = list.length;
+        if (!wadah) return;
+
+        wadah.innerHTML = list.length ? "" : "<div style='padding:12px;color:#64748b;font-size:0.8rem;'>Belum ada notifikasi.</div>";
+        list.forEach(n => {
+            const el = document.createElement("div");
+            el.style.cssText = "padding:10px 12px; border-bottom:1px solid #e2e8f0; cursor:pointer;";
+            el.innerHTML = `<strong style="font-size:0.82rem; color:#1e293b;">${n.judul}</strong><div style="font-size:0.75rem; color:#64748b;">${n.pesan}</div>`;
+            el.onclick = () => {
+                if (n.linkTujuan && n.linkTujuan.startsWith("display.html")) {
+                    window.open("display.html", "_blank");
+                } else if (n.tipe === "TUGAS" || n.tipe === "PEMBARUAN") {
+                    if (typeof bukaSection === "function") bukaSection("sec-akademik");
+                } else if (n.tipe === "PENGUMUMAN") {
+                    if (typeof bukaSection === "function") bukaSection("sec-beranda");
+                }
+            };
+            wadah.appendChild(el);
+        });
+    });
+}
 
     // Dengarkan notifikasi real-time dari Firestore
     db.collection("notifikasi_sistem")
