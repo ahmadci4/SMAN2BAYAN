@@ -2239,3 +2239,25 @@ window.renderPilketos = function() {
         _originalRenderPilketos();
     }
 };
+// ==========================================
+// INSTALL APLIKASI
+// ==========================================
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+});
+
+function installAplikasiPortal() {
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
+    } else {
+        Swal.fire({
+            title: "Pasang Aplikasi SMAN 2 Bayan",
+            html: "<strong>Android (Chrome):</strong> Ketuk ikon titik tiga (⋮) di pojok kanan atas → pilih <b>Tambahkan ke Layar Utama / Install App</b>.<br><br><strong>iPhone (Safari):</strong> Ketuk ikon Bagikan (Share) → pilih <b>Add to Home Screen</b>.",
+            icon: "info",
+            confirmButtonColor: "#4318ff"
+        });
+    }
+}
