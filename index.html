@@ -495,6 +495,189 @@
             cursor: pointer;
             color: #64748b;
         }
+        <style>
+        /* PERBAIKAN INSTAN LAYOUT HERO SLIDER, STATISTIK & GRID MAPEL */
+        .hero-banner {
+            position: relative !important;
+            width: 100% !important;
+            height: 360px !important;
+            border-radius: 22px !important;
+            overflow: hidden !important;
+            margin-bottom: 24px !important;
+            box-shadow: 0 12px 30px rgba(27, 37, 75, 0.12) !important;
+            background: #1b254b !important;
+        }
+        .hero-slides {
+            position: relative !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .hero-slide {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: opacity 0.6s ease, visibility 0.6s ease !important;
+        }
+        .hero-slide.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 1 !important;
+        }
+        .hero-slide img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            display: block !important;
+        }
+        .hero-overlay {
+            position: absolute !important;
+            inset: 0 !important;
+            background: linear-gradient(90deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 55%, rgba(15, 23, 42, 0.15) 100%) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            padding: 32px 56px !important;
+            color: #ffffff !important;
+        }
+        .hero-overlay .badge-npsn {
+            display: inline-block !important;
+            width: fit-content !important;
+            background: rgba(67, 24, 255, 0.9) !important;
+            color: #ffffff !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            padding: 5px 14px !important;
+            border-radius: 999px !important;
+            margin-bottom: 12px !important;
+        }
+        .hero-overlay h1 {
+            font-size: 1.85rem !important;
+            font-weight: 800 !important;
+            margin: 0 0 8px 0 !important;
+            line-height: 1.25 !important;
+            max-width: 650px !important;
+            color: #ffffff !important;
+        }
+        .hero-overlay p {
+            font-size: 0.95rem !important;
+            margin: 0 !important;
+            max-width: 600px !important;
+            color: #e2e8f0 !important;
+        }
+        .hero-nav-btn {
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 5 !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            border: 1px solid rgba(255, 255, 255, 0.35) !important;
+            background: rgba(15, 23, 42, 0.45) !important;
+            color: #ffffff !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .hero-nav-btn.prev { left: 14px !important; }
+        .hero-nav-btn.next { right: 14px !important; }
+        .hero-dots {
+            position: absolute !important;
+            bottom: 16px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 5 !important;
+            display: flex !important;
+            gap: 8px !important;
+        }
+        .hero-dot {
+            width: 10px !important;
+            height: 10px !important;
+            border-radius: 999px !important;
+            background: rgba(255, 255, 255, 0.45) !important;
+            cursor: pointer !important;
+        }
+        .hero-dot.active {
+            width: 26px !important;
+            background: #ffffff !important;
+        }
+
+        /* GRID STATISTIK */
+        .stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+            gap: 16px !important;
+            margin-bottom: 24px !important;
+        }
+        .stat-card {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            padding: 18px 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 15px !important;
+            box-shadow: 0 4px 14px rgba(112, 144, 176, 0.08) !important;
+        }
+        .stat-icon {
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.3rem !important;
+            flex-shrink: 0 !important;
+        }
+
+        /* GRID MATA PELAJARAN */
+        .subject-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important;
+            gap: 14px !important;
+        }
+        .subject-card {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 18px 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            gap: 10px !important;
+            cursor: pointer !important;
+        }
+        .subject-icon {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 14px !important;
+            color: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.25rem !important;
+        }
+
+        /* GRID KARTU UMUM */
+        .grid-cards {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)) !important;
+            gap: 18px !important;
+        }
+
+        @media (max-width: 768px) {
+            .hero-banner { height: 260px !important; }
+            .hero-overlay { padding: 20px 42px !important; }
+            .hero-overlay h1 { font-size: 1.25rem !important; }
+            .subject-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+    </style>
     </style>
 </head>
 <body>
