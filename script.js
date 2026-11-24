@@ -202,7 +202,6 @@ const subjectsList = [
     { name: "Antropologi", icon: "fa-masks-theater", grad: "linear-gradient(135deg, #cc2b5e, #753a88)", active: true },
     { name: "PKWU", icon: "fa-lightbulb", grad: "linear-gradient(135deg, #e65c00, #f9d423)", active: true }
 ];
-
 // 3. SISTEM NOTIFIKASI REAL-TIME (TUGAS, PERTANYAAN SISWA & PEMBARUAN)
 // ==========================================
 let notifikasiListCache = [];
@@ -251,7 +250,6 @@ function inisialisasiNotifikasiRealtime() {
             }
         }, () => {});
 }
-
     // Dengarkan notifikasi real-time dari Firestore
     db.collection("notifikasi_sistem")
         .orderBy("timestamp", "desc")
