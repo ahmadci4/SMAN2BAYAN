@@ -250,43 +250,6 @@ function inisialisasiNotifikasiRealtime() {
             }
         }, () => {});
 }
-    // Dengarkan notifikasi real-time dari Firestore
-    db.collection("notifikasi_sistem")
-        .orderBy("timestamp", "desc")
-        .limit(25)
-        .onSnapshot((snapshot) => {
-            notifikasiListCache = [];
-            const lastRead = Number(localStorage.getItem("sman2bayan_notif_last_read") || "0");
-            let unreadCount = 0;
-
-            snapshot.forEach((doc) => {
-                const d = { id: doc.id, ...doc.data() };
-                // Filter relevan berdasarkan peran
-                const target = d.targetRole || "SEMUA";
-                const userRole = currentUserSession ? currentUserSession.role : "Tamu";
-                const cocokRole =
-                    target === "SEMUA" ||
-                    (target === "STAFF" && ["Operator", "Guru", "Guru / Staf"].includes(userRole)) ||
-                    (target === "SISWA" && userRole === "Siswa");
-
-                if (cocokRole) {
-                    notifikasiListCache.push(d);
-                    const ts = d.timestamp && d.timestamp.toMillis ? d.timestamp.toMillis() : 0;
-                    if (ts > lastRead) unreadCount++;
-                }
-            });
-
-            const badge = document.getElementById('notif-badge-count');
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.style.display = "flex";
-                    badge.innerText = unreadCount > 9 ? "9+" : String(unreadCount);
-                } else {
-                    badge.style.display = "none";
-                }
-            }
-        }, () => {});
-}
 
 function kirimNotifikasiSistem({ tipe, judul, pesan, targetRole = "SEMUA", pengirim = "Sistem" }) {
     db.collection("notifikasi_sistem").add({
@@ -342,7 +305,6 @@ function bukaModalNotifikasi() {
         alert(notifikasiListCache.map(n => `${n.judul}: ${n.pesan}`).join("\n") || "Tidak ada notifikasi.");
     }
 }
-
 // ==========================================
 // 4. KONTROL HAK AKSES MENU, SAKELAR PANEL & MODAL LOGIN
 // ==========================================
