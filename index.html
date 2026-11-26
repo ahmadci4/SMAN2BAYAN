@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart E-Learning - SMA NEGERI 2 BAYAN</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4318ff">
+    <link rel="apple-touch-icon" href="images/logo-sman2bayan.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -544,39 +547,63 @@
     </header>
 
     <!-- BILAH NAVIGASI MENU -->
-    <div class="nav-bar-wrap">
-        <div class="nav-pills">
-            <!-- Menu Publik (Selalu Tampil) -->
-            <button id="nav-home" class="menu-pill active-home" onclick="renderHome()">
+    <!-- BILAH NAVIGASI MENU -->
+    <div class="nav-bar-wrap" style="position: relative;">
+        <div class="nav-pills" id="main-nav-pills" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; scroll-behavior: smooth; padding-right: 32px; -webkit-overflow-scrolling: touch; cursor: grab;">
+            <!-- Menu Publik -->
+            <button id="nav-home" class="menu-pill active-home" onclick="navigasiKe('home')" style="flex-shrink: 0;">
                 <i class="fa-solid fa-house"></i> Home
             </button>
-            <a id="nav-display" href="display.html" target="_blank" class="menu-pill" style="border-color: #05cd99; color: #059669;">
+            <a id="nav-display" href="display.html" target="_blank" class="menu-pill" style="border-color: #05cd99; color: #059669; flex-shrink: 0;">
                 <i class="fa-solid fa-tv"></i> Display TV
             </a>
-            <button id="nav-tendik" class="menu-pill" onclick="renderStrukturGuruTendik()">
-                <i class="fa-solid fa-chalkboard-user"></i> Guru & Tenaga Pendidik
-            </button>
-            <a id="nav-ekskul" href="ekskul.html" class="menu-pill">
-                <i class="fa-solid fa-trophy"></i> Ekskul
-            </a>
 
-            <!-- Menu Pembelajaran Siswa (Hanya Muncul Setelah Login) -->
-            <button id="nav-mapel" class="menu-pill" style="display: none;" onclick="renderDaftarMapel()">
-                <i class="fa-solid fa-book-open"></i> Mata Pelajaran & Tugas
-            </button>
-            <a id="nav-kartu" href="kartu-siswa.html" class="menu-pill" style="display: none;">
-                <i class="fa-solid fa-id-card"></i> Kartu Pelajar QR
-            </a>
-            <button id="nav-guru-favorit" class="menu-pill" onclick="renderGuruFavorit()">
-                <i class="fa-solid fa-award"></i> Guru Terbaik
-            </button>
-            <a id="nav-pilketos" href="pilketos.html" class="menu-pill" style="display: none;">
-                <i class="fa-solid fa-check-to-slot"></i> Pilketos
-            </a>
-
-            <!-- Panel Khusus Guru / Operator -->
-            <a id="btn-dashboard-staff" href="guru.html" class="menu-pill staff-panel-btn" style="display: none;">
+            <!-- Tombol Ruang Kerja Guru / Operator (Langsung di sebelah Display TV, tidak terpotong) -->
+            <a id="btn-dashboard-staff" href="guru.html" class="menu-pill staff-panel-btn" style="display: none; flex-shrink: 0;">
                 <i class="fa-solid fa-chalkboard-user"></i> Ruang Kerja Guru
+            </a>
+
+            <!-- Menu Lainnya (Tampil berjajar untuk Siswa/Tamu, otomatis masuk Dropdown saat Guru login) -->
+            <div id="nav-extra-inline" style="display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <button id="nav-tendik" class="menu-pill" onclick="navigasiKe('tendik')" style="flex-shrink: 0;">
+                    <i class="fa-solid fa-chalkboard-user"></i> Guru & Tenaga Pendidik
+                </button>
+                <a id="nav-ekskul" href="ekskul.html" class="menu-pill" style="flex-shrink: 0;">
+                    <i class="fa-solid fa-trophy"></i> Ekskul
+                </a>
+                <button id="nav-mapel" class="menu-pill" style="display: none; flex-shrink: 0;" onclick="navigasiKe('mapel')">
+                    <i class="fa-solid fa-book-open"></i> Mata Pelajaran & Tugas
+                </button>
+                <a id="nav-kartu" href="kartu-siswa.html" class="menu-pill" style="display: none; flex-shrink: 0;">
+                    <i class="fa-solid fa-id-card"></i> Kartu Pelajar QR
+                </a>
+                <button id="nav-guru-favorit" class="menu-pill" onclick="navigasiKe('favorit')" style="flex-shrink: 0;">
+                    <i class="fa-solid fa-award"></i> Guru Terbaik
+                </button>
+                <a id="nav-pilketos" href="pilketos.html" class="menu-pill" style="display: none; flex-shrink: 0;">
+                    <i class="fa-solid fa-check-to-slot"></i> Pilketos
+                </a>
+            </div>
+
+            <!-- Tombol Dropdown Ringkas (Hanya Muncul saat Guru / Operator berada di Beranda) -->
+            <button id="btn-dropdown-guru" type="button" class="menu-pill" onclick="toggleDropdownMenuLain(event)" style="display: none; flex-shrink: 0;">
+                <i class="fa-solid fa-bars"></i> Menu Lainnya <i class="fa-solid fa-chevron-down" style="font-size: 0.72rem; margin-left: 4px;"></i>
+            </button>
+        </div>
+
+        <!-- Panel Isi Dropdown Menu Lainnya -->
+        <div id="dropdown-menu-lain-panel" style="display: none; position: absolute; right: 16px; top: 52px; z-index: 999; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; box-shadow: 0 12px 28px rgba(15,23,42,0.16); padding: 8px; min-width: 230px; flex-direction: column; gap: 6px;">
+            <button type="button" class="menu-pill" style="width: 100%; justify-content: flex-start; border: none;" onclick="tutupDropdownMenuLain(); navigasiKe('tendik')">
+                <i class="fa-solid fa-chalkboard-user" style="width: 18px;"></i> Guru & Tenaga Pendidik
+            </button>
+            <a href="ekskul.html" class="menu-pill" style="width: 100%; justify-content: flex-start; border: none;">
+                <i class="fa-solid fa-trophy" style="width: 18px;"></i> Ekskul
+            </a>
+            <button id="dd-guru-favorit" type="button" class="menu-pill" style="width: 100%; justify-content: flex-start; border: none;" onclick="tutupDropdownMenuLain(); navigasiKe('favorit')">
+                <i class="fa-solid fa-award" style="width: 18px;"></i> Guru Terbaik
+            </button>
+            <a id="dd-pilketos" href="pilketos.html" class="menu-pill" style="display: none; width: 100%; justify-content: flex-start; border: none;">
+                <i class="fa-solid fa-check-to-slot" style="width: 18px;"></i> Pilketos
             </a>
         </div>
     </div>
@@ -758,6 +785,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=5"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>
