@@ -1,12 +1,13 @@
 {
-  "name": "Smart E-Learning SMAN 2 BAYAN",
+  "name": "Smart E-Learning SMAN 2 Bayan",
   "short_name": "SMAN 2 Bayan",
-  "description": "Aplikasi Pembelajaran Digital, Absensi QR, PILKETOS & Informasi Akademik SMA Negeri 2 Bayan.",
-  "start_url": "index.html",
+  "description": "Portal Pembelajaran Digital, Absensi QR & Informasi Sekolah SMAN 2 Bayan",
+  "start_url": "/SMAN2BAYAN/index.html",
+  "scope": "/SMAN2BAYAN/",
   "display": "standalone",
-  "background_color": "#f4f7fe",
-  "theme_color": "#4318ff",
   "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#4318ff",
   "icons": [
     {
       "src": "images/logo-sman2bayan.png",
